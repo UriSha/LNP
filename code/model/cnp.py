@@ -1,8 +1,6 @@
 import torch
 import torch.nn as nn
 import torchvision
-from torch.autograd import Variable
-from torch.utils.data import Dataset, DataLoader
 from encoder import Encoder
 from decoder import Decoder
 from aggregator import AttentionAggregator, AverageAggregator
