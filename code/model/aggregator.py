@@ -7,9 +7,12 @@ class AverageAggregator(nn.Module):
     def __init__(self, hidden_repr, to_cuda=False):
         super(AverageAggregator, self).__init__()
 
-    def forward(self, x):
-        x = torch.mean(x, 0)
-        return x
+    def forward(self, x, x_mask):
+        weights = F.softmax(x_mask, dim=0)
+        x = x.permute([1, 0])  # transpose
+        x = torch.matmul(x, weights)
+        x = x.permute([1, 0])  # transpose
+        return torch.sum(x, dim=0)
 
 
 class AttentionAggregator(nn.Module):

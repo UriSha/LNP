@@ -23,9 +23,9 @@ class CNP(nn.Module):
             self.aggregator = self.aggregator.cuda()
             self.decoder = self.decoder.cuda()
 
-    def forward(self, context, target):
+    def forward(self, context, context_mask, target):
         encodings = self.encoder(context)
-        representation = self.aggregator(encodings)
+        representation = self.aggregator(encodings, context_mask)
 
         x = self.concat_repr_to_target(representation, target)
         predictions = self.decoder(x)
