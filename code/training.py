@@ -28,22 +28,25 @@ class Trainer():
             # train
             self.model.train_model()
             epoch_train_loss = []
-            for context_batch, target_xs_batch, target_ys_batch in train_loader:
+            for context_batch, context_mask_batch target_xs_batch, target_ys_batch in train_loader:
                 context = torch.stack(context_batch, dim=1).float()
+                context_mask = torch.stack(context_mask_batch, dim=1).float()
                 target_xs = torch.stack(target_xs_batch, dim=1).float()
                 target_ys = torch.stack(target_ys_batch, dim=1).float()
                 if self.to_cuda:
                     context = context.cuda()
+                    context_mask = context_mask.cuda()
                     target_xs = target_xs.cuda()
                     target_ys = target_ys.cuda()
 
                 context = Variable(context, requires_grad=True)
+                context_mask = Variable(context_mask, requires_grad=True)
                 target_xs = Variable(target_xs, requires_grad=True)
                 target_ys = Variable(target_ys, requires_grad=True)
 
                 # feedforward - backprop
                 optimizer.zero_grad()
-                outputs = self.model(context, target_xs)
+                outputs = self.model(context, context_mask, target_xs)
                 loss = loss_function(outputs, target_ys)
                 loss.backward()
                 optimizer.step()
@@ -54,21 +57,24 @@ class Trainer():
             # evaluate
             self.model.eval_model()
             epoch_eval_loss = []
-            for context_batch, target_xs_batch, target_ys_batch in eval_loader:
+            for context_batch, context_mask_batch, target_xs_batch, target_ys_batch in eval_loader:
                 context = torch.stack(context_batch, dim=1).float()
+                context_mask = torch.stack(context_mask_batch, dim=1).float()
                 target_xs = torch.stack(target_xs_batch, dim=1).float()
                 target_ys = torch.stack(target_ys_batch, dim=1).float()
                 if self.to_cuda:
                     context = context.cuda()
+                    context_mask = context_mask.cuda()
                     target_xs = target_xs.cuda()
                     target_ys = target_ys.cuda()
 
                 context = Variable(context, requires_grad=False)
+                context_mask = Variable(context_mask, requires_grad=False)
                 target_xs = Variable(target_xs, requires_grad=False)
                 target_ys = Variable(target_ys, requires_grad=False)
 
                 # feedforward
-                outputs = self.model(context, target_xs)
+                outputs = self.model(context, context_mask, target_xs)
                 loss = loss_function(outputs, target_ys)
 
                 # train loss
