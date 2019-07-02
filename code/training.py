@@ -16,7 +16,7 @@ class Trainer():
         self.to_cuda = to_cuda
 
     def train(self):
-        loss_function = nn.CrossEntropyLoss(ignore_index=-1)  # padded indices will have -1 value
+        loss_function = nn.CrossEntropyLoss(ignore_index=-1)  # padded outputs will have -1 as class
         optimizer = torch.optim.Adam(model.parameters(), lr=self.learning_rate)
         train_loader = DataLoader(
             dataset=self.training_dataset, batch_size=self.batch_size, shuffle=True)
