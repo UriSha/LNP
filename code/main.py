@@ -7,7 +7,7 @@ import logging
 def load_data_and_embeddings():
     name = 'APRC'
 
-    mid25 = cPickle.load(open('../data/%s/50_middle.pkl' % name, 'rb'))
+    mid25 = cPickle.load(open('../data/%s/25_random.pkl' % name, 'rb'))
     index = cPickle.load(open('../data/%s/index.pkl' % name, 'rb'))
     w2id, id2w = cPickle.load(open('../data/%s/w2id_id2w.pkl' % name, 'rb'))
 
@@ -99,13 +99,13 @@ def generage_original_text_from_index_and_id2w():
 
 if __name__ == "__main__":
     print('Hello World!')
-    # load_data_and_embeddings()
+    load_data_and_embeddings()
     # load_bert()
     # generage_original_text_from_index_and_id2w()
-    t1 = torch.tensor([[[11, 12, 13, 14], [1, 2, 3, 4]]]).float()
-    t2 = torch.tensor([[[0, 0, 1, 1], [2, 2, 3, 3]]]).float()
-    t3 = torch.tensor([[[3, 2, 1, 0], [3, 2, 1, 0]]]).float()
-    print(t1.shape)
-    lst = [t1, t2, t3]
-
-    average_transform(lst)
+    # t1 = torch.tensor([[[11, 12, 13, 14], [1, 2, 3, 4]]]).float()
+    # t2 = torch.tensor([[[0, 0, 1, 1], [2, 2, 3, 3]]]).float()
+    # t3 = torch.tensor([[[3, 2, 1, 0], [3, 2, 1, 0]]]).float()
+    # print(t1.shape)
+    # lst = [t1, t2, t3]
+    #
+    # average_transform(lst)
