@@ -17,7 +17,7 @@ class CNP(nn.Module):
             self.aggregator = AverageAggregator(hidden_repr, to_cuda)
         self.decoder = Decoder(hidden_repr, target_size,
                                dec_hidden_layers, output_size, to_cuda)
-        self.representation = None
+        
         if to_cuda:
             self.encoder = self.encoder.cuda()
             self.aggregator = self.aggregator.cuda()
@@ -25,15 +25,14 @@ class CNP(nn.Module):
 
     def forward(self, context, target):
         encodings = self.encoder(context)
-        self.representation = self.aggregator(encodings)
+        representation = self.aggregator(encodings)
 
-        x = self.concat_repr_to_target(target)
-
+        x = self.concat_repr_to_target(representation, target)
         predictions = self.decoder(x)
         return predictions
 
-    def concat_repr_to_target(self, target):
-        x = self.representation.repeat(target.shape[0], 1)
+    def concat_repr_to_target(self, representation, target):
+        x = representation.repeat(target.shape[0], 1)
         x = torch.cat((x, target), dim=1)
         return x
 
