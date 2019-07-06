@@ -8,7 +8,7 @@ class AverageAggregator(nn.Module):
         super(AverageAggregator, self).__init__()
 
     def forward(self, x, x_mask):
-        weights = F.softmax(x_mask, dim=0)
+        weights = F.softmax(x_mask.masked_fill(x_mask, float('-inf')), dim=0)
         x = x.permute([1, 0])  # transpose
         x = torch.matmul(x, weights)
         x = x.permute([1, 0])  # transpose
@@ -25,9 +25,10 @@ class AttentionAggregator(nn.Module):
         if to_cuda:
             self.fc = self.fc.cuda()
 
-    def forward(self, x):
+    def forward(self, x, x_mask):
         energies = self.fc(x)
         energies = torch.matmul(energies, self.weight_vec)
+        energies.masked_fill_(x_mask, float('-inf'))
         weights = F.softmax(energies, dim=0)
 
         x = x.permute([1, 0])  # transpose
