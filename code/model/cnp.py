@@ -7,16 +7,17 @@ from aggregator import AttentionAggregator, AverageAggregator
 
 
 class CNP(nn.Module):
-    def __init__(self, context_size, target_size, hidden_repr, enc_hidden_layers, dec_hidden_layers, output_size, attn=False, to_cuda=False):
+    def __init__(self, context_size, target_size, hidden_repr, enc_hidden_layers, dec_hidden_layers, output_size, max_sent_len, max_target_size, attn=False, to_cuda=False):
         super(CNP, self).__init__()
         self.encoder = Encoder(
             context_size, enc_hidden_layers, hidden_repr, to_cuda)
         if attn:
-            self.aggregator = AttentionAggregator(hidden_repr, to_cuda)
+            self.aggregator = AttentionAggregator(hidden_repr, max_sent_len, to_cuda)
         else:
-            self.aggregator = AverageAggregator(hidden_repr, to_cuda)
-        self.decoder = Decoder(hidden_repr, target_size,
-                               dec_hidden_layers, output_size, to_cuda)
+            self.aggregator = AverageAggregator(hidden_repr, max_sent_len, to_cuda)
+        self.decoder = Decoder(hidden_repr, target_size, dec_hidden_layers, output_size, to_cuda)
+
+        self.max_target_size = max_target_size
         
         if to_cuda:
             self.encoder = self.encoder.cuda()
@@ -26,15 +27,15 @@ class CNP(nn.Module):
 
     def forward(self, context, context_mask, target):
         encodings = self.encoder(context)
-        representation = self.aggregator(encodings, context_mask)
+        representations = self.aggregator(encodings, context_mask)
 
-        x = self.concat_repr_to_target(representation, target)
+        x = self.concat_repr_to_target(representations, target)
         predictions = self.decoder(x)
         return predictions
 
 
-    def concat_repr_to_target(self, representation, target):
-        x = representation.repeat(target.shape[0], 1)
+    def concat_repr_to_target(self, representations, target):
+        x = representations.repeat(self.max_target_size, 1)
         x = torch.cat((x, target), dim=1)
         return x
 
