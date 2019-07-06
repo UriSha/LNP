@@ -142,7 +142,10 @@ class text_dataset(Dataset):
         target_xs = []
         target_ys = []
 
-        num_of_masks = math.floor(len(sent) * self.mask_ratio)
+        if len(sent) >= 4:
+            num_of_masks = math.floor(len(sent) * self.mask_ratio)
+        else:
+            num_of_masks = math.ceil(len(sent) * self.mask_ratio)
 
         indices_to_mask = sorted(random.sample(range(len(sent)), num_of_masks))
 
