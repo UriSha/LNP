@@ -15,70 +15,69 @@ class Trainer():
         self.epoch_count = epoch_count
         self.to_cuda = to_cuda
 
-    def train(self):
+
+    def train(self, train_loader, loss_function, optimizer, epoch_train_loss):
+        for context_batch, context_mask_batch target_xs_batch, target_ys_batch in train_loader:
+            context = self.batch2var(context_batch, True)
+            context_mask = self.batch2var(context_mask_batch, True)
+            target_xs = self.batch2var(target_xs_batch, True)
+            target_ys = self.batch2var(target_ys_batch, True)
+
+            # feedforward - backprop
+            optimizer.zero_grad()
+            outputs = self.model(context, context_mask, target_xs)
+            loss = loss_function(outputs, target_ys)
+            loss.backward()
+            optimizer.step()
+
+            # train loss
+            epoch_train_loss.append(loss.item())
+
+
+    def evaluate(self, eval_loader, loss_function, epoch_eval_loss):
+        for context_batch, context_mask_batch, target_xs_batch, target_ys_batch in eval_loader:
+            context = self.batch2var(context_batch, False)
+            context_mask = self.batch2var(context_mask_batch, False)
+            target_xs = self.batch2var(target_xs_batch, False)
+            target_ys = self.batch2var(target_ys_batch, False)
+
+            # feedforward
+            outputs = self.model(context, context_mask, target_xs)
+            loss = loss_function(outputs, target_ys)
+
+            # train loss
+            epoch_eval_loss.append(loss.item())
+
+
+    def batch2var(self, batch_param, requires_grad):
+        p = torch.stack(batch_param, dim=1).float()
+        if self.to_cuda:
+            p = p.cuda()
+
+        return Variable(p, requires_grad=requires_grad)
+
+
+    def run(self):
         loss_function = nn.CrossEntropyLoss(ignore_index=-1)  # padded outputs will have -1 as class
         optimizer = torch.optim.Adam(model.parameters(), lr=self.learning_rate)
-        train_loader = DataLoader(
-            dataset=self.training_dataset, batch_size=self.batch_size, shuffle=True)
-        eval_loader = DataLoader(
-            dataset=self.evaluation_dataset, batch_size=self.batch_size)
+        train_loader = DataLoader(dataset=self.training_dataset, batch_size=self.batch_size, shuffle=True)
+        if self.evaluation_dataset:
+            eval_loader = DataLoader(dataset=self.evaluation_dataset, batch_size=self.batch_size, shuffle=False)
+        else:
+            eval_loader = None
         train_loss_per_epoch = []
 
         for epoch in range(self.epoch_count):
             # train
             self.model.train_model()
             epoch_train_loss = []
-            for context_batch, context_mask_batch target_xs_batch, target_ys_batch in train_loader:
-                context = torch.stack(context_batch, dim=1).float()
-                context_mask = torch.stack(context_mask_batch, dim=1).float()
-                target_xs = torch.stack(target_xs_batch, dim=1).float()
-                target_ys = torch.stack(target_ys_batch, dim=1).float()
-                if self.to_cuda:
-                    context = context.cuda()
-                    context_mask = context_mask.cuda()
-                    target_xs = target_xs.cuda()
-                    target_ys = target_ys.cuda()
-
-                context = Variable(context, requires_grad=True)
-                context_mask = Variable(context_mask, requires_grad=True)
-                target_xs = Variable(target_xs, requires_grad=True)
-                target_ys = Variable(target_ys, requires_grad=True)
-
-                # feedforward - backprop
-                optimizer.zero_grad()
-                outputs = self.model(context, context_mask, target_xs)
-                loss = loss_function(outputs, target_ys)
-                loss.backward()
-                optimizer.step()
-
-                # train loss
-                epoch_train_loss.append(loss.item())
+            self.train(train_loader, loss_function, optimizer, epoch_train_loss)
 
             # evaluate
-            self.model.eval_model()
-            epoch_eval_loss = []
-            for context_batch, context_mask_batch, target_xs_batch, target_ys_batch in eval_loader:
-                context = torch.stack(context_batch, dim=1).float()
-                context_mask = torch.stack(context_mask_batch, dim=1).float()
-                target_xs = torch.stack(target_xs_batch, dim=1).float()
-                target_ys = torch.stack(target_ys_batch, dim=1).float()
-                if self.to_cuda:
-                    context = context.cuda()
-                    context_mask = context_mask.cuda()
-                    target_xs = target_xs.cuda()
-                    target_ys = target_ys.cuda()
-
-                context = Variable(context, requires_grad=False)
-                context_mask = Variable(context_mask, requires_grad=False)
-                target_xs = Variable(target_xs, requires_grad=False)
-                target_ys = Variable(target_ys, requires_grad=False)
-
-                # feedforward
-                outputs = self.model(context, context_mask, target_xs)
-                loss = loss_function(outputs, target_ys)
-
-                # train loss
-                epoch_eval_loss.append(loss.item())
+            if eval_loader:
+                self.model.eval_model()
+                epoch_eval_loss = []
+                self.evaluate(eval_loader, loss_function, epoch_eval_loss)
 
             # compute epoch loss
             cur_train_loss = sum(epoch_train_loss) / len(epoch_train_loss)
