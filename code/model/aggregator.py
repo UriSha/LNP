@@ -21,8 +21,6 @@ class AverageAggregator(nn.Module):
         x = torch.matmul(x, weights)  # batch matrix multiplication
         x = x.permute([0, 2, 1])  # transpose
         
-        x = x.squeeze(dim=1)
-
         return x
 
 

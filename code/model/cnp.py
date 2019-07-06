@@ -34,8 +34,9 @@ class CNP(nn.Module):
 
 
     def concat_repr_to_target(self, representations, target):
-        x = representations.repeat(self.max_target_size, 1)
-        x = torch.cat((x, target), dim=1)
+        x = torch.repeat_interleave(representations, self.max_target_size, dim=1)
+        target = torch.unsqueeze(target, dim=2)
+        x = torch.cat((x, target), dim=2)
         return x
 
 
