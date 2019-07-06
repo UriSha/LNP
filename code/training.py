@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torchvision
+import numpy as np
 from torch.autograd import Variable
 from torch.utils.data import Dataset, DataLoader
 
@@ -43,7 +44,7 @@ class Trainer():
 
             # feedforward
             outputs = self.model(context, context_mask, target_xs)
-            loss = loss_function(outputs, target_ys)
+            losses = loss_function(outputs, target_ys)
 
             # train loss
             epoch_eval_loss.append(loss.item())
@@ -83,11 +84,13 @@ class Trainer():
             cur_train_loss = sum(epoch_train_loss) / len(epoch_train_loss)
             train_loss_per_epoch.append(cur_train_loss)
             cur_eval_loss = sum(epoch_eval_loss) / len(epoch_eval_loss)
+            cur_eval_perplexity = np.exp(cur_eval_loss)
             eval_loss_per_epoch.append(cur_dev_loss)
+            eval_perplexity_per_epoch(cur_eval_perplexity)
 
             if (epoch) % 10 == 0:
-                print('Epoch [%d/%d] Train Loss: %.4f, Eval Loss: %.4f' %
-                      (epoch+1, self.epoch_count, cur_train_loss, cur_eval_loss))
+                print('Epoch [%d/%d] Train Loss: %.4f, Eval Loss: %.4f, Eval Perplexity: %.4f' %
+                      (epoch+1, self.epoch_count, cur_train_loss, cur_eval_loss, cur_eval_perplexity))
                 print()
 
         return train_loss_per_epoch, eval_loss_per_epoch
