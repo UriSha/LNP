@@ -18,6 +18,7 @@ class Encoder(nn.Module):
                 self.fcs[i] = self.fcs[i].cuda()
             self.output_fc = self.output_fc.cuda()
 
+
     def forward(self, x):
         for fc in self.fcs:
             x = fc(x)

@@ -7,6 +7,7 @@ class AverageAggregator(nn.Module):
     def __init__(self, hidden_repr, to_cuda=False):
         super(AverageAggregator, self).__init__()
 
+
     def forward(self, x, x_mask):
         weights = F.softmax(x_mask.masked_fill(x_mask, float('-inf')), dim=0)
         x = x.permute([1, 0])  # transpose
@@ -24,6 +25,7 @@ class AttentionAggregator(nn.Module):
 
         if to_cuda:
             self.fc = self.fc.cuda()
+
 
     def forward(self, x, x_mask):
         energies = self.fc(x)
