@@ -18,9 +18,9 @@ class Trainer():
 
 
     def train(self, train_loader, loss_function, optimizer, epoch_train_loss):
-        for context_batch, context_mask_batch target_xs_batch, target_ys_batch in train_loader:
+        for context_batch, context_mask_batch, target_xs_batch, target_ys_batch in train_loader:
             context = self.batch2var(context_batch, True)
-            context_mask = self.batch2var(context_mask_batch, True)
+            context_mask = self.batch2var(context_mask_batch, False)
             target_xs = self.batch2var(target_xs_batch, True)
             target_ys = self.batch2var(target_ys_batch, True)
 
@@ -51,7 +51,8 @@ class Trainer():
 
 
     def batch2var(self, batch_param, requires_grad):
-        p = torch.stack(batch_param, dim=1).float()
+        # p = torch.stack(batch_param, dim=1).float()
+        p = batch_param
         if self.to_cuda:
             p = p.cuda()
 
@@ -60,7 +61,7 @@ class Trainer():
 
     def run(self):
         loss_function = nn.CrossEntropyLoss(ignore_index=-1)  # padded outputs will have -1 as class
-        optimizer = torch.optim.Adam(model.parameters(), lr=self.learning_rate)
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
         train_loader = DataLoader(dataset=self.training_dataset, batch_size=self.batch_size, shuffle=True)
         if self.evaluation_dataset:
             eval_loader = DataLoader(dataset=self.evaluation_dataset, batch_size=self.batch_size, shuffle=False)

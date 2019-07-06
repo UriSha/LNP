@@ -29,7 +29,7 @@ class text_dataset(Dataset):
     def __getitem__(self, index):
         # Tokenized input
         sentence = self.text[index].copy()
-        print("sent", sentence)
+        # print("sent", sentence)
 
         sent, masked_indices, target_xs, target_ys = self.mask_sent(sentence)
         sent.insert(0, "[CLS]")
@@ -38,7 +38,7 @@ class text_dataset(Dataset):
         sent = " ".join(sent)
         tokenized_sent = self.tokenizer.tokenize(sent)
 
-        print("tokenized_sent", tokenized_sent)
+        # print("tokenized_sent", tokenized_sent)
 
         if len(tokenized_sent) - 2 > self.max_seq_len:
             # should not get here
@@ -151,7 +151,7 @@ class text_dataset(Dataset):
             target_ys.append(self.w2id[sent[idx]])
             sent[idx] = '[MASK]'
 
-        target_padding = [-1 for _ in range(self.max_seq_len - len(target))]
+        target_padding = [-1 for _ in range(self.max_masked_size - len(target_xs))]
         target_xs.extend(target_padding)
         target_ys.extend(target_padding)
 

@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 import torchvision
-from encoder import Encoder
-from decoder import Decoder
-from aggregator import AttentionAggregator, AverageAggregator
+from model.encoder import Encoder
+from model.decoder import Decoder
+from model.aggregator import AttentionAggregator, AverageAggregator
 
 
 class CNP(nn.Module):

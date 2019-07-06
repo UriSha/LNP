@@ -10,17 +10,19 @@ class AverageAggregator(nn.Module):
 
 
     def forward(self, x, x_mask):
-        r, c = x.shape
-        x = x.view(r // self.max_sent_len, self.max_sent_len, c)
+        # r, c = x.shape
+        # x = x.view(r // self.max_sent_len, self.max_sent_len, c)
 
         weights = x_mask.float()
-        weights = F.softmax(weights.masked_fill(x_mask, float('-inf')))
+        weights = F.softmax(weights.masked_fill(x_mask, float('-inf')), dim=1)
         weights = torch.unsqueeze(weights, dim=2)
 
         x = x.permute([0, 2, 1])  # transpose
         x = torch.matmul(x, weights)  # batch matrix multiplication
         x = x.permute([0, 2, 1])  # transpose
         
+        x = x.squeeze(dim=1)
+
         return x
 
 
