@@ -10,15 +10,18 @@ class AverageAggregator(nn.Module):
 
 
     def forward(self, x, x_mask):
-        weights = F.softmax(x_mask.masked_fill(x_mask, float('-inf')), dim=0)
-
-        x = x.permute([1, 0])  # transpose
-        x = torch.matmul(x, weights)
-        x = x.permute([1, 0])  # transpose
-
         r, c = x.shape
         x = x.view(r // self.max_sent_len, self.max_sent_len, c)
-        return torch.sum(x, dim=1)
+
+        weights = x_mask.float()
+        weights = F.softmax(weights.masked_fill(x_mask, float('-inf')))
+        weights = torch.unsqueeze(weights, dim=2)
+
+        x = x.permute([0, 2, 1])  # transpose
+        x = torch.matmul(x, weights)  # batch matrix multiplication
+        x = x.permute([0, 2, 1])  # transpose
+        
+        return x
 
 
 class AttentionAggregator(nn.Module):
@@ -34,15 +37,16 @@ class AttentionAggregator(nn.Module):
 
 
     def forward(self, x, x_mask):
+        r, c = x.shape
+        x = x.view(r // self.max_sent_len, self.max_sent_len, c)
+
         energies = self.fc(x)
         energies = torch.matmul(energies, self.weight_vec)
         energies.masked_fill_(x_mask, float('-inf'))
         weights = F.softmax(energies, dim=0)
 
-        x = x.permute([1, 0])  # transpose
-        x = torch.matmul(x, weights)
-        x = x.permute([1, 0])  # transpose
+        x = x.permute([0, 2, 1])  # transpose
+        x = torch.matmul(x, weights)  # batch matrix multiplication
+        x = x.permute([0, 2, 1])  # transpose
 
-        r, c = x.shape
-        x = x.view(r // self.max_sent_len, self.max_sent_len, c)
-        return torch.sum(x, dim=1)
+        return x
