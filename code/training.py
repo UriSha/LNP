@@ -22,12 +22,12 @@ class Trainer():
             context = self.batch2var(context_batch, True)
             context_mask = self.batch2var(context_mask_batch, False)
             target_xs = self.batch2var(target_xs_batch, True)
-            target_ys = self.batch2var(target_ys_batch, True)
+            target_ys = self.batch2var(target_ys_batch, False)
 
             # feedforward - backprop
             optimizer.zero_grad()
             outputs = self.model(context, context_mask, target_xs)
-            loss = loss_function(outputs, target_ys)
+            loss = self.compute_loss(loss_function, outputs, target_ys)
             loss.backward()
             optimizer.step()
 
@@ -44,7 +44,7 @@ class Trainer():
 
             # feedforward
             outputs = self.model(context, context_mask, target_xs)
-            losses = loss_function(outputs, target_ys)
+            loss = self.compute_loss(loss_function, outputs, target_ys)
 
             # train loss
             epoch_eval_loss.append(loss.item())
@@ -59,6 +59,14 @@ class Trainer():
         return Variable(p, requires_grad=requires_grad)
 
 
+    def compute_loss(self, loss_function, outputs, target_ys):
+        a, b, c, = outputs.shape
+        outputs = outputs.reshape(a * b, c)
+        a, b = target_ys.shape
+        target_ys = target_ys.reshape(a * b).long()  # TODO: get long tensor in the first place
+        return loss_function(outputs, target_ys)
+
+
     def run(self):
         loss_function = nn.CrossEntropyLoss(ignore_index=-1)  # padded outputs will have -1 as class
         optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
@@ -68,6 +76,7 @@ class Trainer():
         else:
             eval_loader = None
         train_loss_per_epoch = []
+        eval_loss_per_epoch = []
 
         for epoch in range(self.epoch_count):
             # train
@@ -84,10 +93,14 @@ class Trainer():
             # compute epoch loss
             cur_train_loss = sum(epoch_train_loss) / len(epoch_train_loss)
             train_loss_per_epoch.append(cur_train_loss)
-            cur_eval_loss = sum(epoch_eval_loss) / len(epoch_eval_loss)
-            cur_eval_perplexity = np.exp(cur_eval_loss)
-            eval_loss_per_epoch.append(cur_dev_loss)
-            eval_perplexity_per_epoch(cur_eval_perplexity)
+            if eval_loader:
+                cur_eval_loss = sum(epoch_eval_loss) / len(epoch_eval_loss)
+                cur_eval_perplexity = np.exp(cur_eval_loss)
+                eval_loss_per_epoch.append(cur_dev_loss)
+                eval_perplexity_per_epoch(cur_eval_perplexity)
+            else:
+                cur_eval_loss = 0
+                cur_eval_perplexity = 0
 
             if (epoch) % 10 == 0:
                 print('Epoch [%d/%d] Train Loss: %.4f, Eval Loss: %.4f, Eval Perplexity: %.4f' %
