@@ -105,6 +105,6 @@ class Trainer():
             if epoch % 10 == 0 or epoch == self.epoch_count - 1:
                 print('Epoch [%d/%d] Train Loss: %.4f, Eval Loss: %.4f, Eval Perplexity: %.4f' %
                       (epoch, self.epoch_count, cur_train_loss, cur_eval_loss, cur_eval_perplexity))
-                print()
+               # print()
 
         return train_loss_per_epoch, eval_loss_per_epoch
