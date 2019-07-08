@@ -9,7 +9,7 @@ import random
 
 # max_seq_length = 256
 
-class textdataset_once_random.py(Dataset):
+class text_dataset_once_random(Dataset):
     def __init__(self, text_as_list, mask_ratio=.25, transform=None, to_cuda=True):
         self.transform = transform
         self.mask_ratio = mask_ratio
