@@ -117,14 +117,14 @@ class text_dataset_once_random(Dataset):
             paddings_mask = paddings_mask.cuda()
         return padded_sent, paddings_mask, num_of_paddings
 
-    def initiate_vocab(self, tokenizer):
+    def initiate_vocab(self, text_as_list, tokenizer):
         max_len = 0
         words_count = 0
         sent_count = 0
         w2id = {}
         id2w = {}
 
-        for sent in self.text:
+        for sent in text_as_list:
             for w in sent:
                 if w not in w2id:
                     w2id[w] = words_count
