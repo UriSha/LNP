@@ -23,7 +23,7 @@ if __name__ == "__main__":
     lr = float(sys.argv[2])
     random_every_getitem_call = bool(sys.argv[3])
     
-    if random_every_getitem_call:
+    if random_every_getitem_call == "random":
         dataset = text_dataset(sents, to_cuda=to_cuda)
     else:
         dataset = text_dataset_once_random(sents, to_cuda=to_cuda)
