@@ -21,8 +21,8 @@ if __name__ == "__main__":
     to_cuda = True
     n_epoches = int(sys.argv[1])
     lr = float(sys.argv[2])
-    random_every_getitem_call = bool(sys.argv[3])
-    
+    random_every_getitem_call = sys.argv[3]
+
     if random_every_getitem_call == "random":
         dataset = text_dataset(sents, to_cuda=to_cuda)
     else:
