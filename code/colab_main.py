@@ -6,6 +6,7 @@ from data_processing.dataset import text_dataset
 from data_processing.dataset_once_random import text_dataset_once_random
 from model.cnp import CNP
 from training import Trainer
+import sys
 
 
 def read_data(path):
@@ -18,8 +19,15 @@ def read_data(path):
 if __name__ == "__main__":
     sents = read_data("data/APRC/APRC_small_mock.txt")
     to_cuda = True
-    n_epoches = 1000
-    dataset = text_dataset(sents, to_cuda=to_cuda)
+    n_epoches = int(sys.argv[1])
+    lr = float(sys.argv[2])
+    random_every_getitem_call = bool(sys.argv[3])
+    
+    if random_every_getitem_call:
+        dataset = text_dataset(sents, to_cuda=to_cuda)
+    else:
+        dataset = text_dataset_once_random(sents, to_cuda=to_cuda)
+
     model = CNP(769, 1, 800, [700], [700], len(dataset.id2w), dataset.max_seq_len, dataset.max_masked_size, to_cuda=to_cuda)
-    trainer = Trainer(model, dataset, None, 2, 0.0005, n_epoches, to_cuda)
+    trainer = Trainer(model, dataset, None, 2, lr, n_epoches, to_cuda)
     trainer.run()
