@@ -21,5 +21,5 @@ if __name__ == "__main__":
     n_epoches = 1000
     dataset = text_dataset_once_random(sents, to_cuda=to_cuda)
     model = CNP(769, 1, 800, [700], [700], len(dataset.id2w), dataset.max_seq_len, dataset.max_masked_size, to_cuda=to_cuda)
-    trainer = Trainer(model, dataset, None, 2, 0.001, n_epoches, to_cuda)
+    trainer = Trainer(model, dataset, None, 2, 0.0001, n_epoches, to_cuda)
     trainer.run()
