@@ -139,7 +139,8 @@ class text_dataset_once_random(Dataset):
         return w2id, id2w, max_len
 
     def mask_sent(self, sent):
-
+        print("start mask_sent")
+        print("sent: ", sent)
         target_xs = []
         target_ys = []
 
@@ -147,14 +148,16 @@ class text_dataset_once_random(Dataset):
             num_of_masks = math.floor(len(sent) * self.mask_ratio)
         else:
             num_of_masks = math.ceil(len(sent) * self.mask_ratio)
-
+        print("num_of_masks: ", num_of_masks)
         indices_to_mask = sorted(random.sample(range(len(sent)), num_of_masks))
-
+        print("indices_to_mask: ", indices_to_mask)
         for idx in indices_to_mask:
             target_xs.append(idx)
             target_ys.append(self.w2id[sent[idx]])
             sent[idx] = '[MASK]'
 
+        print("target_xs: ", target_xs)
+        print("target_ys: ", target_ys)
         target_padding = [-1 for _ in range(self.max_masked_size - len(target_xs))]
         target_xs.extend(target_padding)
         target_ys.extend(target_padding)
