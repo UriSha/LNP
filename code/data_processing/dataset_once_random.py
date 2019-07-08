@@ -17,7 +17,7 @@ class text_dataset_once_random(Dataset):
 
         # Load pre-trained model tokenizer (vocabulary)
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-        self.w2id, self.id2w, self.max_seq_len = self.initiate_vocab(tokenizer)
+        self.w2id, self.id2w, self.max_seq_len = self.initiate_vocab(text_as_list, tokenizer)
         self.max_masked_size = math.ceil(self.max_seq_len * mask_ratio)
 
         self.data = self.create_data(text_as_list, tokenizer)
