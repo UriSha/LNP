@@ -2,7 +2,8 @@ import pickle as cPickle
 import torch
 import logging
 from pytorch_pretrained_bert import BertTokenizer, BertModel, BertForMaskedLM
-from data_processing.dataset import text_dataset, text_dataset_once_random
+from data_processing.dataset import text_dataset
+from data_processing.dataset_once_random import text_dataset_once_random
 from model.cnp import CNP
 from training import Trainer
 
