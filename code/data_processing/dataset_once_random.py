@@ -82,18 +82,13 @@ class text_dataset_once_random(Dataset):
             embbedings_per_token_without_masked_paddded = self.concatenate_original_indecies(
                 embbedings_per_token_without_masked_paddded, anti_mask_indices)
 
-            data.append((embbedings_per_token_without_masked_paddded, paddings_mask, target_xs, target_ys)
+            data.append((embbedings_per_token_without_masked_paddded, paddings_mask, target_xs, target_ys))
 
         return data
 
-
-
-
     def __getitem__(self, index):
-       
         return self.data[index]
         # print("sent", sentence)
-
 
     def __len__(self):
         return len(self.data)
