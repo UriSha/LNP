@@ -2,7 +2,7 @@ import pickle as cPickle
 import torch
 import logging
 from pytorch_pretrained_bert import BertTokenizer, BertModel, BertForMaskedLM
-from data_processing.dataset import text_dataset
+from data_processing.dataset import text_dataset, text_dataset_once_random
 from model.cnp import CNP
 from training import Trainer
 
@@ -18,7 +18,7 @@ if __name__ == "__main__":
     sents = read_data("data/APRC/APRC_small_mock.txt")
     to_cuda = True
     n_epoches = 1000
-    dataset = text_dataset(sents, to_cuda)
+    dataset = text_dataset_once_random(sents, to_cuda)
     model = CNP(769, 1, 800, [700], [700], len(dataset.id2w), dataset.max_seq_len, dataset.max_masked_size, to_cuda=to_cuda)
     trainer = Trainer(model, dataset, None, 2, 0.001, n_epoches, to_cuda)
     trainer.run()
