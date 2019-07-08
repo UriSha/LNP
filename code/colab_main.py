@@ -18,6 +18,6 @@ if __name__ == "__main__":
     sents = read_data("data/APRC/APRC_small_mock.txt")
     to_cuda = True
     dataset = text_dataset(sents, to_cuda)
-    model = CNP(769, 1, 800, [700], [700], len(dataset.id2w), dataset.max_seq_len, dataset.max_masked_size)
+    model = CNP(769, 1, 800, [700], [700], len(dataset.id2w), dataset.max_seq_len, dataset.max_masked_size, to_cuda=to_cuda)
     trainer = Trainer(model, dataset, None, 2, 0.001, 100, to_cuda)
     trainer.run()
