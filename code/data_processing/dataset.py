@@ -32,6 +32,8 @@ class text_dataset(Dataset):
         # print("sent", sentence)
 
         sent, masked_indices, target_xs, target_ys = self.mask_sent(sentence)
+        print()
+        print("masked sentance: ", sentence)
         sent.insert(0, "[CLS]")
         sent.append("[SEP]")
 
