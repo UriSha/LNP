@@ -27,12 +27,23 @@ class DatasetConsistent(AbstractDataset):
         if self.to_cuda:
             bert_pretrained.to('cuda')
 
+        num_of_sents = len(text_as_list)
+        one_tenth = num_of_sents / 10
+        cur_count = 0
+        sents_processed = 0
+
         data = []
         for original_sent in text_as_list:
             data_instance = self.generate_data_instance_fron_sentence(original_sent=original_sent,
                                                                       tokenizer=tokenizer,
                                                                       bert_pretrained=bert_pretrained)
+            sents_processed += 1
+            cur_count += 1
             data.append(data_instance)
+
+            if cur_count == one_tenth:
+                print("Processed {} out of {} data_instances".format(sents_processed, num_of_sents))
+                cur_count = 0
 
         return data
 

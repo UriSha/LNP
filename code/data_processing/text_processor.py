@@ -6,6 +6,8 @@ from sklearn.model_selection import train_test_split
 
 class TextProcessor:
     def __init__(self, text_file_path, sents_limit=0, test_size=0.1, mask_ratio=.25):
+        print()
+        print("init TextProcessor")
         sents = self.read_data(text_file_path)
         if sents_limit > 0:
             sents = sents[:sents_limit]

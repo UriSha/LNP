@@ -9,6 +9,8 @@ from torch.utils.data import Dataset
 class AbstractDataset(Dataset):
     def __init__(self, text_as_list, tokenizer, w2id, max_seq_len, max_masked_size, mask_ratio=.25, transform=None,
                  to_cuda=True):
+        print()
+        print("init Dataset")
         self.data = text_as_list
         self.transform = transform
         self.mask_ratio = mask_ratio
@@ -24,7 +26,7 @@ class AbstractDataset(Dataset):
         sentence = original_sent.copy()
 
         sent, masked_indices, target_xs, target_ys = self.mask_sent(sentence)
-       # print("masked sentance: ", sentence)
+        # print("masked sentance: ", sentence)
         sent.insert(0, "[CLS]")
         sent.append("[SEP]")
 
