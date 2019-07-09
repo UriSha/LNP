@@ -70,8 +70,8 @@ class Trainer():
 
 
     def compute_accuracy(self, outputs, target_ys):
-        _, max_indices = outputs.max(dim=1)
-        return (max_indices == target_ys).sum() / len(target_ys)
+        _, max_indices = outputs.max(dim=2)
+        return (max_indices == target_ys.long()).sum() / len(target_ys)
 
 
     def run(self):
