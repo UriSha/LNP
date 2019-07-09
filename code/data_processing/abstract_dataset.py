@@ -44,8 +44,8 @@ class AbstractDataset(Dataset):
         segments_ids = [0] * len(indexed_tokens)
 
         # Convert inputs to PyTorch tensors
-        tokens_tensor = torch.Tensor([indexed_tokens])
-        segments_tensors = torch.Tensor([segments_ids])
+        tokens_tensor = torch.tensor([indexed_tokens])
+        segments_tensors = torch.tensor([segments_ids])
 
         if self.to_cuda:
             tokens_tensor = tokens_tensor.to('cuda')
