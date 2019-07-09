@@ -24,7 +24,7 @@ class AbstractDataset(Dataset):
         sentence = original_sent.copy()
 
         sent, masked_indices, target_xs, target_ys = self.mask_sent(sentence)
-        print("masked sentance: ", sentence)
+       # print("masked sentance: ", sentence)
         sent.insert(0, "[CLS]")
         sent.append("[SEP]")
 
