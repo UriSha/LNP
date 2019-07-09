@@ -6,16 +6,9 @@ import argparse
 from pytorch_pretrained_bert import BertTokenizer, BertModel, BertForMaskedLM
 from data_processing.dataset import text_dataset
 from data_processing.dataset_once_random import text_dataset_once_random
-from sklearn.model_selection import train_test_split
 from model.cnp import CNP
+from data_processing.text_processor import TextProcessor
 from training import Trainer
-
-
-def read_data(path):
-    with open(path, "r") as f:
-        text = f.readlines()
-    text = [sent.rstrip("\n").split(" ") for sent in text]
-    return text
 
 
 if __name__ == "__main__":
@@ -49,29 +42,22 @@ if __name__ == "__main__":
                         type=int)
     args = parser.parse_args()
 
-    sents = read_data("data/APRC/{}".format(args.data_file))
+    text_processor = TextProcessor("data/APRC/{}".format(args.data_file), sents_limit=args.sent_count)
 
-    if args.sent_count == 0:
-        sent_count = len(sents)
-    else:
-        sent_count = args.sent_count
-    train_sents, eval_sents = train_test_split(
-        sents[:sent_count], test_size=0.1)
     if args.dataset_random_every_time:
-        train_dataset = text_dataset(train_sents, to_cuda=args.to_cuda)
+        train_dataset = text_dataset(text_processor.train_sents, to_cuda=args.to_cuda)
     else:
-        train_dataset = text_dataset_once_random(
-            train_sents, to_cuda=args.to_cuda)
+        train_dataset = text_dataset_once_random(text_processor.train_sents, to_cuda=args.to_cuda)
 
-    eval_dataset = text_dataset_once_random(eval_sents, to_cuda=args.to_cuda)
+    eval_dataset = text_dataset_once_random(text_processor.eval_sents, to_cuda=args.to_cuda)
     model = CNP(context_size=769, 
                 target_size=1, 
                 hidden_repr=800, 
                 enc_hidden_layers=[800, 800], 
                 dec_hidden_layers=[850, 1000], 
-                output_size=len(dataset.id2w), 
-                max_sent_len=dataset.max_seq_len, 
-                max_target_size=dataset.max_masked_size,
+                output_size=len(text_processor.id2w), 
+                max_sent_len=text_processor.max_seq_len, 
+                max_target_size=text_processor.max_masked_size,
                 to_cuda=args.to_cuda)
     trainer = Trainer(model, train_dataset, eval_dataset, args.batch_size,
                       args.learning_rate, args.epochs, args.to_cuda)
