@@ -38,7 +38,15 @@ class text_dataset(Dataset):
         sent = " ".join(sent)
         tokenized_sent = self.tokenizer.tokenize(sent)
 
-        # print("tokenized_sent", tokenized_sent)
+        target_xs = self.update_xs_tokenized_indices(target_xs=target_xs,
+                                                     tokenized_sent=tokenized_sent)
+
+        target_xs = torch.Tensor(target_xs)
+        target_ys = torch.Tensor(target_ys).long()
+
+        if self.to_cuda:
+            target_xs = target_xs.cuda()
+            target_ys = target_ys.cuda()
 
         if len(tokenized_sent) - 2 > self.max_seq_len:
             # should not get here
@@ -59,8 +67,8 @@ class text_dataset(Dataset):
         #   print("segments_ids", segments_ids)
 
         # Convert inputs to PyTorch tensors
-        tokens_tensor = torch.tensor([indexed_tokens])
-        segments_tensors = torch.tensor([segments_ids])
+        tokens_tensor = torch.Tensor([indexed_tokens])
+        segments_tensors = torch.Tensor([segments_ids])
 
         if self.to_cuda:
             tokens_tensor = tokens_tensor.to('cuda')
@@ -84,7 +92,7 @@ class text_dataset(Dataset):
             embbedings_per_token_without_masked)
         anti_mask_indices += [-1] * num_of_paddings
 
-        embbedings_per_token_without_masked_paddded = self.concatenate_original_indecies(
+        embbedings_per_token_without_masked_paddded = self.concatenate_original_indices(
             embbedings_per_token_without_masked_paddded, anti_mask_indices)
 
         return embbedings_per_token_without_masked_paddded, paddings_mask, target_xs, target_ys
@@ -174,7 +182,7 @@ class text_dataset(Dataset):
         big_tensor = torch.stack(list_of_tensors)
         return big_tensor.mean(dim=0)
 
-    def concatenate_original_indecies(self, embbedings_per_token_without_masked, indices):
+    def concatenate_original_indices(self, embbedings_per_token_without_masked, indices):
         indices = torch.Tensor(indices).unsqueeze(1)
         if self.to_cuda:
             indices = indices.cuda()
@@ -183,6 +191,21 @@ class text_dataset(Dataset):
         #       print("embbedings_per_token_without_masked.shape:", embbedings_per_token_without_masked.shape)
 
         return torch.cat((embbedings_per_token_without_masked, indices), 1)
+
+    def update_xs_tokenized_indices(self, target_xs, tokenized_sent):
+
+        res = []
+        for idx, token in enumerate(tokenized_sent):
+            if token == '[MASK]':
+                res.append(idx)
+
+        print("target_xs = ", target_xs)
+        for idx, x in enumerate(target_xs):
+            if x == -1:
+                res.extend(target_xs[idx:])
+                break
+
+        return res
 
 
 # class ToTensor(object):
