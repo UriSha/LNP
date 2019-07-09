@@ -49,7 +49,7 @@ if __name__ == "__main__":
                         type=int)
     args = parser.parse_args()
 
-    sents = read_data("data/APRC/{}.txt".format(args.data_file))
+    sents = read_data("data/APRC/{}".format(args.data_file))
 
     if args.sent_count == 0:
         sent_count = len(sents)
