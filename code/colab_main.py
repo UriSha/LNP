@@ -1,10 +1,10 @@
 import argparse
 
-from code.data_processing.dataset_consistent import DatasetConsistent
-from code.data_processing.dataset_random import DatasetRandom
-from code.data_processing.text_processor import TextProcessor
-from code.model.cnp import CNP
-from code.training import Trainer
+from data_processing.dataset_consistent import DatasetConsistent
+from data_processing.dataset_random import DatasetRandom
+from data_processing.text_processor import TextProcessor
+from model.cnp import CNP
+from training import Trainer
 
 
 def parse_arguments():
