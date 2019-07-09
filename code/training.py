@@ -27,7 +27,8 @@ class Trainer():
             # feedforward - backprop
             optimizer.zero_grad()
             outputs = self.model(context, context_mask, target_xs)
-            loss = self.compute_loss(loss_function, outputs, target_ys)
+            outputs, target_ys = self.fix_dimensions(outputs, target_ys)
+            loss = loss_function(outputs, target_ys)
             loss.backward()
             optimizer.step()
 
@@ -45,7 +46,8 @@ class Trainer():
 
             # feedforward
             outputs = self.model(context, context_mask, target_xs)
-            loss = self.compute_loss(loss_function, outputs, target_ys)
+            outputs, target_ys = self.fix_dimensions(outputs, target_ys)
+            loss = loss_function(outputs, target_ys)
 
             # train loss
             epoch_eval_loss.append(loss.item())
@@ -61,16 +63,16 @@ class Trainer():
         return Variable(p, requires_grad=requires_grad)
 
 
-    def compute_loss(self, loss_function, outputs, target_ys):
+    def fix_dimensions(self, outputs, target_ys):
         a, b, c, = outputs.shape
         outputs = outputs.reshape(a * b, c)
         a, b = target_ys.shape
         target_ys = target_ys.reshape(a * b).long()  # TODO: get long tensor in the first place
-        return loss_function(outputs, target_ys)
+        return outputs, target_ys
 
 
     def compute_accuracy(self, outputs, target_ys):
-        _, max_indices = outputs.max(dim=2)
+        _, max_indices = outputs.max(dim=1)
         return (max_indices == target_ys.long()).sum() / len(target_ys)
 
 
@@ -116,9 +118,9 @@ class Trainer():
 
             if epoch % 10 == 0 or epoch == self.epoch_count - 1:
                 print('Epoch [%d/%d] Train Loss: %.4f, Eval Loss: %.4f' %
-                      (epoch, self.epoch_count, cur_train_loss, cur_eval_loss))
+                      (epoch+1, self.epoch_count, cur_train_loss, cur_eval_loss))
                 print('Epoch [%d/%d] Train Accuracy: %.4f, Eval Accuracy: %.4f, Eval Perplexity: %.4f' %
-                      (epoch, self.epoch_count, cur_train_acc, cur_eval_acc, cur_eval_perplexity))
+                      (epoch+1, self.epoch_count, cur_train_acc, cur_eval_acc, cur_eval_perplexity))
                # print()
 
         return train_loss_per_epoch, eval_loss_per_epoch
