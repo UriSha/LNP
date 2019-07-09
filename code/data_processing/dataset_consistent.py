@@ -1,6 +1,6 @@
 from pytorch_pretrained_bert import BertModel
 
-from code.data_processing.abstract_dataset import AbstractDataset
+from data_processing.abstract_dataset import AbstractDataset
 
 
 class DatasetConsistent(AbstractDataset):
