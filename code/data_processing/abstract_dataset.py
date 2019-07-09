@@ -1,21 +1,26 @@
-import torch
-from torch.utils.data import Dataset
-from pytorch_pretrained_bert import BertTokenizer
 import math
+
 import random
+import torch
+from pytorch_pretrained_bert import BertTokenizer
+from torch.utils.data import Dataset
 
 
-class Abstract_Dataset(Dataset):
-    def __init__(self, text_as_list, mask_ratio=.25, transform=None, to_cuda=True):
+class AbstractDataset(Dataset):
+    def __init__(self, text_as_list, tokenizer, w2id, max_seq_len, max_masked_size, mask_ratio=.25, transform=None,
+                 to_cuda=True):
         self.data = text_as_list
 
         # Load pre-trained model tokenizer (vocabulary)
         self.transform = transform
         self.mask_ratio = mask_ratio
-        tokenizer = self.get_tokenizer()
-        self.w2id, self.id2w, self.max_seq_len = self.initiate_vocab(text_as_list, tokenizer)
-        self.max_masked_size = math.ceil(self.max_seq_len * mask_ratio)
+        self.w2id = w2id
+        self.max_seq_len = max_seq_len
+        self.max_masked_size = max_masked_size
         self.to_cuda = to_cuda
+
+    def __getitem__(self, item):
+        raise Exception('AbstractDataset has no __getitem__!')
 
     def generate_data_instance_fron_sentence(self, original_sent, tokenizer, bert_pretrained):
         sentence = original_sent.copy()
@@ -97,26 +102,6 @@ class Abstract_Dataset(Dataset):
         if self.to_cuda:
             paddings_mask = paddings_mask.cuda()
         return padded_sent, paddings_mask, num_of_paddings
-
-    def initiate_vocab(self, text_as_list, tokenizer):
-        max_len = 0
-        words_count = 0
-        w2id = {}
-        id2w = {}
-
-        for sent in text_as_list:
-            for w in sent:
-                if w not in w2id:
-                    w2id[w] = words_count
-                    id2w[words_count] = w
-                    words_count += 1
-
-            sent_as_string = " ".join(sent)
-            tokenized_sent = tokenizer.tokenize(sent_as_string)
-            max_len = max(max_len, len(tokenized_sent))
-
-        # return w2id, id2w, max_len + 2 # plus 2 for 'CLS' and 'SEP'
-        return w2id, id2w, max_len
 
     def mask_sent(self, sent):
 

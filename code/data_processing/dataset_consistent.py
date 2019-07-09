@@ -1,13 +1,20 @@
 from pytorch_pretrained_bert import BertModel
-from code.data_processing.abstract_dataset import Abstract_Dataset
+
+from code.data_processing.abstract_dataset import AbstractDataset
 
 
-class dataset_consistent(Abstract_Dataset):
-    def __init__(self, text_as_list, mask_ratio=.25, transform=None, to_cuda=True):
-        super(dataset_consistent, self).__init__(text_as_list=text_as_list,
-                                                 mask_ratio=mask_ratio,
-                                                 transform=transform,
-                                                 to_cuda=to_cuda)
+class DatasetConsistent(AbstractDataset):
+    def __init__(self, text_as_list, tokenizer, w2id, max_seq_len, max_masked_size, mask_ratio=.25, transform=None,
+                 to_cuda=True):
+        super(DatasetConsistent, self).__init__(text_as_list=text_as_list,
+                                                tokenizer=tokenizer,
+                                                w2id=w2id,
+                                                max_seq_len=max_seq_len,
+                                                max_masked_size=max_masked_size,
+                                                mask_ratio=mask_ratio,
+                                                transform=transform,
+                                                to_cuda=to_cuda)
+
         # Load pre-trained model tokenizer (vocabulary)
         tokenizer = self.get_tokenizer()
 

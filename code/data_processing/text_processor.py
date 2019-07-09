@@ -1,9 +1,10 @@
 import math
+
+from pytorch_pretrained_bert import BertTokenizer
 from sklearn.model_selection import train_test_split
-from pytorch_pretrained_bert import BertTokenizer, BertModel, BertForMaskedLM
 
 
-class TextProcessor():
+class TextProcessor:
     def __init__(self, text_file_path, sents_limit=0, test_size=0.1, mask_ratio=.25):
         sents = self.read_data(text_file_path)
         if sents_limit > 0:
@@ -13,18 +14,15 @@ class TextProcessor():
         self.train_sents, self.eval_sents = train_test_split(self.sents, test_size=test_size)
         self.w2id, self.id2w, self.max_seq_len = self.initiate_vocab()
         self.max_masked_size = math.ceil(self.max_seq_len * mask_ratio)
-    
 
     def read_data(self, path):
         with open(path, "r") as f:
             text = f.readlines()
         return [sent.rstrip("\n").split(" ") for sent in text]
 
-
     def initiate_vocab(self):
         max_len = 0
         words_count = 0
-        sent_count = 0
         w2id = {}
         id2w = {}
 
@@ -35,9 +33,8 @@ class TextProcessor():
                     id2w[words_count] = w
                     words_count += 1
 
-            sent_as_string = (" ").join(sent)
+            sent_as_string = " ".join(sent)
             tokenized_sent = self.tokenizer.tokenize(sent_as_string)
             max_len = max(max_len, len(tokenized_sent))
 
-        # return w2id, id2w, max_len + 2 # plus 2 for 'CLS' and 'SEP'
         return w2id, id2w, max_len
