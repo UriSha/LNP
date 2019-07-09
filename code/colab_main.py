@@ -1,11 +1,6 @@
-import sys
-import torch
-import pickle as cPickle
-import logging
 import argparse
-from pytorch_pretrained_bert import BertTokenizer, BertModel, BertForMaskedLM
-from data_processing.dataset import text_dataset
-from data_processing.dataset_once_random import text_dataset_once_random
+from data_processing.dataset import dataset_random
+from data_processing.dataset_once_random import dataset_consistent
 from sklearn.model_selection import train_test_split
 from model.cnp import CNP
 from training import Trainer
@@ -55,22 +50,20 @@ if __name__ == "__main__":
         sent_count = len(sents)
     else:
         sent_count = args.sent_count
-    train_sents, eval_sents = train_test_split(
-        sents[:sent_count], test_size=0.1)
+    train_sents, eval_sents = train_test_split(sents[:sent_count], test_size=0.1)
     if args.dataset_random_every_time:
-        train_dataset = text_dataset(train_sents, to_cuda=args.to_cuda)
+        train_dataset = dataset_random(train_sents, to_cuda=args.to_cuda)
     else:
-        train_dataset = text_dataset_once_random(
-            train_sents, to_cuda=args.to_cuda)
+        train_dataset = dataset_consistent(train_sents, to_cuda=args.to_cuda)
 
-    eval_dataset = text_dataset_once_random(eval_sents, to_cuda=args.to_cuda)
-    model = CNP(context_size=769, 
-                target_size=1, 
-                hidden_repr=800, 
-                enc_hidden_layers=[800, 800], 
-                dec_hidden_layers=[850, 1000], 
-                output_size=len(dataset.id2w), 
-                max_sent_len=dataset.max_seq_len, 
+    eval_dataset = dataset_consistent(eval_sents, to_cuda=args.to_cuda)
+    model = CNP(context_size=769,
+                target_size=1,
+                hidden_repr=800,
+                enc_hidden_layers=[800, 800],
+                dec_hidden_layers=[850, 1000],
+                output_size=len(dataset.id2w),
+                max_sent_len=dataset.max_seq_len,
                 max_target_size=dataset.max_masked_size,
                 to_cuda=args.to_cuda)
     trainer = Trainer(model, train_dataset, eval_dataset, args.batch_size,

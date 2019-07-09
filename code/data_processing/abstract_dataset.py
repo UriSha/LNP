@@ -1,16 +1,11 @@
 import torch
-from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms
-from pytorch_pretrained_bert import BertTokenizer, BertModel, BertForMaskedLM
-import pickle
+from torch.utils.data import Dataset
+from pytorch_pretrained_bert import BertTokenizer
 import math
 import random
 
 
-# max_seq_length = 256
-
 class Abstract_Dataset(Dataset):
-
     def __init__(self, text_as_list, mask_ratio=.25, transform=None, to_cuda=True):
         self.data = text_as_list
 
@@ -71,8 +66,6 @@ class Abstract_Dataset(Dataset):
 
         embbedings_per_token_without_masked_paddded = self.concatenate_original_indices(
             embbedings_per_token_without_masked_paddded, anti_mask_indices)
-
-
 
         return embbedings_per_token_without_masked_paddded, paddings_mask, target_xs, target_ys
 
@@ -182,5 +175,3 @@ class Abstract_Dataset(Dataset):
                 break
 
         return res
-
-
