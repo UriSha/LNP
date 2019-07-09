@@ -26,6 +26,11 @@ class TextProcessor:
         w2id = {}
         id2w = {}
 
+        num_of_sents = len(self.sents)
+        one_tenth = num_of_sents / 10
+        cur_count = 0
+        sents_processed = 0
+
         for sent in self.sents:
             for w in sent:
                 if w not in w2id:
@@ -36,5 +41,11 @@ class TextProcessor:
             sent_as_string = " ".join(sent)
             tokenized_sent = self.tokenizer.tokenize(sent_as_string)
             max_len = max(max_len, len(tokenized_sent))
+            sents_processed += 1
+            cur_count += 1
+
+            if cur_count == one_tenth:
+                print("Processed {} out of {} sentences".format(sents_processed, num_of_sents))
+                cur_count = 0
 
         return w2id, id2w, max_len
