@@ -86,12 +86,14 @@ class Trainer():
             eval_loader = None
         train_loss_per_epoch = []
         eval_loss_per_epoch = []
+        eval_perplexity_per_epoch = []
 
         for epoch in range(1, self.epoch_count+1):
             # train
             self.model.train_model()
             epoch_train_loss = []
             epoch_train_acc = []
+            
             self.train(train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc)
 
             # evaluate
@@ -110,7 +112,7 @@ class Trainer():
                 cur_eval_acc = sum(epoch_eval_acc) / len(epoch_eval_acc)
                 cur_eval_perplexity = np.exp(cur_eval_loss)
                 eval_loss_per_epoch.append(cur_eval_loss)
-                eval_perplexity_per_epoch(cur_eval_perplexity)
+                eval_perplexity_per_epoch.append(cur_eval_perplexity)
             else:
                 cur_eval_loss = 0
                 cur_eval_acc = 0
