@@ -119,10 +119,8 @@ class Trainer():
                 cur_eval_perplexity = 0
 
             if epoch % 1 == 0 or epoch == 1:
-                print('Epoch [%d/%d] Train Loss: %.4f, Eval Loss: %.4f' %
-                      (epoch, self.epoch_count, cur_train_loss, cur_eval_loss))
-                print('Epoch [%d/%d] Train Accuracy: %.4f, Eval Accuracy: %.4f, Eval Perplexity: %.4f' %
-                      (epoch, self.epoch_count, cur_train_acc, cur_eval_acc, cur_eval_perplexity))
+                print('Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f, Eval Loss: %.4f, Eval Accuracy: %.4f, Eval Perplexity: %.4f' %
+                      (epoch, self.epoch_count, cur_train_loss, cur_train_acc, cur_eval_loss, cur_eval_acc, cur_eval_perplexity))
                # print()
 
         return train_loss_per_epoch, eval_loss_per_epoch
