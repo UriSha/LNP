@@ -9,8 +9,18 @@ def main():
     to_cuda = False
 
     text_processor = TextProcessor("data/APRC/APRC_small_mock.txt", sents_limit=1000)
-    train_dataset = DatasetConsistent(text_processor.train_sents, to_cuda=to_cuda)
-    eval_dataset = DatasetConsistent(text_processor.eval_sents, to_cuda=to_cuda)
+    train_dataset = DatasetConsistent(text_as_list=text_processor.train_sents,
+                                          tokenizer=text_processor.tokenizer,
+                                          w2id=text_processor.w2id,
+                                          max_seq_len=text_processor.max_seq_len,
+                                          max_masked_size=text_processor.max_masked_size,
+                                          to_cuda=to_cuda)
+    eval_dataset = DatasetConsistent(text_as_list=text_processor.eval_sents,
+                                          tokenizer=text_processor.tokenizer,
+                                          w2id=text_processor.w2id,
+                                          max_seq_len=text_processor.max_seq_len,
+                                          max_masked_size=text_processor.max_masked_size,
+                                          to_cuda=to_cuda)
     model = CNP(context_size=769,
                 target_size=1,
                 hidden_repr=800,
