@@ -8,7 +8,7 @@ def main():
     to_cuda = False
     mask_ratio = 0.1
 
-    text_processor = TextProcessor("data/APRC/APRC_small_mock.txt", sents_limit=1000)
+    text_processor = TextProcessor("data/APRC/APRC_new1.txt", test_size=0.05, sents_limit=1000)
     train_dataset = DatasetConsistent(text_as_list=text_processor.train_sents,
                                       tokenizer=text_processor.tokenizer,
                                       w2id=text_processor.w2id,
