@@ -75,6 +75,8 @@ class Trainer():
         _, max_indices = outputs.max(dim=1)
         mask = torch.ones(len(target_ys)) * -1
         mask = mask.long()
+        if self.to_cuda:
+            mask = mask.cuda()
         mask_size = (target_ys == mask).sum()
         return (max_indices == target_ys).sum() / (len(target_ys) - mask_size)
 
