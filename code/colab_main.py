@@ -46,7 +46,7 @@ def parse_arguments():
 def main():
     args = parse_arguments()
 
-    text_processor = TextProcessor("data/APRC/{}".format(args.data_file), sents_limit=args.sent_count)
+    text_processor = TextProcessor("data/APRC/{}".format(args.data_file), test_size=0.05, sents_limit=args.sent_count)
 
     if args.dataset_random_every_time:
         train_dataset = DatasetRandom(text_as_list=text_processor.train_sents,

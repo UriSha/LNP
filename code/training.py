@@ -73,7 +73,10 @@ class Trainer():
 
     def compute_accuracy(self, outputs, target_ys):
         _, max_indices = outputs.max(dim=1)
-        return (max_indices == target_ys.long()).sum() / len(target_ys)
+        mask = torch.ones(len(target_ys)) * -1
+        mask = mask.long()
+        mask_size = (target_ys == mask).sum()
+        return (max_indices == target_ys).sum() / (len(target_ys) - mask_size)
 
 
     def run(self):
