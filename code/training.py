@@ -17,7 +17,7 @@ class Trainer():
         self.to_cuda = to_cuda
 
 
-    def train(self, train_loader, loss_function, optimizer, epoch_train_loss):
+    def train(self, train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc):
         for context_batch, context_mask_batch, target_xs_batch, target_ys_batch in train_loader:
             context = self.batch2var(context_batch, True)
             context_mask = self.batch2var(context_mask_batch, False)
@@ -33,9 +33,10 @@ class Trainer():
 
             # train loss
             epoch_train_loss.append(loss.item())
+            epoch_train_acc.append(self.compute_accuracy(outputs, target_ys))
 
 
-    def evaluate(self, eval_loader, loss_function, epoch_eval_loss):
+    def evaluate(self, eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc):
         for context_batch, context_mask_batch, target_xs_batch, target_ys_batch in eval_loader:
             context = self.batch2var(context_batch, False)
             context_mask = self.batch2var(context_mask_batch, False)
@@ -48,6 +49,7 @@ class Trainer():
 
             # train loss
             epoch_eval_loss.append(loss.item())
+            epoch_eval_acc.append(self.compute_accuracy(outputs, target_ys))
 
 
     def batch2var(self, batch_param, requires_grad):
@@ -67,6 +69,11 @@ class Trainer():
         return loss_function(outputs, target_ys)
 
 
+    def compute_accuracy(self, outputs, target_ys):
+        _, max_indices = outputs.max(dim=1)
+        return (max_indices == target_ys).sum() / len(target_ys)
+
+
     def run(self):
         loss_function = nn.CrossEntropyLoss(ignore_index=-1)  # padded outputs will have -1 as class
         optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
@@ -82,29 +89,36 @@ class Trainer():
             # train
             self.model.train_model()
             epoch_train_loss = []
-            self.train(train_loader, loss_function, optimizer, epoch_train_loss)
+            epoch_train_acc = []
+            self.train(train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc)
 
             # evaluate
             if eval_loader:
                 self.model.eval_model()
                 epoch_eval_loss = []
-                self.evaluate(eval_loader, loss_function, epoch_eval_loss)
+                epoch_eval_acc = []
+                self.evaluate(eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc)
 
             # compute epoch loss
             cur_train_loss = sum(epoch_train_loss) / len(epoch_train_loss)
+            cur_train_acc = sum(epoch_train_acc) / len(epoch_train_acc)
             train_loss_per_epoch.append(cur_train_loss)
             if eval_loader:
                 cur_eval_loss = sum(epoch_eval_loss) / len(epoch_eval_loss)
+                cur_eval_acc = sum(epoch_eval_acc) / len(epoch_eval_acc)
                 cur_eval_perplexity = np.exp(cur_eval_loss)
                 eval_loss_per_epoch.append(cur_dev_loss)
                 eval_perplexity_per_epoch(cur_eval_perplexity)
             else:
                 cur_eval_loss = 0
+                cur_eval_acc = 0
                 cur_eval_perplexity = 0
 
             if epoch % 10 == 0 or epoch == self.epoch_count - 1:
-                print('Epoch [%d/%d] Train Loss: %.4f, Eval Loss: %.4f, Eval Perplexity: %.4f' %
-                      (epoch, self.epoch_count, cur_train_loss, cur_eval_loss, cur_eval_perplexity))
+                print('Epoch [%d/%d] Train Loss: %.4f, Eval Loss: %.4f' %
+                      (epoch, self.epoch_count, cur_train_loss, cur_eval_loss))
+                print('Epoch [%d/%d] Train Accuracy: %.4f, Eval Accuracy: %.4f, Eval Perplexity: %.4f' %
+                      (epoch, self.epoch_count, cur_train_acc, cur_eval_acc, cur_eval_perplexity))
                # print()
 
         return train_loss_per_epoch, eval_loss_per_epoch
