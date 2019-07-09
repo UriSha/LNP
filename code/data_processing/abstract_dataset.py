@@ -98,10 +98,8 @@ class AbstractDataset(Dataset):
         target_xs = []
         target_ys = []
 
-        if len(sent) >= 4:
-            num_of_masks = math.floor(len(sent) * self.mask_ratio)
-        else:
-            num_of_masks = math.ceil(len(sent) * self.mask_ratio)
+        num_of_masks = int(math.floor(len(sent) * self.mask_ratio))
+        num_of_masks = max(1, num_of_masks)
 
         indices_to_mask = sorted(random.sample(range(len(sent)), num_of_masks))
 

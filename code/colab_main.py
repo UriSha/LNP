@@ -36,6 +36,10 @@ def parse_arguments():
                         help="batch_size (default: 16)",
                         default=16,
                         type=int)
+    parser.add_argument('-mr', '--mask_ratio',
+                        help="max_ratio (default: 0.25)",
+                        default=.25,
+                        type=float)
     return parser.parse_args()
 
 
@@ -50,6 +54,7 @@ def main():
                                       w2id=text_processor.w2id,
                                       max_seq_len=text_processor.max_seq_len,
                                       max_masked_size=text_processor.max_masked_size,
+                                      mask_ratio=args.mask_ratio,
                                       to_cuda=args.to_cuda)
 
     else:
@@ -58,6 +63,7 @@ def main():
                                           w2id=text_processor.w2id,
                                           max_seq_len=text_processor.max_seq_len,
                                           max_masked_size=text_processor.max_masked_size,
+                                          mask_ratio=args.mask_ratio,
                                           to_cuda=args.to_cuda)
 
     eval_dataset = DatasetConsistent(text_as_list=text_processor.eval_sents,
@@ -65,6 +71,7 @@ def main():
                                      w2id=text_processor.w2id,
                                      max_seq_len=text_processor.max_seq_len,
                                      max_masked_size=text_processor.max_masked_size,
+                                     mask_ratio=args.mask_ratio,
                                      to_cuda=args.to_cuda)
 
     model = CNP(context_size=769,

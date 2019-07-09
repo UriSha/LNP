@@ -1,5 +1,4 @@
 from data_processing.dataset_consistent import DatasetConsistent
-
 from data_processing.text_processor import TextProcessor
 from model.cnp import CNP
 from training import Trainer
@@ -7,20 +6,23 @@ from training import Trainer
 
 def main():
     to_cuda = False
+    mask_ratio = 0.1
 
     text_processor = TextProcessor("data/APRC/APRC_small_mock.txt", sents_limit=1000)
     train_dataset = DatasetConsistent(text_as_list=text_processor.train_sents,
-                                          tokenizer=text_processor.tokenizer,
-                                          w2id=text_processor.w2id,
-                                          max_seq_len=text_processor.max_seq_len,
-                                          max_masked_size=text_processor.max_masked_size,
-                                          to_cuda=to_cuda)
+                                      tokenizer=text_processor.tokenizer,
+                                      w2id=text_processor.w2id,
+                                      max_seq_len=text_processor.max_seq_len,
+                                      max_masked_size=text_processor.max_masked_size,
+                                      mask_ratio=mask_ratio,
+                                      to_cuda=to_cuda)
     eval_dataset = DatasetConsistent(text_as_list=text_processor.eval_sents,
-                                          tokenizer=text_processor.tokenizer,
-                                          w2id=text_processor.w2id,
-                                          max_seq_len=text_processor.max_seq_len,
-                                          max_masked_size=text_processor.max_masked_size,
-                                          to_cuda=to_cuda)
+                                     tokenizer=text_processor.tokenizer,
+                                     w2id=text_processor.w2id,
+                                     max_seq_len=text_processor.max_seq_len,
+                                     max_masked_size=text_processor.max_masked_size,
+                                     mask_ratio=mask_ratio,
+                                     to_cuda=to_cuda)
     model = CNP(context_size=769,
                 target_size=1,
                 hidden_repr=800,
