@@ -87,7 +87,7 @@ class Trainer():
         train_loss_per_epoch = []
         eval_loss_per_epoch = []
 
-        for epoch in range(self.epoch_count):
+        for epoch in range(1, self.epoch_count+1):
             # train
             self.model.train_model()
             epoch_train_loss = []
@@ -116,11 +116,11 @@ class Trainer():
                 cur_eval_acc = 0
                 cur_eval_perplexity = 0
 
-            if epoch % 10 == 0 or epoch == self.epoch_count - 1:
+            if epoch % 10 == 0 or epoch == 1:
                 print('Epoch [%d/%d] Train Loss: %.4f, Eval Loss: %.4f' %
-                      (epoch+1, self.epoch_count, cur_train_loss, cur_eval_loss))
+                      (epoch, self.epoch_count, cur_train_loss, cur_eval_loss))
                 print('Epoch [%d/%d] Train Accuracy: %.4f, Eval Accuracy: %.4f, Eval Perplexity: %.4f' %
-                      (epoch+1, self.epoch_count, cur_train_acc, cur_eval_acc, cur_eval_perplexity))
+                      (epoch, self.epoch_count, cur_train_acc, cur_eval_acc, cur_eval_perplexity))
                # print()
 
         return train_loss_per_epoch, eval_loss_per_epoch
