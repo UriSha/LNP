@@ -1,4 +1,5 @@
 import argparse
+
 from code.data_processing.dataset_consistent import DatasetConsistent
 from code.data_processing.dataset_random import DatasetRandom
 from code.data_processing.text_processor import TextProcessor
@@ -65,6 +66,7 @@ def main():
                                      max_seq_len=text_processor.max_seq_len,
                                      max_masked_size=text_processor.max_masked_size,
                                      to_cuda=args.to_cuda)
+
     model = CNP(context_size=769,
                 target_size=1,
                 hidden_repr=800,

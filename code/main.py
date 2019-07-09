@@ -4,6 +4,7 @@ from data_processing.text_processor import TextProcessor
 from model.cnp import CNP
 from training import Trainer
 
+
 def main():
     to_cuda = False
 
@@ -21,6 +22,7 @@ def main():
                 to_cuda=to_cuda)
     trainer = Trainer(model, train_dataset, eval_dataset, 16, 0.005, 100, to_cuda)
     trainer.run()
+
 
 if __name__ == "__main__":
     main()

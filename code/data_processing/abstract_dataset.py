@@ -10,8 +10,6 @@ class AbstractDataset(Dataset):
     def __init__(self, text_as_list, tokenizer, w2id, max_seq_len, max_masked_size, mask_ratio=.25, transform=None,
                  to_cuda=True):
         self.data = text_as_list
-
-        # Load pre-trained model tokenizer (vocabulary)
         self.transform = transform
         self.mask_ratio = mask_ratio
         self.w2id = w2id
@@ -90,14 +88,6 @@ class AbstractDataset(Dataset):
         padded_sent = torch.cat((embedded_sent, paddings), 0)
         paddings_mask = [0] * embedded_sent.shape[0] + [1] * num_of_paddings
         paddings_mask = torch.ByteTensor(paddings_mask)
-
-        #         print("padded_sent.shape:", padded_sent.shape)
-        #         print("padded_sent:", padded_sent)
-        #         print()
-
-        #         print("paddings_mask.shape:", paddings_mask.shape)
-        #         print("paddings_mask:", paddings_mask)
-        #         print()
 
         if self.to_cuda:
             paddings_mask = paddings_mask.cuda()
