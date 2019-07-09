@@ -1,11 +1,7 @@
-import sys
-import torch
-import pickle as cPickle
-import logging
 import argparse
-from pytorch_pretrained_bert import BertTokenizer, BertModel, BertForMaskedLM
-from data_processing.dataset import text_dataset
-from data_processing.dataset_once_random import text_dataset_once_random
+from data_processing.dataset import dataset_random
+from data_processing.dataset_once_random import dataset_consistent
+from sklearn.model_selection import train_test_split
 from model.cnp import CNP
 from data_processing.text_processor import TextProcessor
 from training import Trainer
@@ -45,11 +41,11 @@ if __name__ == "__main__":
     text_processor = TextProcessor("data/APRC/{}".format(args.data_file), sents_limit=args.sent_count)
 
     if args.dataset_random_every_time:
-        train_dataset = text_dataset(text_processor.train_sents, to_cuda=args.to_cuda)
+        train_dataset = dataset_random(text_processor.train_sents, to_cuda=args.to_cuda)
     else:
-        train_dataset = text_dataset_once_random(text_processor.train_sents, to_cuda=args.to_cuda)
+        train_dataset = dataset_consistent(text_processor.train_sents, to_cuda=args.to_cuda)
 
-    eval_dataset = text_dataset_once_random(text_processor.eval_sents, to_cuda=args.to_cuda)
+    eval_dataset = dataset_consistent(text_processor.eval_sents, to_cuda=args.to_cuda)
     model = CNP(context_size=769, 
                 target_size=1, 
                 hidden_repr=800, 

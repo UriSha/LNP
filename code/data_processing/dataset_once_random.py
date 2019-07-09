@@ -1,22 +1,13 @@
-import math
-
-import pickle
-import random
-import torch
 from pytorch_pretrained_bert import BertModel
-
 from code.data_processing.abstract_dataset import Abstract_Dataset
 
 
-# max_seq_length = 256
-
-class text_dataset_once_random(Abstract_Dataset):
-
+class dataset_consistent(Abstract_Dataset):
     def __init__(self, text_as_list, mask_ratio=.25, transform=None, to_cuda=True):
-        super(text_dataset_once_random, self).__init__(text_as_list=text_as_list,
-                                                       mask_ratio=mask_ratio,
-                                                       transform=transform,
-                                                       to_cuda=to_cuda)
+        super(dataset_consistent, self).__init__(text_as_list=text_as_list,
+                                                 mask_ratio=mask_ratio,
+                                                 transform=transform,
+                                                 to_cuda=to_cuda)
         # Load pre-trained model tokenizer (vocabulary)
         tokenizer = self.get_tokenizer()
 
@@ -40,7 +31,3 @@ class text_dataset_once_random(Abstract_Dataset):
 
     def __getitem__(self, index):
         return self.data[index]
-
-
-
-
