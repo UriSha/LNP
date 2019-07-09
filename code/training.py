@@ -67,7 +67,7 @@ class Trainer():
         a, b, c, = outputs.shape
         outputs = outputs.reshape(a * b, c)
         a, b = target_ys.shape
-        target_ys = target_ys.reshape(a * b).long()  # TODO: get long tensor in the first place
+        target_ys = target_ys.reshape(a * b)
         return outputs, target_ys
 
 
