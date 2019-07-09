@@ -114,8 +114,8 @@ class AbstractDataset(Dataset):
         target_xs.extend(target_padding)
         target_ys.extend(target_padding)
 
-        target_xs = torch.Tensor(target_xs)
-        target_ys = torch.Tensor(target_ys)
+        target_xs = torch.tensor(target_xs)
+        target_ys = torch.tensor(target_ys)
 
         if self.to_cuda:
             target_xs = target_xs.cuda()
