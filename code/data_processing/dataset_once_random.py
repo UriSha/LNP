@@ -35,7 +35,6 @@ class text_dataset_once_random(Dataset):
             sentence = original_sent.copy()
 
             sent, masked_indices, target_xs, target_ys = self.mask_sent(sentence)
-            print()
             print("masked sentance: ", sentence)
             sent.insert(0, "[CLS]")
             sent.append("[SEP]")
@@ -139,6 +138,7 @@ class text_dataset_once_random(Dataset):
         return w2id, id2w, max_len
 
     def mask_sent(self, sent):
+        print()
         print("start mask_sent")
         print("sent: ", sent)
         target_xs = []
