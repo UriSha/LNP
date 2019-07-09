@@ -110,7 +110,7 @@ class Trainer():
             if eval_loader:
                 cur_eval_loss = sum(epoch_eval_loss) / len(epoch_eval_loss)
                 cur_eval_acc = sum(epoch_eval_acc) / len(epoch_eval_acc)
-                cur_eval_perplexity = np.exp(cur_eval_loss)
+                cur_eval_perplexity = np.exp(-cur_eval_loss)
                 eval_loss_per_epoch.append(cur_eval_loss)
                 eval_perplexity_per_epoch.append(cur_eval_perplexity)
             else:
