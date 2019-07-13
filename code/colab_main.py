@@ -44,9 +44,13 @@ def parse_arguments():
                         help="topk (default: 15)",
                         default=15,
                         type=int)
-    parser.add_argument('-momentum', '--momentum',
+    parser.add_argument('-moment', '--momentum',
                         help="momentum (default: 0)",
                         default=0,
+                        type=float)
+    parser.add_argument('-ts', '--test_size',
+                        help="test_size (default: 0.1)",
+                        default=0.1,
                         type=float)
     return parser.parse_args()
 
@@ -54,7 +58,7 @@ def parse_arguments():
 def main():
     args = parse_arguments()
 
-    text_processor = TextProcessor("data/APRC/{}".format(args.data_file), test_size=0.05, sents_limit=args.sent_count)
+    text_processor = TextProcessor("data/APRC/{}".format(args.data_file), test_size=args.test_size, sents_limit=args.sent_count)
 
     if args.dataset_random_every_time:
         train_dataset = DatasetRandom(text_as_list=text_processor.train_sents,
