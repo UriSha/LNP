@@ -3,7 +3,7 @@ from collections import defaultdict
 
 import numpy as np
 
-from abstract_text_processor import AbstractTextProcessor
+from .abstract_text_processor import AbstractTextProcessor
 
 
 class TextProcessorNonContextual(AbstractTextProcessor):

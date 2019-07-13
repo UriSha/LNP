@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from pytorch_pretrained_bert import BertTokenizer
 
-from abstract_text_processor import AbstractTextProcessor
+from .abstract_text_processor import AbstractTextProcessor
 
 
 class TextProcessor(AbstractTextProcessor):
