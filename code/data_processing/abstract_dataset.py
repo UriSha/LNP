@@ -1,6 +1,6 @@
 import math
-
 import random
+
 import torch
 from pytorch_pretrained_bert import BertTokenizer
 from torch.utils.data import Dataset
@@ -142,7 +142,6 @@ class AbstractDataset(Dataset):
         return torch.cat((embbedings_per_token_without_masked, indices), 1)
 
     def update_xs_tokenized_indices(self, target_xs, tokenized_sent):
-
         res = []
         for idx, token in enumerate(tokenized_sent):
             if token == '[MASK]':
