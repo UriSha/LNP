@@ -38,13 +38,13 @@ class TextProcessor(AbstractTextProcessor):
         for k in w2cnt.keys():
             if w2cnt[k] < self.rare_word_threshold:
                 rare_words_count += 1
-            else:
-                w2id[k] = words_count
-                id2w[words_count] = k
-                words_count += 1
+            #else:
+            w2id[k] = words_count
+            id2w[words_count] = k
+            words_count += 1
 
         print(
-            'With rare_word_threshold = {rare_word_threshold}, the ratio of rare words (that were removed) is: {ratio}'.format(
+            'With rare_word_threshold = {rare_word_threshold}, the ratio of rare words is: {ratio}'.format(
                 rare_word_threshold=self.rare_word_threshold, ratio=rare_words_count / len(w2cnt)))
 
         w2id['<UNK>'] = len(w2id)
