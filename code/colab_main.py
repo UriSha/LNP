@@ -52,13 +52,18 @@ def parse_arguments():
                         help="test_size (default: 0.1)",
                         default=0.1,
                         type=float)
+    parser.add_argument('-rt', '--rare_threshold',
+                        help="rare word threshold (default: 10)",
+                        default=10,
+                        type=float)
     return parser.parse_args()
 
 
 def main():
     args = parse_arguments()
 
-    text_processor = TextProcessor("data/APRC/{}".format(args.data_file), test_size=args.test_size, sents_limit=args.sent_count)
+    text_processor = TextProcessor("data/APRC/{}".format(args.data_file), test_size=args.test_size,
+                                   sents_limit=args.sent_count, rare_word_threshold=args.rare_threshold)
 
     if args.dataset_random_every_time:
         train_dataset = DatasetRandom(text_as_list=text_processor.train_sents,
@@ -96,12 +101,12 @@ def main():
                 max_target_size=text_processor.max_masked_size,
                 to_cuda=args.to_cuda)
     trainer = Trainer(model=model,
-                      training_dataset=train_dataset, 
-                      evaluation_dataset=eval_dataset, 
-                      batch_size=args.batch_size, 
-                      learning_rate=args.learning_rate, 
+                      training_dataset=train_dataset,
+                      evaluation_dataset=eval_dataset,
+                      batch_size=args.batch_size,
+                      learning_rate=args.learning_rate,
                       momentum=args.momentum,
-                      epoch_count=args.epochs, 
+                      epoch_count=args.epochs,
                       acc_topk=args.topk,
                       to_cuda=args.to_cuda)
     trainer.run()
