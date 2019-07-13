@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 
 
 class TextProcessor:
-    def __init__(self, text_file_path, sents_limit=0, test_size=0.1, mask_ratio=.25):
+    def __init__(self, text_file_path, sents_limit=0, test_size=0.1, mask_ratio=.25, random_state=42):
         print()
         print("init TextProcessor")
         sents = self.read_data(text_file_path)
@@ -13,7 +13,7 @@ class TextProcessor:
             sents = sents[:sents_limit]
         self.sents = sents
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-        self.train_sents, self.eval_sents = train_test_split(self.sents, test_size=test_size)
+        self.train_sents, self.eval_sents = train_test_split(self.sents, test_size=test_size, random_state=random_state)
         self.w2id, self.id2w, self.max_seq_len = self.initiate_vocab()
         self.max_masked_size = math.ceil(self.max_seq_len * mask_ratio)
 

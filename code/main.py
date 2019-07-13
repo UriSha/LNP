@@ -8,7 +8,8 @@ def main():
     to_cuda = False
     mask_ratio = 0.1
 
-    text_processor = TextProcessor("data/APRC/APRC_new1.txt", test_size=0.05, sents_limit=1000)
+    text_processor = TextProcessor("data/APRC/APRC_new1.txt", test_size=0.1, sents_limit=500)
+    # text_processor = TextProcessor("data/APRC/APRC_small_mock.txt", test_size=0.05, sents_limit=5)
     train_dataset = DatasetConsistent(text_as_list=text_processor.train_sents,
                                       tokenizer=text_processor.tokenizer,
                                       w2id=text_processor.w2id,
@@ -25,14 +26,22 @@ def main():
                                      to_cuda=to_cuda)
     model = CNP(context_size=769,
                 target_size=1,
-                hidden_repr=800,
-                enc_hidden_layers=[800, 800],
-                dec_hidden_layers=[850, 1000],
+                hidden_repr=1024,
+                enc_hidden_layers=[800, 1000],
+                dec_hidden_layers=[768, 1024, 2048],
                 output_size=len(text_processor.id2w),
                 max_sent_len=text_processor.max_seq_len,
                 max_target_size=text_processor.max_masked_size,
                 to_cuda=to_cuda)
-    trainer = Trainer(model, train_dataset, eval_dataset, 16, 0.005, 100, to_cuda)
+    trainer = Trainer(model=model,
+                      training_dataset=train_dataset, 
+                      evaluation_dataset=eval_dataset, 
+                      batch_size=32, 
+                      learning_rate=0.01, 
+                      momentum=0,
+                      epoch_count=200, 
+                      acc_topk=15,
+                      to_cuda=to_cuda)
     trainer.run()
 
 

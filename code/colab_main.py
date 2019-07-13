@@ -40,6 +40,14 @@ def parse_arguments():
                         help="max_ratio (default: 0.25)",
                         default=.25,
                         type=float)
+    parser.add_argument('-topk', '--topk',
+                        help="topk (default: 15)",
+                        default=15,
+                        type=int)
+    parser.add_argument('-momentum', '--momentum',
+                        help="momentum (default: 0)",
+                        default=0,
+                        type=float)
     return parser.parse_args()
 
 
@@ -83,8 +91,15 @@ def main():
                 max_sent_len=text_processor.max_seq_len,
                 max_target_size=text_processor.max_masked_size,
                 to_cuda=args.to_cuda)
-    trainer = Trainer(model, train_dataset, eval_dataset, args.batch_size,
-                      args.learning_rate, args.epochs, args.to_cuda)
+    trainer = Trainer(model=model,
+                      training_dataset=train_dataset, 
+                      evaluation_dataset=eval_dataset, 
+                      batch_size=args.batch_size, 
+                      learning_rate=args.learning_rate, 
+                      momentum=args.momentum,
+                      epoch_count=args.epochs, 
+                      acc_topk=args.topk,
+                      to_cuda=args.to_cuda)
     trainer.run()
 
 

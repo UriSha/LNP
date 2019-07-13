@@ -7,13 +7,15 @@ from torch.utils.data import Dataset, DataLoader
 
 
 class Trainer():
-    def __init__(self, model, training_dataset, evaluation_dataset, batch_size, learning_rate, epoch_count, to_cuda):
+    def __init__(self, model, training_dataset, evaluation_dataset, batch_size, learning_rate, momentum, epoch_count, acc_topk, to_cuda):
         self.model = model
         self.training_dataset = training_dataset
         self.evaluation_dataset = evaluation_dataset
         self.learning_rate = learning_rate
+        self.momentum = momentum
         self.batch_size = batch_size
         self.epoch_count = epoch_count
+        self.acc_topk = acc_topk
         self.to_cuda = to_cuda
 
 
@@ -34,7 +36,7 @@ class Trainer():
 
             # train loss
             epoch_train_loss.append(loss.item())
-            epoch_train_acc.append(self.compute_accuracy(outputs, target_ys))
+            epoch_train_acc.append(self.compute_accuracy_topk(outputs, target_ys))
 
 
     def evaluate(self, eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc):
@@ -51,7 +53,7 @@ class Trainer():
 
             # train loss
             epoch_eval_loss.append(loss.item())
-            epoch_eval_acc.append(self.compute_accuracy(outputs, target_ys))
+            epoch_eval_acc.append(self.compute_accuracy_topk(outputs, target_ys))
 
 
     def batch2var(self, batch_param, requires_grad):
@@ -81,9 +83,19 @@ class Trainer():
         return (max_indices == target_ys).sum() / (len(target_ys) - mask_size)
 
 
+    def compute_accuracy_topk(self, outputs, target_ys):
+        _, max_indices = outputs.topk(k=self.acc_topk, dim=1)
+        mask = torch.ones(len(target_ys)) * -1
+        mask = mask.long()
+        if self.to_cuda:
+            mask = mask.cuda()
+        mask_size = (target_ys == mask).sum()
+        return (max_indices == target_ys.unsqueeze(dim=1)).sum() / (len(target_ys) - mask_size)
+
+
     def run(self):
         loss_function = nn.CrossEntropyLoss(ignore_index=-1)  # padded outputs will have -1 as class
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
+        optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=self.momentum)
         train_loader = DataLoader(dataset=self.training_dataset, batch_size=self.batch_size, shuffle=True)
         if self.evaluation_dataset:
             eval_loader = DataLoader(dataset=self.evaluation_dataset, batch_size=self.batch_size, shuffle=False)

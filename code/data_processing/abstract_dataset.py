@@ -56,7 +56,8 @@ class AbstractDataset(Dataset):
         with torch.no_grad():
             encoded_layers, _ = bert_pretrained(tokens_tensor, segments_tensors)
 
-        embbedings_per_token = self.mean_transform(encoded_layers)
+        # embbedings_per_token = self.mean_transform(encoded_layers)
+        embbedings_per_token = self.take_last_transform(encoded_layers)
 
         masked_indices_set = set(masked_indices)
         anti_mask_indices = [i for i in range(1, embbedings_per_token.shape[1] - 1) if i not in masked_indices_set]
@@ -129,6 +130,9 @@ class AbstractDataset(Dataset):
     def mean_transform(self, list_of_tensors):
         big_tensor = torch.stack(list_of_tensors)
         return big_tensor.mean(dim=0)
+
+    def take_last_transform(self, list_of_tensors):
+        return list_of_tensors[-1]
 
     def concatenate_original_indices(self, embbedings_per_token_without_masked, indices):
         indices = torch.Tensor(indices).unsqueeze(1)
