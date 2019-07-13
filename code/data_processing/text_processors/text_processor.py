@@ -11,7 +11,6 @@ class TextProcessor(AbstractTextProcessor):
                                             rare_word_threshold, sents_limit, tokenizer=BertTokenizer.from_pretrained('bert-base-uncased'))
         print()
         print("init TextProcessor")
-        self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
     def get_sent_long_version(self, sent):
         sent_as_string = " ".join(sent)
@@ -38,7 +37,6 @@ class TextProcessor(AbstractTextProcessor):
         for k in w2cnt.keys():
             if w2cnt[k] < self.rare_word_threshold:
                 rare_words_count += 1
-            #else:
             w2id[k] = words_count
             id2w[words_count] = k
             words_count += 1
