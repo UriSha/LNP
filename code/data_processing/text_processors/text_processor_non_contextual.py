@@ -47,7 +47,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
                     w2cnt[word] += 1
 
             new_sents.append(new_sent)
-            max_len = max(max_len, len(sent))
+            max_len = max(max_len, len(new_sent))
 
         rare_words_count = 0
         for k in w2cnt.keys():
@@ -90,9 +90,15 @@ class TextProcessorNonContextual(AbstractTextProcessor):
     def _read_embeddings(self, file_path, sents_limit=None):
         """Assumes that the first line of the file is
         the vocabulary length and vector dimension."""
-        with open(file_path) as f:
+        with open(file_path, encoding="utf8") as f:
             if sents_limit:
-                embeddings_file_lines = [next(f) for _ in range(sents_limit)]
+                i = 0
+                sent = next(f, None)
+                embeddings_file_lines = []
+                while sent and i < sents_limit:
+                    embeddings_file_lines.append(sent)
+                    i+=1
+                    sent = next(f, None)
             else:
                 embeddings_file_lines = f.readlines()
         # vocab_length = len(txt)
