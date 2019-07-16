@@ -21,6 +21,7 @@ class DatasetNonContextual(Dataset):
         self.max_masked_size = max_masked_size
         self.to_cuda = to_cuda
         self.MASK_SYMBOL = '<MASK>'
+        self.mem = {}
         # self.data = self.create_data(text_as_list, tokenizer)
 
     # def create_data(self, text_as_list, tokenizer):
@@ -50,7 +51,6 @@ class DatasetNonContextual(Dataset):
     #
     #     return data
 
-    self.mem = {}
     def __getitem__(self, index):
         if index in self.mem:
             return self.mem[index]
