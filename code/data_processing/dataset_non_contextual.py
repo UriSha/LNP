@@ -2,9 +2,9 @@ import math
 
 import random
 import torch
-from pytorch_pretrained_bert import BertTokenizer
+# from pytorch_pretrained_bert import BertTokenizer
 from torch.utils.data import Dataset
-from pytorch_pretrained_bert import BertModel
+# from pytorch_pretrained_bert import BertModel
 
 
 class DatasetNonContextual(Dataset):
