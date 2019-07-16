@@ -65,15 +65,15 @@ def parse_arguments():
     parser.add_argument('-encl', '--enc_layers',
                         help="enc_layers (default: [2000, 1700, 1300])",
                         action="append",
-                        dest="list"
-                        default=[2000, 1700, 1300],
-                        type=int)
+                        dest="list",
+                        type=int,
+                        default=[2000, 1700, 1300],)
     parser.add_argument('-decl', '--dec_layers',
                         help="dec_layers (default: [2000, 1700, 1300])",
                         action="append",
+                        type=int,
                         dest="list",
-                        default=[2000, 1700, 1300],
-                        type=int)
+                        default=[2000, 1700, 1300])
     parser.add_argument('-opt', '--opt',
                         help="opt (default: \"SGD\")",
                         default="SGD",
