@@ -139,6 +139,7 @@ class DatasetNonContextual(Dataset):
         paddings = torch.zeros(num_of_paddings, dtype=torch.long)
         if self.to_cuda:
             paddings = paddings.cuda()
+            embedded_sent = embedded_sent.cuda()
         padded_sent = torch.cat((embedded_sent, paddings), 0)
         paddings_mask = [0] * embedded_sent.shape[0] + [1] * num_of_paddings
         paddings_mask = torch.ByteTensor(paddings_mask)
