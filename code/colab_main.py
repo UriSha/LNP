@@ -58,6 +58,24 @@ def parse_arguments():
                         help="rare word threshold (default: 10)",
                         default=10,
                         type=float)
+    parser.add_argument('-hr', '--hidden_repr',
+                        help="hidden_repr (default: 1000)",
+                        default=1000,
+                        type=int)
+    parser.add_argument('-encl', '--enc_layers',
+                        help="enc_layers (default: [2000, 1700, 1300])",
+                        nargs="*"
+                        default=[2000, 1700, 1300],
+                        type=list)
+    parser.add_argument('-decl', '--dec_layers',
+                        help="dec_layers (default: [2000, 1700, 1300])",
+                        nargs="*"
+                        default=[2000, 1700, 1300],
+                        type=list)
+    parser.add_argument('-opt', '--opt',
+                        help="opt (default: \"SGD\")",
+                        default="SGD",
+                        type=str)
     return parser.parse_args()
 
 
@@ -104,10 +122,11 @@ def main():
                                      mask_ratio=args.mask_ratio,
                                      to_cuda=args.to_cuda)
 
+    print("Vocab size: ", len(text_processor.id2w))
     model = CNP(vec_size=text_processor.vec_size,
-                hidden_repr=1024,
-                enc_hidden_layers=[800, 1000],
-                dec_hidden_layers=[768, 1024, 2048],
+                hidden_repr=args.hidden_repr,
+                enc_hidden_layers=args.enc_layers,
+                dec_hidden_layers=args.dec_layers,
                 output_size=len(text_processor.id2w),
                 max_target_size=text_processor.max_masked_size,
                 w2id = text_processor.w2id,
@@ -120,6 +139,7 @@ def main():
                       training_dataset=train_dataset,
                       evaluation_dataset=eval_dataset,
                       batch_size=args.batch_size,
+                      opt=args.opt,
                       learning_rate=args.learning_rate,
                       momentum=args.momentum,
                       epoch_count=args.epochs,

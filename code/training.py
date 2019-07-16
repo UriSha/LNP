@@ -7,10 +7,11 @@ from torch.utils.data import Dataset, DataLoader
 
 
 class Trainer():
-    def __init__(self, model, training_dataset, evaluation_dataset, batch_size, learning_rate, momentum, epoch_count, acc_topk, to_cuda):
+    def __init__(self, model, training_dataset, evaluation_dataset, batch_size, opt, learning_rate, momentum, epoch_count, acc_topk, to_cuda):
         self.model = model
         self.training_dataset = training_dataset
         self.evaluation_dataset = evaluation_dataset
+        self.opt = opt
         self.learning_rate = learning_rate
         self.momentum = momentum
         self.batch_size = batch_size
@@ -97,7 +98,10 @@ class Trainer():
 
     def run(self):
         loss_function = nn.CrossEntropyLoss(ignore_index=-1)  # padded outputs will have -1 as class
-        optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=self.momentum)
+        if self.opt == "SGD":
+            optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=self.momentum)
+        else:
+            optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
         train_loader = DataLoader(dataset=self.training_dataset, batch_size=self.batch_size, shuffle=True)
         if self.evaluation_dataset:
             eval_loader = DataLoader(dataset=self.evaluation_dataset, batch_size=self.batch_size, shuffle=False)

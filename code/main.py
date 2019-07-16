@@ -48,6 +48,7 @@ def main():
                       training_dataset=train_dataset,
                       evaluation_dataset=eval_dataset,
                       batch_size=32,
+                      opt="SGD",
                       learning_rate=0.01,
                       momentum=0,
                       epoch_count=200,
