@@ -104,7 +104,7 @@ def main():
                                      mask_ratio=args.mask_ratio,
                                      to_cuda=args.to_cuda)
 
-    model = CNP(context_size=text_processor.vec_size,
+    model = CNP(vec_size=text_processor.vec_size,
                 hidden_repr=1024,
                 enc_hidden_layers=[800, 1000],
                 dec_hidden_layers=[768, 1024, 2048],
@@ -114,7 +114,7 @@ def main():
                 id2w = text_processor.id2w,
                 emb_weight = text_processor.embed_matrix,
                 padding_idx = text_processor.pad_index,
-                to_cuda=to_cuda)
+                to_cuda=args.to_cuda)
 
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,
