@@ -7,7 +7,7 @@ from data_processing.text_processors.text_processor_non_contextual import TextPr
 def main():
     text_processor = TextProcessorNonContextual("../data/APRC/APRC_new1.txt",
                                                 "../data/embeddings/wiki-news-300d-1M.vec", test_size=0.1,
-                                                sents_limit=100, rare_word_threshold=10)
+                                                sents_limit=None, rare_word_threshold=10)
 
     data = DatasetNonContextual(text_processor.sents, text_processor.w2id, text_processor.id2w,
                                 text_processor.max_seq_len, text_processor.max_masked_size, to_cuda=False)
