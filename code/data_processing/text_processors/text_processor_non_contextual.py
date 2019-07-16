@@ -83,11 +83,11 @@ class TextProcessorNonContextual(AbstractTextProcessor):
             new_w2id[word] = idx
             new_id2w[idx] = word
 
-        with open('/Users/omerkoren/Final_Project/TICNP/data/embeddings/APRC_embeddings.txt', 'w+') as f:
-            f.write('999994 300\n')
-            for idx, embed_vector in enumerate(embed_list):
-                word = new_id2w[idx]
-                f.write('{word} {vec}\n'.format(word=word, vec=' '.join(embed_vector)))
+        # with open('/Users/omerkoren/Final_Project/TICNP/data/embeddings/APRC_embeddings.txt', 'w+') as f:
+        #     f.write('999994 300\n')
+        #     for idx, embed_vector in enumerate(embed_list):
+        #         word = new_id2w[idx]
+        #         f.write('{word} {vec}\n'.format(word=word, vec=' '.join(embed_vector)))
 
 
         self.embed_matrix = torch.stack(embed_list)
