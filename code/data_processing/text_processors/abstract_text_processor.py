@@ -17,7 +17,13 @@ class AbstractTextProcessor:
     def read_data(self, path, sents_limit):
         with open(path, "r") as f:
             if sents_limit:
-                text = [next(f) for _ in range(sents_limit)]
+                i = 0
+                sent = next(f, None)
+                text = []
+                while sent and i < sents_limit:
+                    i+=1
+                    text.append(sent)
+                    sent = next(f, None)
             else:
                 text = f.readlines()
 

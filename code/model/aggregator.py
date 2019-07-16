@@ -4,9 +4,8 @@ import torch.nn.functional as F
 
 
 class AverageAggregator(nn.Module):
-    def __init__(self, hidden_repr, max_sent_len, to_cuda=False):
+    def __init__(self, hidden_repr, to_cuda=False):
         super(AverageAggregator, self).__init__()
-        self.max_sent_len = max_sent_len
 
 
     def forward(self, x, x_mask):
@@ -25,9 +24,9 @@ class AverageAggregator(nn.Module):
 
 
 class AttentionAggregator(nn.Module):
-    def __init__(self, hidden_repr, max_sent_len, to_cuda=False):
+    def __init__(self, hidden_repr, to_cuda=False):
         super(AttentionAggregator, self).__init__()
-        self.max_sent_len = max_sent_len
+        # self.max_sent_len = max_sent_len
         self.fc = nn.Linear(hidden_repr, hidden_repr)
         self.weight_vec = nn.Parameter(torch.FloatTensor(hidden_repr, 1))
         torch.nn.init.xavier_normal_(self.weight_vec)
@@ -38,7 +37,7 @@ class AttentionAggregator(nn.Module):
 
     def forward(self, x, x_mask):
         r, c = x.shape
-        x = x.view(r // self.max_sent_len, self.max_sent_len, c)
+        # x = x.view(r // self.max_sent_len, self.max_sent_len, c)
 
         energies = self.fc(x)
         energies = torch.matmul(energies, self.weight_vec)

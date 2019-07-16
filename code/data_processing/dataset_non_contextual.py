@@ -54,9 +54,9 @@ class DatasetNonContextual(Dataset):
 
         sent = self.data[index].copy()
 
-        print("sent: ", sent)
+        # print("sent: ", sent)
         sent, masked_indices, target_xs, target_ys = self.mask_sent(sent)
-        print("masked_sent: ", sent)
+        # print("masked_sent: ", sent)
         masked_indices_set = set(masked_indices)
         anti_mask_indices = [i for i in range(len(sent)) if i not in masked_indices_set]
 
@@ -69,6 +69,7 @@ class DatasetNonContextual(Dataset):
         padded_sent_ids_tensor, paddings_mask, num_of_paddings = self.pad_embedded_sentence(
             sent_ids_tensor)
         anti_mask_indices += [-1] * num_of_paddings
+        anti_mask_indices = torch.tensor(anti_mask_indices).float()
 
         return padded_sent_ids_tensor, anti_mask_indices, paddings_mask, target_xs, target_ys
 

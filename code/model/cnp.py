@@ -7,16 +7,19 @@ from model.aggregator import AttentionAggregator, AverageAggregator
 
 
 class CNP(nn.Module):
-    def __init__(self, context_size, target_size, hidden_repr, enc_hidden_layers, dec_hidden_layers, output_size, max_sent_len, max_target_size, attn=False, to_cuda=False):
+    def __init__(self, context_size, target_size, hidden_repr, enc_hidden_layers, dec_hidden_layers, output_size, max_target_size, w2id, id2w, emb_weight, padding_idx, attn=False, to_cuda=False):
         super(CNP, self).__init__()
         self.encoder = Encoder(context_size, enc_hidden_layers, hidden_repr, to_cuda)
         if attn:
-            self.aggregator = AttentionAggregator(hidden_repr, max_sent_len, to_cuda)
+            self.aggregator = AttentionAggregator(hidden_repr, to_cuda)
         else:
-            self.aggregator = AverageAggregator(hidden_repr, max_sent_len, to_cuda)
+            self.aggregator = AverageAggregator(hidden_repr, to_cuda)
         self.decoder = Decoder(hidden_repr, target_size, dec_hidden_layers, output_size, to_cuda)
 
         self.max_target_size = max_target_size
+        self.w2id = w2id
+        self.id2w = id2w
+        self.embedding = nn.Embedding.from_pretrained(emb_weight, padding_idx=padding_idx)
         
         if to_cuda:
             self.encoder = self.encoder.cuda()
@@ -24,7 +27,9 @@ class CNP(nn.Module):
             self.decoder = self.decoder.cuda()
 
 
-    def forward(self, context, context_mask, target):
+    def forward(self, context_ids, context_pos, context_mask, target):
+        context = self.embedding(context_ids)
+        context = torch.cat((context, context_pos.unsqueeze(dim=2)), dim=2)
         encodings = self.encoder(context)
         representations = self.aggregator(encodings, context_mask)
 

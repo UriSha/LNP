@@ -20,15 +20,16 @@ class Trainer():
 
 
     def train(self, train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc):
-        for context_batch, context_mask_batch, target_xs_batch, target_ys_batch in train_loader:
-            context = self.batch2var(context_batch, True)
+        for context_ids_batch, context_pos_batch, context_mask_batch, target_xs_batch, target_ys_batch in train_loader:
+            context_ids = self.batch2var(context_ids_batch, False)
+            context_pos = self.batch2var(context_pos_batch, False)
             context_mask = self.batch2var(context_mask_batch, False)
-            target_xs = self.batch2var(target_xs_batch, True)
+            target_xs = self.batch2var(target_xs_batch, False)
             target_ys = self.batch2var(target_ys_batch, False)
 
             # feedforward - backprop
             optimizer.zero_grad()
-            outputs = self.model(context, context_mask, target_xs)
+            outputs = self.model(context_ids, context_pos, context_mask, target_xs)
             outputs, target_ys = self.fix_dimensions(outputs, target_ys)
             loss = loss_function(outputs, target_ys)
             loss.backward()
@@ -40,14 +41,15 @@ class Trainer():
 
 
     def evaluate(self, eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc):
-        for context_batch, context_mask_batch, target_xs_batch, target_ys_batch in eval_loader:
-            context = self.batch2var(context_batch, False)
+        for context_ids_batch, context_pos_batch, context_mask_batch, target_xs_batch, target_ys_batch in eval_loader:
+            context_ids = self.batch2var(context_ids_batch, False)
+            context_pos = self.batch2var(context_pos_batch, False)
             context_mask = self.batch2var(context_mask_batch, False)
             target_xs = self.batch2var(target_xs_batch, False)
             target_ys = self.batch2var(target_ys_batch, False)
 
             # feedforward
-            outputs = self.model(context, context_mask, target_xs)
+            outputs = self.model(context_ids, context_pos, context_mask, target_xs)
             outputs, target_ys = self.fix_dimensions(outputs, target_ys)
             loss = loss_function(outputs, target_ys)
 
