@@ -1,8 +1,10 @@
 import argparse
 
-from data_processing.dataset_consistent import DatasetConsistent
-from data_processing.dataset_random import DatasetRandom
-from data_processing.text_processors.text_processor import TextProcessor
+# from data_processing.dataset_consistent import DatasetConsistent
+# from data_processing.dataset_random import DatasetRandom
+# from data_processing.text_processors.text_processor import TextProcessor
+from data_processing.dataset_non_contextual import DatasetNonContextual
+from data_processing.text_processors.text_processor_non_contextual import TextProcessorNonContextual
 from model.cnp import CNP
 from training import Trainer
 
