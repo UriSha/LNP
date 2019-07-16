@@ -7,14 +7,14 @@ from model.aggregator import AttentionAggregator, AverageAggregator
 
 
 class CNP(nn.Module):
-    def __init__(self, context_size, target_size, hidden_repr, enc_hidden_layers, dec_hidden_layers, output_size, max_target_size, w2id, id2w, emb_weight, padding_idx, attn=False, to_cuda=False):
+    def __init__(self, vec_size, hidden_repr, enc_hidden_layers, dec_hidden_layers, output_size, max_target_size, w2id, id2w, emb_weight, padding_idx, attn=False, to_cuda=False):
         super(CNP, self).__init__()
-        self.encoder = Encoder(context_size, enc_hidden_layers, hidden_repr, to_cuda)
+        self.encoder = Encoder(vec_size+1, enc_hidden_layers, hidden_repr, to_cuda)
         if attn:
             self.aggregator = AttentionAggregator(hidden_repr, to_cuda)
         else:
             self.aggregator = AverageAggregator(hidden_repr, to_cuda)
-        self.decoder = Decoder(hidden_repr, target_size, dec_hidden_layers, output_size, to_cuda)
+        self.decoder = Decoder(hidden_repr, 1, dec_hidden_layers, output_size, to_cuda)
 
         self.max_target_size = max_target_size
         self.w2id = w2id

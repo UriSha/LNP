@@ -33,8 +33,7 @@ def main():
     #                                  max_masked_size=text_processor.max_masked_size,
     #                                  mask_ratio=mask_ratio,
     #                                  to_cuda=to_cuda)
-    model = CNP(context_size=301,
-                target_size=1,
+    model = CNP(context_size=text_processor.vec_size,
                 hidden_repr=1024,
                 enc_hidden_layers=[800, 1000],
                 dec_hidden_layers=[768, 1024, 2048],

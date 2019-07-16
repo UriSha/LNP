@@ -61,45 +61,59 @@ def parse_arguments():
 
 def main():
     args = parse_arguments()
+           
+    text_processor = TextProcessorNonContextual("data/APRC/{}".format(args.data_file),
+                                                "data/embeddings/wiki-news-300d-1M.vec", 
+                                                test_size=args.test_size,
+                                                sents_limit=args.sent_count, 
+                                                rare_word_threshold=args.rare_threshold)
 
-    text_processor = TextProcessor("data/APRC/{}".format(args.data_file), test_size=args.test_size,
-                                   sents_limit=args.sent_count, rare_word_threshold=args.rare_threshold)
+    # if args.dataset_random_every_time:
+    #     train_dataset = DatasetRandom(text_as_list=text_processor.train_sents,
+    #                                   tokenizer=text_processor.tokenizer,
+    #                                   w2id=text_processor.w2id,
+    #                                   max_seq_len=text_processor.max_seq_len,
+    #                                   max_masked_size=text_processor.max_masked_size,
+    #                                   mask_ratio=args.mask_ratio,
+    #                                   to_cuda=args.to_cuda)
 
-    if args.dataset_random_every_time:
-        train_dataset = DatasetRandom(text_as_list=text_processor.train_sents,
-                                      tokenizer=text_processor.tokenizer,
-                                      w2id=text_processor.w2id,
-                                      max_seq_len=text_processor.max_seq_len,
-                                      max_masked_size=text_processor.max_masked_size,
-                                      mask_ratio=args.mask_ratio,
-                                      to_cuda=args.to_cuda)
+    # else:
+    #     train_dataset = DatasetConsistent(text_as_list=text_processor.train_sents,
+    #                                       tokenizer=text_processor.tokenizer,
+    #                                       w2id=text_processor.w2id,
+    #                                       max_seq_len=text_processor.max_seq_len,
+    #                                       max_masked_size=text_processor.max_masked_size,
+    #                                       mask_ratio=args.mask_ratio,
+    #                                       to_cuda=args.to_cuda)
 
-    else:
-        train_dataset = DatasetConsistent(text_as_list=text_processor.train_sents,
-                                          tokenizer=text_processor.tokenizer,
-                                          w2id=text_processor.w2id,
-                                          max_seq_len=text_processor.max_seq_len,
-                                          max_masked_size=text_processor.max_masked_size,
-                                          mask_ratio=args.mask_ratio,
-                                          to_cuda=args.to_cuda)
-
-    eval_dataset = DatasetConsistent(text_as_list=text_processor.eval_sents,
-                                     tokenizer=text_processor.tokenizer,
+    train_dataset = DatasetNonContextual(text_as_list=text_processor.train_sents,
                                      w2id=text_processor.w2id,
+                                     id2w=text_processor.id2w,
                                      max_seq_len=text_processor.max_seq_len,
                                      max_masked_size=text_processor.max_masked_size,
                                      mask_ratio=args.mask_ratio,
                                      to_cuda=args.to_cuda)
 
-    model = CNP(context_size=769,
-                target_size=1,
-                hidden_repr=800,
-                enc_hidden_layers=[800, 800],
-                dec_hidden_layers=[850, 1000],
+    eval_dataset = DatasetNonContextual(text_as_list=text_processor.eval_sents,
+                                     w2id=text_processor.w2id,
+                                     id2w=text_processor.id2w,
+                                     max_seq_len=text_processor.max_seq_len,
+                                     max_masked_size=text_processor.max_masked_size,
+                                     mask_ratio=args.mask_ratio,
+                                     to_cuda=args.to_cuda)
+
+    model = CNP(context_size=text_processor.vec_size,
+                hidden_repr=1024,
+                enc_hidden_layers=[800, 1000],
+                dec_hidden_layers=[768, 1024, 2048],
                 output_size=len(text_processor.id2w),
-                max_sent_len=text_processor.max_seq_len,
                 max_target_size=text_processor.max_masked_size,
-                to_cuda=args.to_cuda)
+                w2id = text_processor.w2id,
+                id2w = text_processor.id2w,
+                emb_weight = text_processor.embed_matrix,
+                padding_idx = text_processor.pad_index,
+                to_cuda=to_cuda)
+
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,
                       evaluation_dataset=eval_dataset,
