@@ -66,11 +66,11 @@ class DatasetNonContextual(Dataset):
 
         sent_ids_tensor = torch.tensor(sent_ids)
 
-        embbedings_per_token_without_masked_paddded, paddings_mask, num_of_paddings = self.pad_embedded_sentence(
+        padded_sent_ids_tensor, paddings_mask, num_of_paddings = self.pad_embedded_sentence(
             sent_ids_tensor)
         anti_mask_indices += [-1] * num_of_paddings
 
-        return sent_ids_tensor, anti_mask_indices, paddings_mask, target_xs, target_ys
+        return padded_sent_ids_tensor, anti_mask_indices, paddings_mask, target_xs, target_ys
 
     # def generate_data_instance_fron_sentence(self, original_sent, tokenizer, bert_pretrained):
     #     sentence = original_sent.copy()
