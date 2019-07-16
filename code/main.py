@@ -12,7 +12,7 @@ def main():
 
     text_processor = TextProcessorNonContextual("data/APRC/APRC_new1.txt",
                                                 "data/embeddings/wiki-news-300d-1M.vec", test_size=0.1,
-                                                sents_limit=100, rare_word_threshold=10)
+                                                sents_limit=10000, rare_word_threshold=10)
     # text_processor = TextProcessor("data/APRC/APRC_small_mock.txt", test_size=0.1, sents_limit=500)
     # text_processor = TextProcessor("data/APRC/APRC_small_mock.txt", test_size=0.05, sents_limit=5)
     train_dataset = DatasetNonContextual(text_processor.train_sents, text_processor.w2id, text_processor.id2w,
