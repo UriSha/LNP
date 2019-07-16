@@ -52,8 +52,8 @@ class DatasetNonContextual(Dataset):
 
     self.mem = {}
     def __getitem__(self, index):
-        if index in mem:
-            return mem[index]
+        if index in self.mem:
+            return self.mem[index]
 
         sent = self.data[index].copy()
 
@@ -74,8 +74,8 @@ class DatasetNonContextual(Dataset):
         anti_mask_indices += [-1] * num_of_paddings
         anti_mask_indices = torch.tensor(anti_mask_indices).float()
 
-        mem[index] = padded_sent_ids_tensor, anti_mask_indices, paddings_mask, target_xs, target_ys
-        return mem[index]
+        self.mem[index] = padded_sent_ids_tensor, anti_mask_indices, paddings_mask, target_xs, target_ys
+        return self.mem[index]
 
     # def generate_data_instance_fron_sentence(self, original_sent, tokenizer, bert_pretrained):
     #     sentence = original_sent.copy()
