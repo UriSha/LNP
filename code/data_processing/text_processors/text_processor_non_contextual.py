@@ -30,7 +30,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
         new_sents = []
         w2cnt = defaultdict(int)
 
-        self.vec_size, w2id, id2w, embed_dict = self._read_embeddings(self.embed_file_path, self.sents_limit)
+        self.vec_size, temp_w2id, temp_id2w, embed_dict = self._read_embeddings(self.embed_file_path, self.sents_limit)
 
         for sent in sents:
             new_sent = []
@@ -40,7 +40,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
                     w_list = [w_list]
 
                 for word in w_list:
-                    if word not in w2id:  # i.e word has not embedding vector
+                    if word not in temp_w2id:  # i.e word has not embedding vector
                         word = "<UNK>"
 
                     new_sent.append(word)
@@ -51,12 +51,12 @@ class TextProcessorNonContextual(AbstractTextProcessor):
 
         rare_words_count = 0
         for k in w2cnt.keys():
-            if w2cnt[k] < self.rare_word_threshold and k != "<UNK>":
+            if w2cnt[k] < self.rare_word_threshold and k != "<UNK>" and k != "<PAD>":
                 rare_words_count += 1
-                word_id = w2id[k]
+                word_id = temp_w2id[k]
                 try:
-                    del w2id[k]
-                    del id2w[word_id]
+                    del temp_w2id[k]
+                    del temp_id2w[word_id]
                     del embed_dict[word_id]
                 except KeyError:
                     print("k = ", k)
@@ -65,7 +65,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
         for sent in new_sents:
             for i in range(len(sent)):
                 word = sent[i]
-                if word not in w2id:
+                if word not in temp_w2id:
                     sent[i] = "<UNK>"
 
         print(
@@ -77,7 +77,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
         new_id2w = {}
 
         for idx, (old_word_id, embed_vector) in enumerate(embed_dict.items()):
-            word = id2w[old_word_id]
+            word = temp_id2w[old_word_id]
 
             embed_list.append(embed_vector)
             new_w2id[word] = idx
@@ -100,8 +100,9 @@ class TextProcessorNonContextual(AbstractTextProcessor):
         vec_dim = int(header.split(" ")[1])
         emb_matrix = {}
         w2id = {}
-        # w2id["<PAD>"] = 0
-
+        self.pad_index = 0
+        w2id["<PAD>"] = self.pad_index
+        emb_matrix[self.pad_index] = torch.zeros(vec_dim)
         words_count = 1
 
         embeddings_file_lines = embeddings_file_lines[1:]
