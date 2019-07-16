@@ -22,6 +22,7 @@ class CNP(nn.Module):
         self.embedding = nn.Embedding.from_pretrained(emb_weight, padding_idx=padding_idx)
         
         if to_cuda:
+            self.embedding = self.embedding.cuda()
             self.encoder = self.encoder.cuda()
             self.aggregator = self.aggregator.cuda()
             self.decoder = self.decoder.cuda()
