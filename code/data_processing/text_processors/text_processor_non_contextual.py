@@ -1,7 +1,7 @@
 import re
 from collections import defaultdict
 
-import numpy as np
+import torch
 
 from .abstract_text_processor import AbstractTextProcessor
 
@@ -102,11 +102,12 @@ class TextProcessorNonContextual(AbstractTextProcessor):
                 words_count += 1
 
             # vector = list(map(float, all_tokens[1:]))
-            vector = np.array(all_tokens[1:], dtype=float)
+            vector = torch.tensor(list(map(float, (all_tokens[1:]))))
             word_id = w2id[word]
             emb_matrix[word_id] = vector
 
         w2id["<UNK>"] = words_count
+        emb_matrix[words_count] = torch.zeros(vec_dim)
         id2w = dict(zip(w2id.values(), w2id.keys()))
 
         return vec_dim, w2id, id2w, emb_matrix
