@@ -5,6 +5,7 @@ from data_processing.text_processors.text_processor_non_contextual import TextPr
 
 
 def main():
+    x=3
     text_processor = TextProcessorNonContextual("../data/APRC/APRC_new1.txt",
                                                 "../data/embeddings/wiki-news-300d-1M.vec", test_size=0.1,
                                                 sents_limit=None, rare_word_threshold=10)
