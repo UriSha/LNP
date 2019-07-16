@@ -30,13 +30,13 @@ class TextProcessorNonContextual(AbstractTextProcessor):
         new_sents = []
         w2cnt = defaultdict(int)
 
-        self.vec_size, w2id, id2w, self.embed_matrix = self._read_embeddings(self.embed_file_path, self.sents_limit)
+        self.vec_size, w2id, id2w, embed_dict = self._read_embeddings(self.embed_file_path, self.sents_limit)
 
         for sent in sents:
             new_sent = []
             for w in sent:
                 w_list = self.normalize_word(w)
-                if type(w_list) != list:
+                if not isinstance(w_list, list):
                     w_list = [w_list]
 
                 for word in w_list:
@@ -49,7 +49,6 @@ class TextProcessorNonContextual(AbstractTextProcessor):
             new_sents.append(new_sent)
             max_len = max(max_len, len(sent))
 
-        # get rid of rare words in our sentences
         rare_words_count = 0
         for k in w2cnt.keys():
             if w2cnt[k] < self.rare_word_threshold and k != "<UNK>":
@@ -58,22 +57,35 @@ class TextProcessorNonContextual(AbstractTextProcessor):
                 try:
                     del w2id[k]
                     del id2w[word_id]
+                    del embed_dict[word_id]
                 except KeyError:
                     print("k = ", k)
                     print("word_id = ", word_id)
+
         for sent in new_sents:
             for i in range(len(sent)):
                 word = sent[i]
                 if word not in w2id:
                     sent[i] = "<UNK>"
-                    #  del self.embed_matrix[word_id]
 
         print(
             'With rare_word_threshold = {rare_word_threshold}, the ratio of rare words (that were removed) is: {ratio}'.format(
                 rare_word_threshold=self.rare_word_threshold, ratio=rare_words_count / len(w2cnt)))
 
-        w2id['<UNK>'] = len(w2id)
-        return new_sents, w2id, id2w, max_len
+        embed_list = []
+        new_w2id = {}
+        new_id2w = {}
+
+        for idx, (old_word_id, embed_vector) in enumerate(embed_dict.items()):
+            word = id2w[old_word_id]
+
+            embed_list.append(embed_vector)
+            new_w2id[word] = idx
+            new_id2w[idx] = word
+
+        self.embed_matrix = torch.stack(embed_list)
+
+        return new_sents, new_w2id, new_id2w, max_len
 
     def _read_embeddings(self, file_path, sents_limit=None):
         """Assumes that the first line of the file is
@@ -88,7 +100,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
         vec_dim = int(header.split(" ")[1])
         emb_matrix = {}
         w2id = {}
-        w2id["<PAD>"] = 0
+        # w2id["<PAD>"] = 0
 
         words_count = 1
 
