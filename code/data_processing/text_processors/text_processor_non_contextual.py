@@ -30,7 +30,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
         new_sents = []
         w2cnt = defaultdict(int)
 
-        self.vec_size, temp_w2id, temp_id2w, embed_dict = self._read_embeddings(self.embed_file_path)
+        temp_w2id, temp_id2w, embed_dict = self._read_embeddings(self.embed_file_path)
 
         for sent in sents:
             new_sent = []
@@ -110,6 +110,9 @@ class TextProcessorNonContextual(AbstractTextProcessor):
         return new_sents, new_w2id, new_id2w, max_len
 
     def _line_to_embedding(self, line_num):
+        if line_num == -1:
+            return torch.zeros(self.vec_dim)
+        
         line = self.embeddings_file_lines[line_num]
         all_tokens = line.split(" ")
         # vector = list(map(float, all_tokens[1:]))
@@ -122,12 +125,12 @@ class TextProcessorNonContextual(AbstractTextProcessor):
             embeddings_file_lines = f.readlines()
         # vocab_length = len(txt)
         header = embeddings_file_lines[0]
-        vec_dim = int(header.split(" ")[1])
+        self.vec_dim = int(header.split(" ")[1])
         emb_matrix = {}
         w2id = {}
         self.pad_index = 0
         w2id["<PAD>"] = self.pad_index
-        emb_matrix[self.pad_index] = torch.zeros(vec_dim)
+        emb_matrix[self.pad_index] = -1
         words_count = 1
 
         self.embeddings_file_lines = embeddings_file_lines[1:]
@@ -146,7 +149,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
             emb_matrix[word_id] = line_num
 
         w2id["<UNK>"] = words_count
-        emb_matrix[words_count] = torch.zeros(vec_dim)
+        emb_matrix[words_count] = -1
         id2w = dict(zip(w2id.values(), w2id.keys()))
 
-        return vec_dim, w2id, id2w, emb_matrix
+        return w2id, id2w, emb_matrix
