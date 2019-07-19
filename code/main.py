@@ -33,6 +33,8 @@ def main():
     #                                  max_masked_size=text_processor.max_masked_size,
     #                                  mask_ratio=mask_ratio,
     #                                  to_cuda=to_cuda)
+
+    print("Vocab size: ", len(text_processor.id2w))
     model = CNP(vec_size=text_processor.vec_size,
                 hidden_repr=1024,
                 enc_hidden_layers=[800, 1000],

@@ -62,26 +62,39 @@ class TextProcessorNonContextual(AbstractTextProcessor):
                     print("k = ", k)
                     print("word_id = ", word_id)
 
+        
+        embed_list = [torch.zeros(self.vec_size)]
+        new_w2id = {}
+        new_w2id["<PAD>"] = 0
+        new_id2w = {}
+        new_id2w[0] = "<PAD>"
         for sent in new_sents:
             for i in range(len(sent)):
                 word = sent[i]
                 if word not in temp_w2id:
                     sent[i] = "<UNK>"
+                else:
+                    old_word_id = temp_w2id[word]
+                    new_word_id = len(embed_list)
+                    embed_list.append(embed_dict[old_word_id])
+                    new_w2id[word] = new_word_id
+                    new_id2w[new_word_id] = word
+
+        new_w2id["<UNK>"] = len(embed_list)
+        new_id2w[len(embed_list)] = "<UNK>"
+        embed_list.append(torch.zeros(self.vec_size))
 
         print(
             'With rare_word_threshold = {rare_word_threshold}, the ratio of rare words (that were removed) is: {ratio}'.format(
                 rare_word_threshold=self.rare_word_threshold, ratio=rare_words_count / len(w2cnt)))
 
-        embed_list = []
-        new_w2id = {}
-        new_id2w = {}
+        
+        # for idx, (old_word_id, word) in enumerate(temp_id2w.items()):
+        #     embed_vector = embed_dict[old_word_id]
 
-        for idx, (old_word_id, embed_vector) in enumerate(embed_dict.items()):
-            word = temp_id2w[old_word_id]
-
-            embed_list.append(embed_vector)
-            new_w2id[word] = idx
-            new_id2w[idx] = word
+        #     embed_list.append(embed_vector)
+        #     new_w2id[word] = idx
+        #     new_id2w[idx] = word
 
         # with open('/Users/omerkoren/Final_Project/TICNP/data/embeddings/APRC_embeddings.txt', 'w+') as f:
         #     f.write('999994 300\n')
