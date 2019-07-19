@@ -76,7 +76,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
                 elif word not in new_w2id:
                     old_word_id = temp_w2id[word]
                     new_word_id = len(embed_list)
-                    embed_list.append(torch.tensor(self._line_to_embedding(embed_dict[old_word_id])))
+                    embed_list.append(self._line_to_embedding(embed_dict[old_word_id]))
                     new_w2id[word] = new_word_id
                     new_id2w[new_word_id] = word
 
