@@ -76,7 +76,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
                 elif word not in new_w2id:
                     old_word_id = temp_w2id[word]
                     new_word_id = len(embed_list)
-                    embed_list.append(torch.tensor(embed_dict[old_word_id]))
+                    embed_list.append(torch.tensor(self._line_to_embedding(embed_dict[old_word_id])))
                     new_w2id[word] = new_word_id
                     new_id2w[new_word_id] = word
 
@@ -104,9 +104,16 @@ class TextProcessorNonContextual(AbstractTextProcessor):
         #         f.write('{word} {vec}\n'.format(word=word, vec=' '.join(embed_vector)))
 
 
+        self.embeddings_file_lines = None
         self.embed_matrix = torch.stack(embed_list)
 
         return new_sents, new_w2id, new_id2w, max_len
+
+    def _line_to_embedding(self, line_num):
+        line = self.embeddings_file_lines[line_num]
+        all_tokens = line.split(" ")
+        # vector = list(map(float, all_tokens[1:]))
+        return torch.tensor(list(map(float, (all_tokens[1:]))))
 
     def _read_embeddings(self, file_path):
         """Assumes that the first line of the file is
@@ -123,8 +130,8 @@ class TextProcessorNonContextual(AbstractTextProcessor):
         emb_matrix[self.pad_index] = torch.zeros(vec_dim)
         words_count = 1
 
-        embeddings_file_lines = embeddings_file_lines[1:]
-        for line in embeddings_file_lines:
+        self.embeddings_file_lines = embeddings_file_lines[1:]
+        for line_num, line in enumerate(self.embeddings_file_lines):
             all_tokens = line.split(" ")
             word = all_tokens[0]
 
@@ -132,10 +139,11 @@ class TextProcessorNonContextual(AbstractTextProcessor):
                 w2id[word] = words_count
                 words_count += 1
 
-            vector = list(map(float, all_tokens[1:]))
+
+            # vector = list(map(float, all_tokens[1:]))
             # vector = torch.tensor(list(map(float, (all_tokens[1:]))))
             word_id = w2id[word]
-            emb_matrix[word_id] = vector
+            emb_matrix[word_id] = line_num
 
         w2id["<UNK>"] = words_count
         emb_matrix[words_count] = torch.zeros(vec_dim)
