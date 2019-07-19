@@ -14,14 +14,17 @@ class CNP(nn.Module):
             self.aggregator = AttentionAggregator(hidden_repr, to_cuda)
         else:
             self.aggregator = AverageAggregator(hidden_repr, to_cuda)
-        self.decoder = Decoder(hidden_repr, 1, dec_hidden_layers, output_size, to_cuda)
+        self.decoder = Decoder(hidden_repr, 1, dec_hidden_layers, emb_weight.shape[1], to_cuda)
 
         self.max_target_size = max_target_size
         self.w2id = w2id
         self.id2w = id2w
         self.embedding = nn.Embedding.from_pretrained(emb_weight, padding_idx=padding_idx)
+        self.embedding_matrix = emb_weight.permute([1, 0])
+        self.embedding_matrix.requires_grad = False
         
         if to_cuda:
+            self.embedding_matrix = self.embedding_matrix.cuda()
             self.embedding = self.embedding.cuda()
             self.encoder = self.encoder.cuda()
             self.aggregator = self.aggregator.cuda()
@@ -35,8 +38,9 @@ class CNP(nn.Module):
         representations = self.aggregator(encodings, context_mask)
 
         x = self.concat_repr_to_target(representations, target)
-        predictions = self.decoder(x)
-        return predictions
+        predicted_embeddings = self.decoder(x)
+
+        return torch.matmul(predicted_embeddings, self.embedding_matrix)
 
 
     def concat_repr_to_target(self, representations, target):
