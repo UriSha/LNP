@@ -30,7 +30,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
         new_sents = []
         w2cnt = defaultdict(int)
 
-        self.vec_size, temp_w2id, temp_id2w, embed_dict = self._read_embeddings(self.embed_file_path, self.sents_limit)
+        self.vec_size, temp_w2id, temp_id2w, embed_dict = self._read_embeddings(self.embed_file_path)
 
         for sent in sents:
             new_sent = []
@@ -76,7 +76,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
                 elif word not in new_w2id:
                     old_word_id = temp_w2id[word]
                     new_word_id = len(embed_list)
-                    embed_list.append(embed_dict[old_word_id])
+                    embed_list.append(torch.tensor(embed_dict[old_word_id]))
                     new_w2id[word] = new_word_id
                     new_id2w[new_word_id] = word
 
@@ -108,20 +108,11 @@ class TextProcessorNonContextual(AbstractTextProcessor):
 
         return new_sents, new_w2id, new_id2w, max_len
 
-    def _read_embeddings(self, file_path, sents_limit=None):
+    def _read_embeddings(self, file_path):
         """Assumes that the first line of the file is
         the vocabulary length and vector dimension."""
         with open(file_path, encoding="utf8") as f:
-            if sents_limit:
-                i = 0
-                sent = next(f, None)
-                embeddings_file_lines = []
-                while sent and i < sents_limit:
-                    embeddings_file_lines.append(sent)
-                    i+=1
-                    sent = next(f, None)
-            else:
-                embeddings_file_lines = f.readlines()
+            embeddings_file_lines = f.readlines()
         # vocab_length = len(txt)
         header = embeddings_file_lines[0]
         vec_dim = int(header.split(" ")[1])
@@ -141,8 +132,8 @@ class TextProcessorNonContextual(AbstractTextProcessor):
                 w2id[word] = words_count
                 words_count += 1
 
-            # vector = list(map(float, all_tokens[1:]))
-            vector = torch.tensor(list(map(float, (all_tokens[1:]))))
+            vector = list(map(float, all_tokens[1:]))
+            # vector = torch.tensor(list(map(float, (all_tokens[1:]))))
             word_id = w2id[word]
             emb_matrix[word_id] = vector
 
