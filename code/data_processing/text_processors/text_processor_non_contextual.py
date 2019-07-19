@@ -111,7 +111,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
 
     def _line_to_embedding(self, line_num):
         if line_num == -1:
-            return torch.zeros(self.vec_dim)
+            return torch.zeros(self.vec_size)
         
         line = self.embeddings_file_lines[line_num]
         all_tokens = line.split(" ")
@@ -125,7 +125,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
             embeddings_file_lines = f.readlines()
         # vocab_length = len(txt)
         header = embeddings_file_lines[0]
-        self.vec_dim = int(header.split(" ")[1])
+        self.vec_size = int(header.split(" ")[1])
         emb_matrix = {}
         w2id = {}
         self.pad_index = 0
