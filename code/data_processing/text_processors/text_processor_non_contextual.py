@@ -73,16 +73,17 @@ class TextProcessorNonContextual(AbstractTextProcessor):
                 word = sent[i]
                 if word not in temp_w2id:
                     sent[i] = "<UNK>"
-                else:
+                elif word not in new_w2id:
                     old_word_id = temp_w2id[word]
                     new_word_id = len(embed_list)
                     embed_list.append(embed_dict[old_word_id])
                     new_w2id[word] = new_word_id
                     new_id2w[new_word_id] = word
 
-        new_w2id["<UNK>"] = len(embed_list)
-        new_id2w[len(embed_list)] = "<UNK>"
-        embed_list.append(torch.zeros(self.vec_size))
+        if "<UNK>" not in new_w2id:
+            new_w2id["<UNK>"] = len(embed_list)
+            new_id2w[len(embed_list)] = "<UNK>"
+            embed_list.append(torch.zeros(self.vec_size))
 
         print(
             'With rare_word_threshold = {rare_word_threshold}, the ratio of rare words (that were removed) is: {ratio}'.format(
