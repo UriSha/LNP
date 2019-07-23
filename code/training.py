@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torchvision
 import numpy as np
+import time
 from torch.autograd import Variable
 from torch.utils.data import Dataset, DataLoader
 
@@ -18,6 +19,8 @@ class Trainer():
         self.epoch_count = epoch_count
         self.acc_topk = acc_topk
         self.to_cuda = to_cuda
+        self.last_print_train = time.time()
+        self.last_print_eval = time.time()
 
 
     def train(self, train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc):
@@ -99,6 +102,14 @@ class Trainer():
 
 
     def print_results(self, context_pos, context_ids, target_pos, target_ids, predictions, is_eval=False):
+        if is_eval:
+            if time.time() - self.last_print_eval < 60:
+                return
+            self.last_print_eval = time.time()
+        else:
+            if time.time() - self.last_print_train < 60:
+                return
+            self.last_print_train = time.time()
         i = 0
         j = 0
         pos = 0
@@ -131,8 +142,8 @@ class Trainer():
             print("Eval Sample:")
         else:
             print("Train Sample:")
-        print(orig)
-        print(pred)
+        print("orig: {}".format(orig))
+        print("pred: {}".format(pred))
         print()
 
 
