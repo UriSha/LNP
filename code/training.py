@@ -140,8 +140,8 @@ class Trainer():
             print("Eval Sample:")
         else:
             print("Train Sample:")
-        print(orig)
-        print(pred)
+        print("orig: {}".format(orig))
+        print("pred: {}".format(pred))
         print()
 
 
