@@ -32,7 +32,7 @@ class CNP(nn.Module):
         embedding_matrix = emb_weight.permute([1, 0])
 
         # normalize matrix by columns. for rows change to: axis=1
-        self.embedding_matrix = normalize(embedding_matrix, axis=0, norm='l2')
+        self.embedding_matrix = torch.tensor(normalize(embedding_matrix, axis=0, norm='l2'))
         self.embedding_matrix.requires_grad = False
 
         pos_embeddings_matrix = self.create_pos_embeddings_matrix(max_seq_len, embedding_size)
