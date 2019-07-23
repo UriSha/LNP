@@ -56,7 +56,7 @@ class CNP(nn.Module):
         return torch.matmul(predicted_embeddings, self.embedding_matrix)
 
     def create_pos_embeddings_matrix(self, max_seq_len, embed_size):
-        pe = torch.zeros(max_seq_len, embed_size)
+        pe = torch.zeros(max_seq_len+1, embed_size)
         for pos in range(max_seq_len):
             for i in range(0, embed_size, 2):
                 pe[pos, i] = \
@@ -64,7 +64,6 @@ class CNP(nn.Module):
                 pe[pos, i + 1] = \
                     math.cos(pos / (10000 ** ((2 * (i + 1)) / embed_size)))
 
-        pe = pe.unsqueeze(0)
         return pe
 
     def concat_repr_to_target(self, representations, target):

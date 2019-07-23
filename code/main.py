@@ -44,6 +44,7 @@ def main():
                 w2id = text_processor.w2id,
                 id2w = text_processor.id2w,
                 emb_weight = text_processor.embed_matrix,
+                max_seq_len = text_processor.max_seq_len,
                 padding_idx = text_processor.pad_index,
                 to_cuda=to_cuda)
     trainer = Trainer(model=model,

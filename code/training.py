@@ -8,7 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 
 class Trainer():
     def __init__(self, model, training_dataset, evaluation_dataset, batch_size, opt, learning_rate, momentum, epoch_count, acc_topk, to_cuda):
-       self.model = model
+        self.model = model
         self.training_dataset = training_dataset
         self.evaluation_dataset = evaluation_dataset
         self.opt = opt
