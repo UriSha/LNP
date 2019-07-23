@@ -123,7 +123,7 @@ def main():
                                      to_cuda=args.to_cuda)
 
     print("Vocab size: ", len(text_processor.id2w))
-    model = CNP(vec_size=text_processor.vec_size,
+    model = CNP(embedding_size=text_processor.vec_size,
                 hidden_repr=args.hidden_repr,
                 enc_hidden_layers=args.enc_layers,
                 dec_hidden_layers=args.dec_layers,
@@ -132,6 +132,7 @@ def main():
                 w2id = text_processor.w2id,
                 id2w = text_processor.id2w,
                 emb_weight = text_processor.embed_matrix,
+                max_seq_len=text_processor.max_seq_len,
                 padding_idx = text_processor.pad_index,
                 to_cuda=args.to_cuda)
 
