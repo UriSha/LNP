@@ -105,9 +105,11 @@ class Trainer():
         if is_eval:
             if time.time() - self.last_print_eval < 60:
                 return
+            self.last_print_eval = time.time()
         else:
             if time.time() - self.last_print_train < 60:
                 return
+            self.last_print_train = time.time()
         i = 0
         j = 0
         pos = 0
