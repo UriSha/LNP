@@ -11,8 +11,6 @@ class TextProcessorNonContextual(AbstractTextProcessor):
                  sents_limit=None):
         super(TextProcessorNonContextual, self).__init__(text_file_path, test_size, mask_ratio, rare_word_threshold,
                                                          sents_limit, embed_file_path=embed_file_path)
-        print()
-        print("init TextProcessorNonContextual")
 
     def normalize_word(self, w):
         w = w.replace("`", "")

@@ -10,8 +10,6 @@ class TextProcessor(AbstractTextProcessor):
         super(TextProcessor, self).__init__(text_file_path, test_size, mask_ratio,
                                             rare_word_threshold, sents_limit,
                                             tokenizer=BertTokenizer.from_pretrained('bert-base-uncased'))
-        print("init TextProcessor")
-
     def get_sent_long_version(self, sent):
         sent_as_string = " ".join(sent)
         tokenized_sent = self.tokenizer.tokenize(sent_as_string)

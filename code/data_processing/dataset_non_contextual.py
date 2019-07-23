@@ -12,7 +12,6 @@ from torch.utils.data import Dataset
 class DatasetNonContextual(Dataset):
     def __init__(self, text_as_list, w2id, id2w, max_seq_len, max_masked_size, mask_ratio=.25, transform=None,
                  to_cuda=True):
-        print("init Dataset")
         self.data = text_as_list
         self.transform = transform
         self.mask_ratio = mask_ratio

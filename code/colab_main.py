@@ -91,6 +91,7 @@ def main():
     print("Starting CNP")
     args = parse_arguments()
 
+    print("Init text processor")
     text_processor = TextProcessorNonContextual("data/APRC/{}".format(args.data_file),
                                                 "data/embeddings/wiki-news-300d-1M.vec",
                                                 test_size=args.test_size,
@@ -115,6 +116,7 @@ def main():
     #                                       mask_ratio=args.mask_ratio,
     #                                       to_cuda=args.to_cuda)
 
+    print("Init train Dataset")
     train_dataset = DatasetNonContextual(text_as_list=text_processor.train_sents,
                                          w2id=text_processor.w2id,
                                          id2w=text_processor.id2w,
@@ -123,6 +125,7 @@ def main():
                                          mask_ratio=args.mask_ratio,
                                          to_cuda=args.to_cuda)
 
+    print("Init test Dataset")
     eval_dataset = DatasetNonContextual(text_as_list=text_processor.eval_sents,
                                         w2id=text_processor.w2id,
                                         id2w=text_processor.id2w,
@@ -132,6 +135,7 @@ def main():
                                         to_cuda=args.to_cuda)
 
     print("Vocab size: ", len(text_processor.id2w))
+    print("Init model")
     model = CNP(embedding_size=text_processor.vec_size,
                 hidden_repr=args.hidden_repr,
                 enc_hidden_layers=args.enc_layers,
@@ -145,7 +149,8 @@ def main():
                 padding_idx=text_processor.pad_index,
                 dropout=args.dropout,
                 to_cuda=args.to_cuda)
-
+    print("Model has {} parameters".format(model.parameters()))
+    print("Init Trainer")
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,
                       evaluation_dataset=eval_dataset,
@@ -157,6 +162,7 @@ def main():
                       acc_topk=args.topk,
                       print_interval = args.print_interval,
                       to_cuda=args.to_cuda)
+    print("Start training")
     trainer.run()
 
 
