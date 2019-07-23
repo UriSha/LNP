@@ -13,7 +13,7 @@ class CNP(nn.Module):
                  w2id,
                  id2w, emb_weight, padding_idx, max_seq_len, attn=False, to_cuda=False):
         super(CNP, self).__init__()
-        self.encoder = Encoder(embedding_size, enc_hidden_layers, hidden_repr, to_cuda)
+        self.encoder = Encoder(embedding_size * 2, enc_hidden_layers, hidden_repr, to_cuda)
         if attn:
             self.aggregator = AttentionAggregator(hidden_repr, to_cuda)
         else:
@@ -22,6 +22,7 @@ class CNP(nn.Module):
         self.decoder = Decoder(hidden_repr, embedding_size, dec_hidden_layers, emb_weight.shape[1], to_cuda)
 
         self.max_target_size = max_target_size
+        self.max_seq_len = max_seq_len
         self.w2id = w2id
         self.id2w = id2w
         self.embedding = nn.Embedding.from_pretrained(emb_weight, padding_idx=padding_idx)
@@ -43,14 +44,15 @@ class CNP(nn.Module):
     def forward(self, context_ids, context_pos, context_mask, target):
         sent_embeddings = self.embedding(context_ids)
         pos_embeddings = self.pos_embeddings(context_pos)
-        context = sent_embeddings + pos_embeddings
+        context = torch.cat((sent_embeddings, pos_embeddings), dim=2)
+        # context = sent_embeddings + pos_embeddings
 
         # context = torch.cat((context, context_pos.unsqueeze(dim=2)), dim=2)
         encodings = self.encoder(context)
         representations = self.aggregator(encodings, context_mask)
 
         emb_target = self.pos_embeddings(target)
-        x = self.concat_repr_to_target(representations, target)
+        x = self.concat_repr_to_target(representations, emb_target)
         predicted_embeddings = self.decoder(x)
 
         return torch.matmul(predicted_embeddings, self.embedding_matrix)
@@ -68,8 +70,8 @@ class CNP(nn.Module):
 
     def concat_repr_to_target(self, representations, target):
         x = torch.repeat_interleave(representations, self.max_target_size, dim=1)
-        target = torch.unsqueeze(target, dim=2)
-        x = torch.cat((x, target), dim=2)
+        # target = torch.unsqueeze(target, dim=2)
+        x = torch.cat((x, target.float()), dim=2)
         return x
 
     def eval_model(self):

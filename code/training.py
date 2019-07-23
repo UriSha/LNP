@@ -104,18 +104,20 @@ class Trainer():
         pos = 0
         orig = ""
         pred = ""
-        while i < len(context_pos):
+        while pos < len(context_pos):
             pred_id = None
             id = context_ids[i]
-            if id == 0:
-                break
             if context_pos[i] == pos:
+                if id == 0:
+                    break
                 i += 1
             else:
                 if j >= len(target_pos):
                     print("error")
                     return
                 id = target_ids[j]
+                if id == 0:
+                    break
                 pred_id = torch.max(predictions[j], dim=0)[1]
                 j += 1
             pos += 1
@@ -135,7 +137,7 @@ class Trainer():
 
 
     def run(self):
-        loss_function = nn.CrossEntropyLoss(ignore_index=-1)  # padded outputs will have -1 as class
+        loss_function = nn.CrossEntropyLoss(ignore_index=self.model.max_seq_len)  # padded outputs will have -1 as class
         if self.opt == "SGD":
             optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=self.momentum)
         else:

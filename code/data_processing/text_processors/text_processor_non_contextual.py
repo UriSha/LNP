@@ -17,7 +17,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
     def normalize_word(self, w):
         w = w.replace("`", "")
         w = w.replace("'", "")
-        lst = re.findall(r'[A-Za-z]+|\.', w)
+        lst = re.findall(r'\w+|\.|\,', w)
         if len(lst) == 3:
             if lst[1] == '.':
                 if len(lst[2]) == 1:

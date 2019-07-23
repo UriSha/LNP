@@ -76,7 +76,7 @@ class DatasetNonContextual(Dataset):
 
         padding_idx = self.max_seq_len
         anti_mask_indices += [padding_idx] * num_of_paddings
-        anti_mask_indices = torch.tensor(anti_mask_indices).float()
+        anti_mask_indices = torch.LongTensor(anti_mask_indices)
 
         self.mem[index] = padded_sent_ids_tensor, anti_mask_indices, paddings_mask, target_xs, target_ys
         return self.mem[index]
@@ -173,11 +173,12 @@ class DatasetNonContextual(Dataset):
             target_ys.append(word_id)
             sent[idx] = self.MASK_SYMBOL
 
-        target_padding = [-1 for _ in range(self.max_masked_size - len(target_xs))]
-        target_xs.extend(target_padding)
-        target_ys.extend(target_padding)
+        target_xs_padding = [self.max_seq_len for _ in range(self.max_masked_size - len(target_xs))]
+        target_ys_padding = [0 for _ in range(self.max_masked_size - len(target_xs))]
+        target_xs.extend(target_xs_padding)
+        target_ys.extend(target_ys_padding)
 
-        target_xs = torch.FloatTensor(target_xs)
+        target_xs = torch.LongTensor(target_xs)
         target_ys = torch.tensor(target_ys)
 
         if self.to_cuda:
