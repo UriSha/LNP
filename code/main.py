@@ -35,7 +35,7 @@ def main():
     #                                  to_cuda=to_cuda)
 
     print("Vocab size: ", len(text_processor.id2w))
-    model = CNP(vec_size=text_processor.vec_size,
+    model = CNP(embedding_size=text_processor.vec_size,
                 hidden_repr=1024,
                 enc_hidden_layers=[800, 1000],
                 dec_hidden_layers=[768, 1024, 2048],

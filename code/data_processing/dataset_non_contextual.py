@@ -1,9 +1,11 @@
 import math
-
 import random
+
 import torch
 # from pytorch_pretrained_bert import BertTokenizer
 from torch.utils.data import Dataset
+
+
 # from pytorch_pretrained_bert import BertModel
 
 
@@ -71,7 +73,9 @@ class DatasetNonContextual(Dataset):
 
         padded_sent_ids_tensor, paddings_mask, num_of_paddings = self.pad_embedded_sentence(
             sent_ids_tensor)
-        anti_mask_indices += [-1] * num_of_paddings
+
+        padding_idx = self.max_seq_len
+        anti_mask_indices += [padding_idx] * num_of_paddings
         anti_mask_indices = torch.tensor(anti_mask_indices).float()
 
         self.mem[index] = padded_sent_ids_tensor, anti_mask_indices, paddings_mask, target_xs, target_ys
