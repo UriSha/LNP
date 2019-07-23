@@ -149,7 +149,8 @@ def main():
                 padding_idx=text_processor.pad_index,
                 dropout=args.dropout,
                 to_cuda=args.to_cuda)
-    print("Model has {} parameters".format(model.parameters()))
+
+    print("Model has {} parameters".format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
     print("Init Trainer")
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,
