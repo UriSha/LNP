@@ -10,12 +10,12 @@ def main():
     to_cuda = False
     mask_ratio = 0.1
 
-    # text_processor = TextProcessorNonContextual("data/APRC/APRC_small_mock.txt",
-    #                                             "data/embeddings/small_fasttext.txt", test_size=0.1,
-    #                                             sents_limit=10000, rare_word_threshold=0)
-    text_processor = TextProcessorNonContextual("data/APRC/APRC_small_mock.txt",
-                                                "data/embeddings/wiki-news-300d-1M.vec", test_size=0.1,
+    text_processor = TextProcessorNonContextual("data/APRC/APRC_new1.txt",
+                                                "data/embeddings/small_fasttext.txt", test_size=0.1,
                                                 sents_limit=10000, rare_word_threshold=0)
+    # text_processor = TextProcessorNonContextual("data/APRC/APRC_small_mock.txt",
+    #                                             "data/embeddings/wiki-news-300d-1M.vec", test_size=0.1,
+    #                                             sents_limit=10000, rare_word_threshold=0)
                                                 
     # text_processor = TextProcessor("data/APRC/APRC_small_mock.txt", test_size=0.1, sents_limit=500)
     # text_processor = TextProcessor("data/APRC/APRC_small_mock.txt", test_size=0.05, sents_limit=5)
