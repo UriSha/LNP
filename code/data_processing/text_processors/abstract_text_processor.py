@@ -1,9 +1,11 @@
 import math
+
 from sklearn.model_selection import train_test_split
 
 
 class AbstractTextProcessor:
-    def __init__(self, text_file_path, test_size, mask_ratio, rare_word_threshold, sents_limit, embed_file_path=None, tokenizer=None):
+    def __init__(self, text_file_path, test_size, mask_ratio, rare_word_threshold, sents_limit, embed_file_path=None,
+                 tokenizer=None):
         sents = self.read_data(text_file_path, sents_limit)
         self.sents_limit = sents_limit
         self.rare_word_threshold = rare_word_threshold

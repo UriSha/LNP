@@ -8,7 +8,8 @@ from .abstract_text_processor import AbstractTextProcessor
 class TextProcessor(AbstractTextProcessor):
     def __init__(self, text_file_path, test_size=0.1, mask_ratio=.25, rare_word_threshold=10, sents_limit=None):
         super(TextProcessor, self).__init__(text_file_path, test_size, mask_ratio,
-                                            rare_word_threshold, sents_limit, tokenizer=BertTokenizer.from_pretrained('bert-base-uncased'))
+                                            rare_word_threshold, sents_limit,
+                                            tokenizer=BertTokenizer.from_pretrained('bert-base-uncased'))
         print()
         print("init TextProcessor")
 
