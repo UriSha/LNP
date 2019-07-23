@@ -80,7 +80,7 @@ def parse_arguments():
                         help="topk (default: 0.1)",
                         default=0.1,
                         type=int)
-    parser.add_argument('pi', '--print_interval',
+    parser.add_argument('-pi', '--print_interval',
                         help="print interval (default: 60sec)",
                         default=60,
                         type=int)
