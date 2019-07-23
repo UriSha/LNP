@@ -11,15 +11,15 @@ from model.encoder import Encoder
 class CNP(nn.Module):
     def __init__(self, embedding_size, hidden_repr, enc_hidden_layers, dec_hidden_layers, output_size, max_target_size,
                  w2id,
-                 id2w, emb_weight, padding_idx, max_seq_len, attn=False, to_cuda=False):
+                 id2w, emb_weight, padding_idx, max_seq_len, dropout=0.1, attn=False, to_cuda=False):
         super(CNP, self).__init__()
-        self.encoder = Encoder(embedding_size * 2, enc_hidden_layers, hidden_repr, to_cuda)
+        self.encoder = Encoder(embedding_size * 2, enc_hidden_layers, hidden_repr, dropout, to_cuda)
         if attn:
             self.aggregator = AttentionAggregator(hidden_repr, to_cuda)
         else:
             self.aggregator = AverageAggregator(hidden_repr, to_cuda)
 
-        self.decoder = Decoder(hidden_repr, embedding_size, dec_hidden_layers, emb_weight.shape[1], to_cuda)
+        self.decoder = Decoder(hidden_repr, embedding_size, dec_hidden_layers, emb_weight.shape[1], dropout, to_cuda)
 
         self.max_target_size = max_target_size
         self.max_seq_len = max_seq_len
@@ -58,7 +58,7 @@ class CNP(nn.Module):
         return torch.matmul(predicted_embeddings, self.embedding_matrix)
 
     def create_pos_embeddings_matrix(self, max_seq_len, embed_size):
-        pe = torch.zeros(max_seq_len+1, embed_size)
+        pe = torch.zeros(max_seq_len + 1, embed_size)
         for pos in range(max_seq_len):
             for i in range(0, embed_size, 2):
                 pe[pos, i] = \

@@ -73,19 +73,23 @@ def parse_arguments():
                         type=int,
                         default=[2000, 1700, 1300])
     parser.add_argument('-opt', '--opt',
-                        help="opt (default: \"SGD\")",
-                        default="SGD",
+                        help="opt (default: \"ADAM\")",
+                        default="ADAM",
                         type=str)
+    parser.add_argument('-dp', '--dropout',
+                        help="topk (default: 0.1)",
+                        default=0.1,
+                        type=int)
     return parser.parse_args()
 
 
 def main():
     args = parse_arguments()
-           
+
     text_processor = TextProcessorNonContextual("data/APRC/{}".format(args.data_file),
-                                                "data/embeddings/wiki-news-300d-1M.vec", 
+                                                "data/embeddings/wiki-news-300d-1M.vec",
                                                 test_size=args.test_size,
-                                                sents_limit=args.sent_count, 
+                                                sents_limit=args.sent_count,
                                                 rare_word_threshold=args.rare_threshold)
 
     # if args.dataset_random_every_time:
@@ -107,20 +111,20 @@ def main():
     #                                       to_cuda=args.to_cuda)
 
     train_dataset = DatasetNonContextual(text_as_list=text_processor.train_sents,
-                                     w2id=text_processor.w2id,
-                                     id2w=text_processor.id2w,
-                                     max_seq_len=text_processor.max_seq_len,
-                                     max_masked_size=text_processor.max_masked_size,
-                                     mask_ratio=args.mask_ratio,
-                                     to_cuda=args.to_cuda)
+                                         w2id=text_processor.w2id,
+                                         id2w=text_processor.id2w,
+                                         max_seq_len=text_processor.max_seq_len,
+                                         max_masked_size=text_processor.max_masked_size,
+                                         mask_ratio=args.mask_ratio,
+                                         to_cuda=args.to_cuda)
 
     eval_dataset = DatasetNonContextual(text_as_list=text_processor.eval_sents,
-                                     w2id=text_processor.w2id,
-                                     id2w=text_processor.id2w,
-                                     max_seq_len=text_processor.max_seq_len,
-                                     max_masked_size=text_processor.max_masked_size,
-                                     mask_ratio=args.mask_ratio,
-                                     to_cuda=args.to_cuda)
+                                        w2id=text_processor.w2id,
+                                        id2w=text_processor.id2w,
+                                        max_seq_len=text_processor.max_seq_len,
+                                        max_masked_size=text_processor.max_masked_size,
+                                        mask_ratio=args.mask_ratio,
+                                        to_cuda=args.to_cuda)
 
     print("Vocab size: ", len(text_processor.id2w))
     model = CNP(embedding_size=text_processor.vec_size,
@@ -129,11 +133,12 @@ def main():
                 dec_hidden_layers=args.dec_layers,
                 output_size=len(text_processor.id2w),
                 max_target_size=text_processor.max_masked_size,
-                w2id = text_processor.w2id,
-                id2w = text_processor.id2w,
-                emb_weight = text_processor.embed_matrix,
+                w2id=text_processor.w2id,
+                id2w=text_processor.id2w,
+                emb_weight=text_processor.embed_matrix,
                 max_seq_len=text_processor.max_seq_len,
-                padding_idx = text_processor.pad_index,
+                padding_idx=text_processor.pad_index,
+                dropout=args.dropout,
                 to_cuda=args.to_cuda)
 
     trainer = Trainer(model=model,
