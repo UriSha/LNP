@@ -80,9 +80,13 @@ def parse_arguments():
                         help="topk (default: 0.1)",
                         default=0.1,
                         type=int)
+    parser.add_argument('pi', '--print_interval',
+                        help="print interval (default: 60sec)",
+                        default=60,
+                        type=int)
     return parser.parse_args()
 
-    
+
 def main():
     print("Starting CNP")
     args = parse_arguments()
@@ -151,6 +155,7 @@ def main():
                       momentum=args.momentum,
                       epoch_count=args.epochs,
                       acc_topk=args.topk,
+                      print_interval = args.print_interval,
                       to_cuda=args.to_cuda)
     trainer.run()
 

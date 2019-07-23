@@ -8,7 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 
 
 class Trainer():
-    def __init__(self, model, training_dataset, evaluation_dataset, batch_size, opt, learning_rate, momentum, epoch_count, acc_topk, to_cuda):
+    def __init__(self, model, training_dataset, evaluation_dataset, batch_size, opt, learning_rate, momentum, epoch_count, acc_topk, print_interval, to_cuda):
         self.model = model
         self.training_dataset = training_dataset
         self.evaluation_dataset = evaluation_dataset
@@ -21,6 +21,7 @@ class Trainer():
         self.to_cuda = to_cuda
         self.last_print_train = time.time()
         self.last_print_eval = time.time()
+        self.print_interval = print_interval
 
 
     def train(self, train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc):
@@ -104,11 +105,11 @@ class Trainer():
 
     def print_results(self, context_pos, context_ids, target_pos, target_ids, predictions, is_eval=False):
         if is_eval:
-            if time.time() - self.last_print_eval < 60:
+            if time.time() - self.last_print_eval < self.print_interval:
                 return
             self.last_print_eval = time.time()
         else:
-            if time.time() - self.last_print_train < 60:
+            if time.time() - self.last_print_train < self.print_interval:
                 return
             self.last_print_train = time.time()
         i = 0

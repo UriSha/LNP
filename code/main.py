@@ -59,7 +59,8 @@ def main():
                       learning_rate=0.001,
                       momentum=0,
                       epoch_count=200,
-                      acc_topk=1,
+                      acc_topk=2,
+                      print_interval=5,
                       to_cuda=to_cuda)
     trainer.run()
 
