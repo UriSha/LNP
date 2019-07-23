@@ -8,7 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 
 class Trainer():
     def __init__(self, model, training_dataset, evaluation_dataset, batch_size, opt, learning_rate, momentum, epoch_count, acc_topk, to_cuda):
-        self.model = model
+       self.model = model
         self.training_dataset = training_dataset
         self.evaluation_dataset = evaluation_dataset
         self.opt = opt
@@ -31,14 +31,15 @@ class Trainer():
             # feedforward - backprop
             optimizer.zero_grad()
             outputs = self.model(context_ids, context_pos, context_mask, target_xs)
-            outputs, target_ys = self.fix_dimensions(outputs, target_ys)
-            loss = loss_function(outputs, target_ys)
+            outputs_fixed, target_ys_fixed = self.fix_dimensions(outputs, target_ys)
+            loss = loss_function(outputs_fixed, target_ys_fixed)
             loss.backward()
             optimizer.step()
 
             # train loss
             epoch_train_loss.append(loss.item())
-            epoch_train_acc.append(self.compute_accuracy_topk(outputs, target_ys))
+            epoch_train_acc.append(self.compute_accuracy_topk(outputs_fixed, target_ys_fixed))
+            self.print_results(context_pos[0], context_ids[0], target_xs[0], target_ys[0], outputs[0])
 
 
     def evaluate(self, eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc):
@@ -51,12 +52,13 @@ class Trainer():
 
             # feedforward
             outputs = self.model(context_ids, context_pos, context_mask, target_xs)
-            outputs, target_ys = self.fix_dimensions(outputs, target_ys)
-            loss = loss_function(outputs, target_ys)
+            outputs_fixed, target_ys_fixed = self.fix_dimensions(outputs, target_ys)
+            loss = loss_function(outputs_fixed, target_ys_fixed)
 
             # train loss
             epoch_eval_loss.append(loss.item())
-            epoch_eval_acc.append(self.compute_accuracy_topk(outputs, target_ys))
+            epoch_eval_acc.append(self.compute_accuracy_topk(outputs_fixed, target_ys_fixed))
+            self.print_results(context_pos[0], context_ids[0], target_xs[0], target_ys[0], outputs[0], True)
 
 
     def batch2var(self, batch_param, requires_grad):
@@ -94,6 +96,42 @@ class Trainer():
             mask = mask.cuda()
         mask_size = (target_ys == mask).sum()
         return (max_indices == target_ys.unsqueeze(dim=1)).sum() / (len(target_ys) - mask_size)
+
+
+    def print_results(self, context_pos, context_ids, target_pos, target_ids, predictions, is_eval=False):
+        i = 0
+        j = 0
+        pos = 0
+        orig = ""
+        pred = ""
+        while i < len(context_pos):
+            pred_id = None
+            id = context_ids[i]
+            if id == 0:
+                break
+            if context_pos[i] == pos:
+                i += 1
+            else:
+                if j >= len(target_pos):
+                    print("error")
+                    return
+                id = target_ids[j]
+                pred_id = torch.max(predictions[j], dim=0)[1]
+                j += 1
+            pos += 1
+            if pred_id:
+                orig += "*" + self.model.id2w[int(id.item())] + "* "
+                pred += "*" + self.model.id2w[int(pred_id.item())] + "* "
+            else:
+                orig += self.model.id2w[int(id.item())] + " "
+                pred += self.model.id2w[int(id.item())] + " "
+        if is_eval:
+            print("Eval Sample:")
+        else:
+            print("Train Sample:")
+        print(orig)
+        print(pred)
+        print()
 
 
     def run(self):
