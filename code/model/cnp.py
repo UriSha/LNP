@@ -2,6 +2,7 @@ import math
 
 import torch
 import torch.nn as nn
+from sklearn.preprocessing import normalize
 
 from model.aggregator import AttentionAggregator, AverageAggregator
 from model.decoder import Decoder
@@ -25,8 +26,11 @@ class CNP(nn.Module):
         self.max_seq_len = max_seq_len
         self.w2id = w2id
         self.id2w = id2w
+
         self.embedding = nn.Embedding.from_pretrained(emb_weight, padding_idx=padding_idx)
-        self.embedding_matrix = emb_weight.permute([1, 0])
+
+        embedding_matrix = emb_weight.permute([1, 0])
+        self.embedding_matrix = normalize(embedding_matrix, axis=0, norm='l2')
         self.embedding_matrix.requires_grad = False
 
         pos_embeddings_matrix = self.create_pos_embeddings_matrix(max_seq_len, embedding_size)
