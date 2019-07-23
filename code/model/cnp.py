@@ -19,7 +19,7 @@ class CNP(nn.Module):
         else:
             self.aggregator = AverageAggregator(hidden_repr, to_cuda)
 
-        self.decoder = Decoder(hidden_repr, 1, dec_hidden_layers, emb_weight.shape[1], to_cuda)
+        self.decoder = Decoder(hidden_repr, embedding_size, dec_hidden_layers, emb_weight.shape[1], to_cuda)
 
         self.max_target_size = max_target_size
         self.w2id = w2id
@@ -49,6 +49,7 @@ class CNP(nn.Module):
         encodings = self.encoder(context)
         representations = self.aggregator(encodings, context_mask)
 
+        emb_target = self.pos_embeddings(target)
         x = self.concat_repr_to_target(representations, target)
         predicted_embeddings = self.decoder(x)
 
