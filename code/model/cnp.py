@@ -30,6 +30,8 @@ class CNP(nn.Module):
         self.embedding = nn.Embedding.from_pretrained(emb_weight, padding_idx=padding_idx)
 
         embedding_matrix = emb_weight.permute([1, 0])
+
+        # normalize matrix by columns. for rows change to: axis=1
         self.embedding_matrix = normalize(embedding_matrix, axis=0, norm='l2')
         self.embedding_matrix.requires_grad = False
 
