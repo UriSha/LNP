@@ -84,6 +84,7 @@ def parse_arguments():
 
 
 def main():
+    print("Starting CNP")
     args = parse_arguments()
 
     text_processor = TextProcessorNonContextual("data/APRC/{}".format(args.data_file),
