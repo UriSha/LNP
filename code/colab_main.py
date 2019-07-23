@@ -82,7 +82,7 @@ def parse_arguments():
                         type=int)
     return parser.parse_args()
 
-
+    
 def main():
     print("Starting CNP")
     args = parse_arguments()

@@ -93,12 +93,13 @@ class Trainer():
 
     def compute_accuracy_topk(self, outputs, target_ys):
         _, max_indices = outputs.topk(k=self.acc_topk, dim=1)
-        mask = torch.ones(len(target_ys)) * -1
+        mask = torch.zeros(len(target_ys))
         mask = mask.long()
         if self.to_cuda:
             mask = mask.cuda()
-        mask_size = (target_ys == mask).sum()
-        return (max_indices == target_ys.unsqueeze(dim=1)).sum() / (len(target_ys) - mask_size)
+        mask_size = (target_ys == mask).sum().item()
+        new_targets = target_ys + ((target_ys == mask).long()*-1)
+        return (max_indices == new_targets.unsqueeze(dim=1)).sum().item() / (len(target_ys) - mask_size)
 
 
     def print_results(self, context_pos, context_ids, target_pos, target_ids, predictions, is_eval=False):
