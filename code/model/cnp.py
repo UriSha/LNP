@@ -29,7 +29,7 @@ class CNP(nn.Module):
 
         self.embedding = nn.Embedding.from_pretrained(emb_weight, padding_idx=padding_idx)
 
-        embedding_matrix = emb_weight.permute([1, 0])
+        embedding_matrix = emb_weight[1:].permute([1, 0])  # skip padding
 
         # normalize matrix by columns. for rows change to: axis=1
         self.embedding_matrix = torch.FloatTensor(normalize(embedding_matrix, axis=0, norm='l2'))

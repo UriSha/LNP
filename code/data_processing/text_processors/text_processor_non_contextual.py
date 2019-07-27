@@ -67,6 +67,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
         new_w2id["<PAD>"] = 0
         new_id2w = {}
         new_id2w[0] = "<PAD>"
+        id_freq = defaultdict(int)
         for sent in new_sents:
             for i in range(len(sent)):
                 word = sent[i]
@@ -78,11 +79,31 @@ class TextProcessorNonContextual(AbstractTextProcessor):
                     embed_list.append(self._line_to_embedding(embed_dict[old_word_id]))
                     new_w2id[word] = new_word_id
                     new_id2w[new_word_id] = word
+                id_freq[new_w2id[word]] += 1
 
         if "<UNK>" not in new_w2id:
             new_w2id["<UNK>"] = len(embed_list)
             new_id2w[len(embed_list)] = "<UNK>"
             embed_list.append(torch.zeros(self.vec_size))
+            id_freq[new_w2id["<UNK>"]] += 1
+
+        # rearrange dicts by frequency
+        sorted_id2w = {}
+        sorted_id2w[0] = "<PAD>"
+        sorted_w2id = {}
+        sorted_w2id["<PAD>"] = 0
+        sorted_embed_list = [torch.zeros(self.vec_size)]
+        s = [(k, id_freq[k]) for k in sorted(id_freq, key=id_freq.get, reverse=True)]
+        for i, (k, v) in enumerate(s):
+            word_id = i+1
+            word = new_id2w[k]
+            sorted_id2w[word_id] = word
+            sorted_w2id[word] = word_id
+            sorted_embed_list.append(embed_list[k])
+
+        embed_list = sorted_embed_list
+        new_id2w = sorted_id2w
+        new_w2id = sorted_w2id
 
         print(
             'With rare_word_threshold = {rare_word_threshold}, the ratio of rare words (that were removed) is: {ratio}'.format(

@@ -79,7 +79,7 @@ class Trainer():
         outputs = outputs.reshape(a * b, c)
         a, b = target_ys.shape
         target_ys = target_ys.reshape(a * b)
-        return outputs, target_ys
+        return outputs, target_ys - 1
 
 
     def compute_accuracy(self, outputs, target_ys):
@@ -94,8 +94,8 @@ class Trainer():
 
     def compute_accuracy_topk(self, outputs, target_ys):
         _, max_indices = outputs.topk(k=self.acc_topk, dim=1)
-        mask = torch.zeros(len(target_ys))
-        mask = mask.long()
+        mask = torch.ones(len(target_ys))
+        mask = mask.long() * -1
         if self.to_cuda:
             mask = mask.cuda()
         mask_size = (target_ys == mask).sum().item()
@@ -150,7 +150,7 @@ class Trainer():
 
 
     def run(self):
-        loss_function = nn.CrossEntropyLoss(ignore_index=0)  # padded outputs will have 0 as class
+        loss_function = nn.CrossEntropyLoss(ignore_index=-1)  # padded outputs are ignored
         if self.opt == "SGD":
             optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=self.momentum, nesterov=True)
         else:
