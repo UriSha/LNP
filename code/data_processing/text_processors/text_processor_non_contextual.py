@@ -73,6 +73,10 @@ class TextProcessorNonContextual(AbstractTextProcessor):
                 word = sent[i]
                 if word not in temp_w2id:
                     sent[i] = "<UNK>"
+                    if "<UNK>" not in new_w2id:
+                        new_w2id["<UNK>"] = len(embed_list)
+                        new_id2w[len(embed_list)] = "<UNK>"
+                        embed_list.append(torch.zeros(self.vec_size))
                 elif word not in new_w2id:
                     old_word_id = temp_w2id[word]
                     new_word_id = len(embed_list)
@@ -80,12 +84,6 @@ class TextProcessorNonContextual(AbstractTextProcessor):
                     new_w2id[word] = new_word_id
                     new_id2w[new_word_id] = word
                 id_freq[new_w2id[word]] += 1
-
-        if "<UNK>" not in new_w2id:
-            new_w2id["<UNK>"] = len(embed_list)
-            new_id2w[len(embed_list)] = "<UNK>"
-            embed_list.append(torch.zeros(self.vec_size))
-            id_freq[new_w2id["<UNK>"]] += 1
 
         # rearrange dicts by frequency
         sorted_id2w = {}
