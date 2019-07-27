@@ -73,6 +73,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
                 word = sent[i]
                 if word not in temp_w2id:
                     sent[i] = "<UNK>"
+                    word = "<UNK>"
                     if "<UNK>" not in new_w2id:
                         new_w2id["<UNK>"] = len(embed_list)
                         new_id2w[len(embed_list)] = "<UNK>"
