@@ -4,9 +4,10 @@ from sklearn.model_selection import train_test_split
 
 
 class AbstractTextProcessor:
-    def __init__(self, text_file_path, test_size, mask_ratio, rare_word_threshold, sents_limit, embed_file_path=None,
+    def __init__(self, text_file_path, test_size, mask_ratio, rare_word_threshold, sents_limit, use_weight_loss=True, embed_file_path=None,
                  tokenizer=None):
         sents = self.read_data(text_file_path, sents_limit)
+        self.use_weight_loss = use_weight_loss
         self.sents_limit = sents_limit
         self.rare_word_threshold = rare_word_threshold
         self.embed_file_path = embed_file_path
