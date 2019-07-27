@@ -20,7 +20,7 @@ class CNP(nn.Module):
         else:
             self.aggregator = AverageAggregator(hidden_repr, to_cuda)
 
-        if use_weight_matrix:
+        if not use_weight_matrix:
             output_size = emb_weight.shape[0] - 1
         else:
             output_size = emb_weight.shape[1]
