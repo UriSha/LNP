@@ -7,10 +7,11 @@ from .abstract_text_processor import AbstractTextProcessor
 
 
 class TextProcessorNonContextual(AbstractTextProcessor):
-    def __init__(self, text_file_path, embed_file_path, test_size=0.1, mask_ratio=.25, rare_word_threshold=10,
+    def __init__(self, text_file_path, embed_file_path, test_size=0.1, mask_ratio=.25, rare_word_threshold=10, use_weight_loss=True,
                  sents_limit=None):
         super(TextProcessorNonContextual, self).__init__(text_file_path, test_size, mask_ratio, rare_word_threshold,
                                                          sents_limit, embed_file_path=embed_file_path)
+        self.use_weight_loss = use_weight_loss
 
     def normalize_word(self, w):
         w = w.replace("`", "")
@@ -102,9 +103,12 @@ class TextProcessorNonContextual(AbstractTextProcessor):
             sorted_id2w[word_id] = word
             sorted_w2id[word] = word_id
             sorted_embed_list.append(embed_list[k])
-            # weight = n_samples / (n_classes * v)
-            weight = v / n_samples
-            # weight = 1 / v
+            if self.use_weight_loss:
+                weight = n_samples / (n_classes * v)
+                # weight = v / n_samples
+                # weight = 1 / v
+            else:
+                weight = 1
             sorted_weights.append(torch.tensor(weight).float())
 
         embed_list = sorted_embed_list

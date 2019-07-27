@@ -12,10 +12,10 @@ def main():
 
     text_processor = TextProcessorNonContextual("data/APRC/APRC_new1.txt",
                                                 "data/embeddings/wiki-news-300d-1M.vec", test_size=0.1,
-                                                sents_limit=10000, rare_word_threshold=1)
+                                                sents_limit=10000, rare_word_threshold=1, use_weight_loss=True)
     # text_processor = TextProcessorNonContextual("data/APRC/APRC_small_mock.txt",
     #                                             "data/embeddings/small_fasttext.txt", test_size=0.1,
-    #                                             sents_limit=10000, rare_word_threshold=0)
+    #                                             sents_limit=10000, rare_word_threshold=0, use_weight_loss=True)
                                                 
     # text_processor = TextProcessor("data/APRC/APRC_small_mock.txt", test_size=0.1, sents_limit=500)
     # text_processor = TextProcessor("data/APRC/APRC_small_mock.txt", test_size=0.05, sents_limit=5)
@@ -43,13 +43,14 @@ def main():
                 hidden_repr=1000,
                 enc_hidden_layers=[600, 600, 600, 600],
                 dec_hidden_layers=[600, 600, 600, 300],
-                output_size=len(text_processor.id2w),
                 max_target_size=text_processor.max_masked_size,
                 w2id = text_processor.w2id,
                 id2w = text_processor.id2w,
                 emb_weight = text_processor.embed_matrix,
                 max_seq_len = text_processor.max_seq_len,
                 padding_idx = text_processor.pad_index,
+                use_weight_matrix = args.use_weight_matrix,
+                dropout=0.1,
                 to_cuda=to_cuda)
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,

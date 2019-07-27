@@ -10,9 +10,9 @@ from model.encoder import Encoder
 
 
 class CNP(nn.Module):
-    def __init__(self, embedding_size, hidden_repr, enc_hidden_layers, dec_hidden_layers, output_size, max_target_size,
+    def __init__(self, embedding_size, hidden_repr, enc_hidden_layers, dec_hidden_layers, max_target_size,
                  w2id,
-                 id2w, emb_weight, padding_idx, max_seq_len, dropout=0.1, attn=False, to_cuda=False):
+                 id2w, emb_weight, padding_idx, max_seq_len, use_weight_matrix, dropout=0.1, attn=False, to_cuda=False):
         super(CNP, self).__init__()
         self.encoder = Encoder(embedding_size * 2, enc_hidden_layers, hidden_repr, dropout, to_cuda)
         if attn:
@@ -20,7 +20,11 @@ class CNP(nn.Module):
         else:
             self.aggregator = AverageAggregator(hidden_repr, to_cuda)
 
-        self.decoder = Decoder(hidden_repr, embedding_size, dec_hidden_layers, emb_weight.shape[1], dropout, to_cuda)
+        if use_weight_matrix:
+            output_size = emb_weight.shape[0] - 1
+        else:
+            output_size = emb_weight.shape[1]
+        self.decoder = Decoder(hidden_repr, embedding_size, dec_hidden_layers, output_size, dropout, to_cuda)
 
         self.max_target_size = max_target_size
         self.max_seq_len = max_seq_len
@@ -29,18 +33,20 @@ class CNP(nn.Module):
 
         self.embedding = nn.Embedding.from_pretrained(emb_weight, padding_idx=padding_idx)
 
-        embedding_matrix = emb_weight[1:].permute([1, 0])  # skip padding
-
-        # normalize matrix by columns. for rows change to: axis=1
-        self.embedding_matrix = torch.FloatTensor(normalize(embedding_matrix, axis=0, norm='l2'))
-        self.embedding_matrix.requires_grad = False
+        self.embedding_matrix = None
+        if use_weight_matrix:
+            embedding_matrix = emb_weight[1:].permute([1, 0])  # skip padding
+            # normalize matrix by columns. for rows change to: axis=1
+            self.embedding_matrix = torch.FloatTensor(normalize(embedding_matrix, axis=0, norm='l2'))
+            self.embedding_matrix.requires_grad = False
 
         pos_embeddings_matrix = self.create_pos_embeddings_matrix(max_seq_len, embedding_size)
         self.pos_embeddings = nn.Embedding.from_pretrained(pos_embeddings_matrix, padding_idx=max_seq_len)
         self.pos_embeddings.requires_grad = False
 
         if to_cuda:
-            self.embedding_matrix = self.embedding_matrix.cuda()
+            if self.embedding_matrix is not None:
+                self.embedding_matrix = self.embedding_matrix.cuda()
             self.embedding = self.embedding.cuda()
             self.encoder = self.encoder.cuda()
             self.aggregator = self.aggregator.cuda()
@@ -61,7 +67,9 @@ class CNP(nn.Module):
         x = self.concat_repr_to_target(representations, emb_target)
         predicted_embeddings = self.decoder(x)
 
-        return torch.matmul(predicted_embeddings, self.embedding_matrix)
+        if self.embedding_matrix:
+            predicted_embeddings = torch.matmul(predicted_embeddings, self.embedding_matrix)
+        return predicted_embeddings
 
     def create_pos_embeddings_matrix(self, max_seq_len, embed_size):
         pe = torch.zeros(max_seq_len + 1, embed_size)

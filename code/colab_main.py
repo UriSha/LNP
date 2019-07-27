@@ -43,8 +43,8 @@ def parse_arguments():
                         default=.25,
                         type=float)
     parser.add_argument('-topk', '--topk',
-                        help="topk (default: 15)",
-                        default=15,
+                        help="topk (default: 5)",
+                        default=5,
                         type=int)
     parser.add_argument('-moment', '--momentum',
                         help="momentum (default: 0)",
@@ -77,13 +77,21 @@ def parse_arguments():
                         default="ADAM",
                         type=str)
     parser.add_argument('-dp', '--dropout',
-                        help="topk (default: 0.1)",
+                        help="dropout (default: 0.1)",
                         default=0.1,
                         type=int)
     parser.add_argument('-pi', '--print_interval',
                         help="print interval (default: 60sec)",
                         default=60,
                         type=int)
+    parser.add_argument('-uwm', '--use_weight_matrix',
+                        help="Whether to multiply last layer by weight matrix (default: True)",
+                        default=True,
+                        type=bool)
+    parser.add_argument('-uwl', '--use_weight_loss',
+                        help="Whether to use weights for unbalanced data (default: True)",
+                        default=True,
+                        type=bool)
     return parser.parse_args()
 
 
@@ -96,7 +104,8 @@ def main():
                                                 "data/embeddings/wiki-news-300d-1M.vec",
                                                 test_size=args.test_size,
                                                 sents_limit=args.sent_count,
-                                                rare_word_threshold=args.rare_threshold)
+                                                rare_word_threshold=args.rare_threshold,
+                                                use_weight_loss = args.use_weight_loss)
 
     # if args.dataset_random_every_time:
     #     train_dataset = DatasetRandom(text_as_list=text_processor.train_sents,
@@ -140,13 +149,13 @@ def main():
                 hidden_repr=args.hidden_repr,
                 enc_hidden_layers=args.enc_layers,
                 dec_hidden_layers=args.dec_layers,
-                output_size=len(text_processor.id2w),
                 max_target_size=text_processor.max_masked_size,
                 w2id=text_processor.w2id,
                 id2w=text_processor.id2w,
                 emb_weight=text_processor.embed_matrix,
                 max_seq_len=text_processor.max_seq_len,
                 padding_idx=text_processor.pad_index,
+                use_weight_matrix = args.use_weight_matrix,
                 dropout=args.dropout,
                 to_cuda=args.to_cuda)
 
