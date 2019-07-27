@@ -155,7 +155,10 @@ class Trainer():
     def run(self):
         loss_function = nn.CrossEntropyLoss(weight=self.word_weights, ignore_index=-1)  # padded outputs are ignored
         if self.opt == "SGD":
-            optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=self.momentum, nesterov=True)
+            nestov = False
+            if self.momentum > 0:
+                nestov = True
+            optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=self.momentum, nesterov=nestov)
         else:
             optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
         train_loader = DataLoader(dataset=self.training_dataset, batch_size=self.batch_size, shuffle=True)
