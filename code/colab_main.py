@@ -161,7 +161,7 @@ def main():
                 padding_idx=text_processor.pad_index,
                 use_weight_matrix = args.use_weight_matrix,
                 dropout=args.dropout,
-                use_pos_embedding = args.use_pos_embedding
+                use_pos_embedding = args.use_pos_embedding,
                 to_cuda=args.to_cuda)
 
     print("Model has {} parameters".format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
