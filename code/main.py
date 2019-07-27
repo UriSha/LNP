@@ -61,6 +61,7 @@ def main():
                       epoch_count=200,
                       acc_topk=2,
                       print_interval=5,
+                      word_weights = text_processor.word_weights,
                       to_cuda=to_cuda)
     trainer.run()
 

@@ -11,7 +11,7 @@ class AbstractTextProcessor:
         self.rare_word_threshold = rare_word_threshold
         self.embed_file_path = embed_file_path
         self.tokenizer = tokenizer
-        self.sents, self.w2id, self.id2w, self.max_seq_len = self.initiate_vocab(sents)
+        self.sents, self.w2id, self.id2w, self.max_seq_len, self.word_weights = self.initiate_vocab(sents)
         # self.sents = self.remove_rare_words(sents)
         self.max_masked_size = math.ceil(self.max_seq_len * mask_ratio)
         self.train_sents, self.eval_sents = train_test_split(self.sents, test_size=test_size)

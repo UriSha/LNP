@@ -162,6 +162,7 @@ def main():
                       epoch_count=args.epochs,
                       acc_topk=args.topk,
                       print_interval = args.print_interval,
+                      word_weights = text_processor.word_weights,
                       to_cuda=args.to_cuda)
     print("Start training")
     trainer.run()

@@ -93,17 +93,23 @@ class TextProcessorNonContextual(AbstractTextProcessor):
         sorted_w2id = {}
         sorted_w2id["<PAD>"] = 0
         sorted_embed_list = [torch.zeros(self.vec_size)]
+        sorted_weights = []
         s = [(k, id_freq[k]) for k in sorted(id_freq, key=id_freq.get, reverse=True)]
+        n_samples = sum(id_freq.values())
+        n_classes = len(id_freq)
         for i, (k, v) in enumerate(s):
             word_id = i+1
             word = new_id2w[k]
             sorted_id2w[word_id] = word
             sorted_w2id[word] = word_id
             sorted_embed_list.append(embed_list[k])
+            weight = n_samples / (n_classes * v)
+            sorted_weights.append(torch.tensor(weight).float())
 
         embed_list = sorted_embed_list
         new_id2w = sorted_id2w
         new_w2id = sorted_w2id
+        word_weights = torch.stack(sorted_weights)
 
         print(
             'With rare_word_threshold = {rare_word_threshold}, the ratio of rare words (that were removed) is: {ratio}'.format(
@@ -127,7 +133,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
         self.embeddings_file_lines = None
         self.embed_matrix = torch.stack(embed_list)
 
-        return new_sents, new_w2id, new_id2w, max_len
+        return new_sents, new_w2id, new_id2w, max_len, word_weights
 
     def _line_to_embedding(self, line_num):
         if line_num == -1:
