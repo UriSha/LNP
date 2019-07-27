@@ -92,6 +92,10 @@ def parse_arguments():
                         help="Whether to use weights for unbalanced data (default: True)",
                         default=True,
                         type=bool)
+    parser.add_argument('-upe', '--use_pos_embedding',
+                        help="Whether to use embeddings for positions (default: True)",
+                        default=True,
+                        type=bool)
     return parser.parse_args()
 
 
@@ -157,6 +161,7 @@ def main():
                 padding_idx=text_processor.pad_index,
                 use_weight_matrix = args.use_weight_matrix,
                 dropout=args.dropout,
+                use_pos_embedding = args.use_pos_embedding
                 to_cuda=args.to_cuda)
 
     print("Model has {} parameters".format(sum(p.numel() for p in model.parameters() if p.requires_grad)))

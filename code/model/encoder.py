@@ -3,11 +3,11 @@ import torch.nn.functional as F
 
 
 class Encoder(nn.Module):
-    def __init__(self, input_size, hidden_layers, output_size, dropout, to_cuda=False):
+    def __init__(self, context_size, target_size, hidden_layers, output_size, dropout, to_cuda=False):
         super(Encoder, self).__init__()
         self.fcs = []
         self.dps = []
-        inp = input_size
+        inp = context_size + target_size
         self.dropout = nn.Dropout(dropout)
         for hidden_layer in hidden_layers:
             self.fcs.append(nn.Linear(inp, hidden_layer))

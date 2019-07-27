@@ -11,6 +11,7 @@ def main():
     mask_ratio = 0.25
     use_weight_loss = False
     use_weight_matrix = False
+    use_pos_embedding = False
 
     # text_processor = TextProcessorNonContextual("data/APRC/APRC_new1.txt",
     #                                             "data/embeddings/wiki-news-300d-1M.vec", test_size=0.1, mask_ratio=mask_ratio,
@@ -53,6 +54,7 @@ def main():
                 padding_idx = text_processor.pad_index,
                 use_weight_matrix = use_weight_matrix,
                 dropout=0,
+                use_pos_embedding=use_pos_embedding,
                 to_cuda=to_cuda)
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,
