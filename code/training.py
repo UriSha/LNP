@@ -96,7 +96,8 @@ class Trainer():
 
 
     def compute_accuracy_topk(self, outputs, target_ys):
-        _, max_indices = outputs.topk(k=self.acc_topk, dim=1)
+        topk = min(self.acc_topk, outputs.shape[1])
+        _, max_indices = outputs.topk(k=topk, dim=1)
         mask = torch.ones(len(target_ys))
         mask = mask.long() * -1
         if self.to_cuda:

@@ -8,14 +8,16 @@ from training import Trainer
 
 def main():
     to_cuda = False
-    mask_ratio = 0.1
+    mask_ratio = 0.25
+    use_weight_loss = False
+    use_weight_matrix = False
 
-    text_processor = TextProcessorNonContextual("data/APRC/APRC_new1.txt",
-                                                "data/embeddings/wiki-news-300d-1M.vec", test_size=0.1,
-                                                sents_limit=10000, rare_word_threshold=1, use_weight_loss=True)
-    # text_processor = TextProcessorNonContextual("data/APRC/APRC_small_mock.txt",
-    #                                             "data/embeddings/small_fasttext.txt", test_size=0.1,
-    #                                             sents_limit=10000, rare_word_threshold=0, use_weight_loss=True)
+    # text_processor = TextProcessorNonContextual("data/APRC/APRC_new1.txt",
+    #                                             "data/embeddings/wiki-news-300d-1M.vec", test_size=0.1, mask_ratio=mask_ratio,
+    #                                             sents_limit=10000, rare_word_threshold=1, use_weight_loss=True)
+    text_processor = TextProcessorNonContextual("data/APRC/APRC_small_mock.txt",
+                                                "data/embeddings/small_fasttext.txt", test_size=0.1, mask_ratio=mask_ratio,
+                                                sents_limit=10000, rare_word_threshold=0, use_weight_loss=use_weight_loss)
                                                 
     # text_processor = TextProcessor("data/APRC/APRC_small_mock.txt", test_size=0.1, sents_limit=500)
     # text_processor = TextProcessor("data/APRC/APRC_small_mock.txt", test_size=0.05, sents_limit=5)
@@ -40,28 +42,28 @@ def main():
 
     print("Vocab size: ", len(text_processor.id2w))
     model = CNP(embedding_size=text_processor.vec_size,
-                hidden_repr=1000,
-                enc_hidden_layers=[600, 600, 600, 600],
-                dec_hidden_layers=[600, 600, 600, 300],
+                hidden_repr=10000,
+                enc_hidden_layers=[600, 700, 800, 900],
+                dec_hidden_layers=[15000, 10000, 500, 300],
                 max_target_size=text_processor.max_masked_size,
                 w2id = text_processor.w2id,
                 id2w = text_processor.id2w,
                 emb_weight = text_processor.embed_matrix,
                 max_seq_len = text_processor.max_seq_len,
                 padding_idx = text_processor.pad_index,
-                use_weight_matrix = args.use_weight_matrix,
-                dropout=0.1,
+                use_weight_matrix = use_weight_matrix,
+                dropout=0,
                 to_cuda=to_cuda)
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,
                       evaluation_dataset=eval_dataset,
                       batch_size=50,
                       opt="ADAM",
-                      learning_rate=0.01,
+                      learning_rate=0.001,
                       momentum=0.9,
-                      epoch_count=100,
-                      acc_topk=10,
-                      print_interval=20,
+                      epoch_count=200,
+                      acc_topk=1,
+                      print_interval=1,
                       word_weights = text_processor.word_weights,
                       to_cuda=to_cuda)
     trainer.run()

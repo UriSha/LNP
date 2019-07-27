@@ -103,9 +103,9 @@ class TextProcessorNonContextual(AbstractTextProcessor):
             sorted_w2id[word] = word_id
             sorted_embed_list.append(embed_list[k])
             if self.use_weight_loss:
-                weight = n_samples / (n_classes * v)
+                # weight = n_samples / (n_classes * v)
                 # weight = v / n_samples
-                # weight = 1 / v
+                weight = 1 / v
             else:
                 weight = 1
             sorted_weights.append(torch.tensor(weight).float())
