@@ -23,6 +23,8 @@ class Trainer():
         self.last_print_eval = time.time()
         self.print_interval = print_interval
         self.word_weights = word_weights
+        if self.to_cuda:
+            self.word_weights = self.word_weights.cuda()
 
 
     def train(self, train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc):
@@ -151,8 +153,6 @@ class Trainer():
 
 
     def run(self):
-        if self.to_cuda:
-            self.word_weights = self.word_weights.cuda()
         loss_function = nn.CrossEntropyLoss(weight=self.word_weights, ignore_index=-1)  # padded outputs are ignored
         if self.opt == "SGD":
             optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=self.momentum, nesterov=True)
