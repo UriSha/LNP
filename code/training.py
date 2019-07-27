@@ -150,7 +150,7 @@ class Trainer():
 
 
     def run(self):
-        loss_function = nn.CrossEntropyLoss(ignore_index=self.model.max_seq_len)  # padded outputs will have -1 as class
+        loss_function = nn.CrossEntropyLoss(ignore_index=0)  # padded outputs will have 0 as class
         if self.opt == "SGD":
             optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=self.momentum)
         else:
