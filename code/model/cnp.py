@@ -7,6 +7,7 @@ from sklearn.preprocessing import normalize
 from model.aggregator import AttentionAggregator, AverageAggregator
 from model.decoder import Decoder
 from model.encoder import Encoder
+from model.self_attention_encoder import SelfAttentionEncoder
 
 
 class CNP(nn.Module):
@@ -14,8 +15,13 @@ class CNP(nn.Module):
                  w2id,
                  id2w, emb_weight, padding_idx, max_seq_len, dropout=0.1, attn=False, to_cuda=False):
         super(CNP, self).__init__()
-        self.encoder = Encoder(embedding_size * 2, enc_hidden_layers, hidden_repr, dropout, to_cuda)
+        # self.encoder = Encoder(embedding_size * 2, enc_hidden_layers, hidden_repr, dropout, to_cuda)
+        self.encoder = SelfAttentionEncoder(embed_size=embedding_size * 2,
+                                            heads=2,
+                                            dropout=dropout,
+                                            to_cuda=to_cuda)
         if attn:
+            # cross-attention
             self.aggregator = AttentionAggregator(hidden_repr, to_cuda)
         else:
             self.aggregator = AverageAggregator(hidden_repr, to_cuda)
@@ -54,7 +60,7 @@ class CNP(nn.Module):
         # context = sent_embeddings + pos_embeddings
 
         # context = torch.cat((context, context_pos.unsqueeze(dim=2)), dim=2)
-        encodings = self.encoder(context)
+        encodings = self.encoder(context, context_mask)
         representations = self.aggregator(encodings, context_mask)
 
         emb_target = self.pos_embeddings(target)

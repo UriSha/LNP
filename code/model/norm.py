@@ -13,6 +13,5 @@ class Norm(nn.Module):
         self.eps = eps
 
     def forward(self, x):
-        norm = self.alpha * (x - x.mean(dim=-1, keepdim=True)) \
-               / (x.std(dim=-1, keepdim=True) + self.eps) + self.bias
+        norm = self.alpha * (x - x.mean(dim=-1, keepdim=True)) / (x.std(dim=-1, keepdim=True) + self.eps) + self.bias
         return norm

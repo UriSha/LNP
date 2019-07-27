@@ -3,21 +3,22 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 
+
 class MultiHeadAttention(nn.Module):
-    def __init__(self, heads, d_model, dropout=0.1):
+    def __init__(self, embed_size, heads, dropout=0.1):
         super().__init__()
 
-        self.d_model = d_model
-        self.d_k = d_model // heads
+        self.d_model = embed_size
+        self.d_k = embed_size // heads
         self.h = heads
 
-        self.q_linear = nn.Linear(d_model, d_model)
-        self.v_linear = nn.Linear(d_model, d_model)
-        self.k_linear = nn.Linear(d_model, d_model)
+        self.q_linear = nn.Linear(embed_size, embed_size)
+        self.v_linear = nn.Linear(embed_size, embed_size)
+        self.k_linear = nn.Linear(embed_size, embed_size)
         self.dropout = nn.Dropout(dropout)
-        self.out = nn.Linear(d_model, d_model)
+        self.out = nn.Linear(embed_size, embed_size)
 
-    def forward(self, q, k, v, mask=None):
+    def forward(self, q, k, v, context_mask=None):
         bs = q.size(0)
 
         # perform linear operation and split into h heads
@@ -33,7 +34,7 @@ class MultiHeadAttention(nn.Module):
         v = v.transpose(1, 2)
 
         # calculate attention using function we will define next
-        scores = self.attention(q, k, v, self.d_k, mask, self.dropout)
+        scores = self.attention(q, k, v, self.d_k, context_mask, self.dropout)
 
         # concatenate heads and put through final linear layer
         concat = scores.transpose(1, 2).contiguous().view(bs, -1, self.d_model)
@@ -42,13 +43,13 @@ class MultiHeadAttention(nn.Module):
 
         return output
 
-    def attention(self, q, k, v, d_k, mask=None, dropout=None):
+    def attention(self, q, k, v, d_k, context_mask=None, dropout=None):
 
         scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(d_k)
 
-        if mask is not None:
-            mask = mask.unsqueeze(1)
-            scores = scores.masked_fill(mask == 0, -1e9)
+        if context_mask is not None:
+            context_mask = context_mask.unsqueeze(1)
+            scores = scores.masked_fill(context_mask == 0, -1e9)
         scores = F.softmax(scores, dim=-1)
 
         if dropout is not None:
