@@ -102,7 +102,8 @@ class TextProcessorNonContextual(AbstractTextProcessor):
             sorted_id2w[word_id] = word
             sorted_w2id[word] = word_id
             sorted_embed_list.append(embed_list[k])
-            weight = n_samples / (n_classes * v)
+            # weight = n_samples / (n_classes * v)
+            weight = 1 / v
             sorted_weights.append(torch.tensor(weight).float())
 
         embed_list = sorted_embed_list
