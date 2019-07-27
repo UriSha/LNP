@@ -8,10 +8,10 @@ from training import Trainer
 
 def main():
     to_cuda = False
-    mask_ratio = 0.25
+    mask_ratio = 0.1
     use_weight_loss = False
-    use_weight_matrix = False
-    use_pos_embedding = False
+    use_weight_matrix = True
+    use_pos_embedding = True
 
     # text_processor = TextProcessorNonContextual("data/APRC/APRC_new1.txt",
     #                                             "data/embeddings/wiki-news-300d-1M.vec", test_size=0.1, mask_ratio=mask_ratio,
@@ -43,9 +43,9 @@ def main():
 
     print("Vocab size: ", len(text_processor.id2w))
     model = CNP(embedding_size=text_processor.vec_size,
-                hidden_repr=10000,
-                enc_hidden_layers=[600, 700, 800, 900],
-                dec_hidden_layers=[15000, 10000, 500, 300],
+                hidden_repr=1000,
+                enc_hidden_layers=[600, 600],
+                dec_hidden_layers=[1000, 500, 300],
                 max_target_size=text_processor.max_masked_size,
                 w2id = text_processor.w2id,
                 id2w = text_processor.id2w,
