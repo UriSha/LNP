@@ -35,8 +35,8 @@ def parse_arguments():
                         default=0,
                         type=int)
     parser.add_argument('-bs', '--batch_size',
-                        help="batch_size (default: 16)",
-                        default=16,
+                        help="batch_size (default: 50)",
+                        default=50,
                         type=int)
     parser.add_argument('-mr', '--mask_ratio',
                         help="max_ratio (default: 0.25)",
@@ -63,15 +63,15 @@ def parse_arguments():
                         default=1000,
                         type=int)
     parser.add_argument('-encl', '--enc_layers',
-                        help="enc_layers (default: [2000, 1700, 1300])",
+                        help="enc_layers (default: [600, 600, 600, 600])",
                         nargs="+",
                         type=int,
-                        default=[2000, 1700, 1300])
+                        default=[600, 600, 600, 600])
     parser.add_argument('-decl', '--dec_layers',
-                        help="dec_layers (default: [2000, 1700, 1300])",
+                        help="dec_layers (default: [600, 600, 600, 300])",
                         nargs="+",
                         type=int,
-                        default=[2000, 1700, 1300])
+                        default=[600, 600, 600, 300])
     parser.add_argument('-opt', '--opt',
                         help="opt (default: \"ADAM\")",
                         default="ADAM",

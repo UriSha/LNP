@@ -40,9 +40,9 @@ def main():
 
     print("Vocab size: ", len(text_processor.id2w))
     model = CNP(embedding_size=text_processor.vec_size,
-                hidden_repr=1024,
-                enc_hidden_layers=[800, 1000],
-                dec_hidden_layers=[768, 1024, 2048],
+                hidden_repr=1000,
+                enc_hidden_layers=[600, 600, 600, 600],
+                dec_hidden_layers=[600, 600, 600, 300],
                 output_size=len(text_processor.id2w),
                 max_target_size=text_processor.max_masked_size,
                 w2id = text_processor.w2id,
