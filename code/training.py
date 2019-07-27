@@ -137,9 +137,9 @@ class Trainer():
                 pred_id = torch.max(predictions[j], dim=0)[1]
                 j += 1
             pos += 1
-            if pred_id:
+            if pred_id is not None:
                 orig += "*" + self.model.id2w[int(id.item())] + "* "
-                pred += "*" + self.model.id2w[int(pred_id.item())] + "* "
+                pred += "*" + self.model.id2w[int(pred_id.item()+1)] + "* "
             else:
                 orig += self.model.id2w[int(id.item())] + " "
                 pred += self.model.id2w[int(id.item())] + " "

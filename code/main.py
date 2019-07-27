@@ -10,11 +10,11 @@ def main():
     to_cuda = False
     mask_ratio = 0.1
 
-    text_processor = TextProcessorNonContextual("data/APRC/APRC_small_mock.txt",
-                                                "data/embeddings/small_fasttext.txt", test_size=0.1,
-                                                sents_limit=10000, rare_word_threshold=0)
+    text_processor = TextProcessorNonContextual("data/APRC/APRC_new1.txt",
+                                                "data/embeddings/wiki-news-300d-1M.vec", test_size=0.1,
+                                                sents_limit=10000, rare_word_threshold=1)
     # text_processor = TextProcessorNonContextual("data/APRC/APRC_small_mock.txt",
-    #                                             "data/embeddings/wiki-news-300d-1M.vec", test_size=0.1,
+    #                                             "data/embeddings/small_fasttext.txt", test_size=0.1,
     #                                             sents_limit=10000, rare_word_threshold=0)
                                                 
     # text_processor = TextProcessor("data/APRC/APRC_small_mock.txt", test_size=0.1, sents_limit=500)
@@ -54,13 +54,13 @@ def main():
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,
                       evaluation_dataset=eval_dataset,
-                      batch_size=32,
+                      batch_size=50,
                       opt="ADAM",
-                      learning_rate=0.001,
-                      momentum=0,
-                      epoch_count=200,
-                      acc_topk=2,
-                      print_interval=5,
+                      learning_rate=0.01,
+                      momentum=0.9,
+                      epoch_count=100,
+                      acc_topk=10,
+                      print_interval=20,
                       word_weights = text_processor.word_weights,
                       to_cuda=to_cuda)
     trainer.run()
