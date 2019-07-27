@@ -67,7 +67,7 @@ class CNP(nn.Module):
         x = self.concat_repr_to_target(representations, emb_target)
         predicted_embeddings = self.decoder(x)
 
-        if self.embedding_matrix:
+        if self.embedding_matrix is not None:
             predicted_embeddings = torch.matmul(predicted_embeddings, self.embedding_matrix)
         return predicted_embeddings
 
