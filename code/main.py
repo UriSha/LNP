@@ -15,8 +15,8 @@ def main():
     # text_processor = TextProcessorNonContextual("data/APRC/APRC_new1.txt",
     #                                             "data/embeddings/wiki-news-300d-1M.vec", test_size=0.1, mask_ratio=mask_ratio,
     #                                             sents_limit=10000, rare_word_threshold=1, use_weight_loss=True)
-    text_processor = TextProcessorNonContextual("data/APRC/APRC_small_mock.txt",
-                                                "data/embeddings/small_fasttext.txt", test_size=0.1, mask_ratio=mask_ratio,
+    text_processor = TextProcessorNonContextual("../data/APRC/APRC_small_mock.txt",
+                                                "../data/embeddings/small_fasttext.txt", test_size=0.1, mask_ratio=mask_ratio,
                                                 sents_limit=10000, rare_word_threshold=0, use_weight_loss=use_weight_loss)
                                                 
     # text_processor = TextProcessor("data/APRC/APRC_small_mock.txt", test_size=0.1, sents_limit=500)
