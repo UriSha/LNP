@@ -177,7 +177,7 @@ def main():
                       acc_topk=args.topk,
                       print_interval = args.print_interval,
                       word_weights = text_processor.word_weights,
-                      use_weight_loss = use_weight_loss,
+                      use_weight_loss = args.use_weight_loss,
                       to_cuda=args.to_cuda)
     print("Start training")
     trainer.run()
