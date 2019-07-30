@@ -8,7 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 
 
 class Trainer():
-    def __init__(self, model, training_dataset, evaluation_dataset, batch_size, opt, learning_rate, momentum, epoch_count, acc_topk, print_interval, word_weights, to_cuda):
+    def __init__(self, model, training_dataset, evaluation_dataset, batch_size, opt, learning_rate, momentum, epoch_count, acc_topk, print_interval, word_weights, use_weight_loss, to_cuda):
         self.model = model
         self.training_dataset = training_dataset
         self.evaluation_dataset = evaluation_dataset
@@ -22,6 +22,7 @@ class Trainer():
         self.last_print_train = time.time()
         self.last_print_eval = time.time()
         self.print_interval = print_interval
+        self.use_weight_loss = use_weight_loss
         self.word_weights = word_weights
         if self.to_cuda:
             self.word_weights = self.word_weights.cuda()
@@ -154,7 +155,10 @@ class Trainer():
 
 
     def run(self):
-        loss_function = nn.CrossEntropyLoss(weight=self.word_weights, ignore_index=-1)  # padded outputs are ignored
+        if self.use_weight_loss:
+            loss_function = nn.CrossEntropyLoss(weight=self.word_weights, ignore_index=-1)  # padded outputs are ignored
+        else:
+            loss_function = nn.CrossEntropyLoss(ignore_index=-1)
         if self.opt == "SGD":
             nestov = False
             if self.momentum > 0:
