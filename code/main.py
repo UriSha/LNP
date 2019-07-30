@@ -8,6 +8,7 @@ from training import Trainer
 
 def main():
     to_cuda = False
+    attn = True
     mask_ratio = 0.1
     use_weight_loss = False
     use_weight_matrix = True
@@ -54,6 +55,7 @@ def main():
                 padding_idx = text_processor.pad_index,
                 use_weight_matrix = use_weight_matrix,
                 dropout=0,
+                attn=attn,
                 use_pos_embedding=use_pos_embedding,
                 to_cuda=to_cuda)
     trainer = Trainer(model=model,
