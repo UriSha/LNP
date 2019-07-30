@@ -7,7 +7,8 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
         self.fcs = []
         self.dps = []
-        inp = context_size + target_size
+        # inp = context_size + target_size
+        inp = context_size
         self.dropout = nn.Dropout(dropout)
         for hidden_layer in hidden_layers:
             self.fcs.append(nn.Linear(inp, hidden_layer))

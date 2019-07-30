@@ -7,6 +7,7 @@ from sklearn.preprocessing import normalize
 from model.aggregator import AttentionAggregator, AverageAggregator
 from model.decoder import Decoder
 from model.self_attention_encoder import SelfAttentionEncoderLayer
+from model.cross_attention_aggregator import CrossAttentionAggregator
 
 
 class CNP(nn.Module):
@@ -24,9 +25,10 @@ class CNP(nn.Module):
                                                  heads=2,
                                                  dropout=dropout,
                                                  to_cuda=to_cuda)
+        self.attn = attn
         if attn:
-            # cross-attention
-            self.aggregator = AttentionAggregator(hidden_repr, to_cuda)
+            # self.aggregator = AttentionAggregator(hidden_repr, to_cuda)
+            self.aggregator = CrossAttentionAggregator(embedding_size, 1, dropout, to_cuda)
         else:
             self.aggregator = AverageAggregator(hidden_repr, to_cuda)
 
@@ -34,7 +36,7 @@ class CNP(nn.Module):
             output_size = emb_weight.shape[0] - 1
         else:
             output_size = emb_weight.shape[1]
-        self.decoder = Decoder(hidden_repr, pos_embedding_size, dec_hidden_layers, output_size, dropout, to_cuda)
+        self.decoder = Decoder(embedding_size, pos_embedding_size, dec_hidden_layers, output_size, dropout, to_cuda)
 
         self.max_target_size = max_target_size
         self.max_seq_len = max_seq_len
@@ -69,17 +71,24 @@ class CNP(nn.Module):
             pos_embeddings = self.pos_embeddings(context_pos)
         else:
             pos_embeddings = context_pos.unsqueeze(dim=2).float()
-        context = torch.cat((sent_embeddings, pos_embeddings), dim=2)
-        # context = sent_embeddings + pos_embeddings
+        # context = torch.cat((sent_embeddings, pos_embeddings), dim=2)
+        context = sent_embeddings + pos_embeddings
 
         # context = torch.cat((context, context_pos.unsqueeze(dim=2)), dim=2)
         encodings = self.encoder(context, context_mask)
-        representations = self.aggregator(encodings, context_mask)
 
         if self.use_pos_embedding:
             emb_target = self.pos_embeddings(target)
         else:
             emb_target = target.unsqueeze(dim=2).float()
+
+
+        if self.attn:
+            representations = self.aggregator(pos_embeddings, emb_target, encodings, context_mask)
+        else:
+            representations = self.aggregator(encodings, context_mask)
+
+
         x = self.concat_repr_to_target(representations, emb_target)
         predicted_embeddings = self.decoder(x)
 

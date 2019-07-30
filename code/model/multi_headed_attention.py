@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self, embed_size, num_heads, dropout=0.1):
+    def __init__(self, embed_size, num_heads, dropout=0.1, to_cuda=False):
         super().__init__()
 
         self.embed_size = embed_size
@@ -19,6 +19,13 @@ class MultiHeadAttention(nn.Module):
         self.k_linear = nn.Linear(embed_size, embed_size)
         self.dropout = nn.Dropout(dropout)
         self.out = nn.Linear(embed_size, embed_size)
+
+        if to_cuda:
+            self.q_linear = self.q_linear.cuda()
+            self.v_linear = self.v_linear.cuda()
+            self.k_linear = self.k_linear.cuda()
+            self.dropout = self.dropout.cuda()
+            self.out = self.out.cuda()
 
     def forward(self, q, k, v, context_mask=None):
         bs = q.size(0)

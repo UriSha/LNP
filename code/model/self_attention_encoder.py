@@ -1,13 +1,16 @@
 import torch.nn as nn
+import torch.nn.functional as F
 
-from multi_headed_attention import MultiHeadAttention
-from norm import Norm
+from model.multi_headed_attention import MultiHeadAttention
+from model.norm import Norm
 
 
 # build an encoder layer with one multi-head attention layer and one feed-forward layer
 class SelfAttentionEncoderLayer(nn.Module):
-    def __init__(self, embed_size, heads, dropout, to_cuda):
+    def __init__(self, context_size, target_size, heads, dropout, to_cuda):
         super().__init__()
+        # embed_size = context_size + target_size
+        embed_size = context_size
         self.norm_1 = Norm(embed_size)
         self.norm_2 = Norm(embed_size)
 
