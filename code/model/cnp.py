@@ -6,8 +6,7 @@ from sklearn.preprocessing import normalize
 
 from model.aggregator import AttentionAggregator, AverageAggregator
 from model.decoder import Decoder
-from model.encoder import Encoder
-from model.self_attention_encoder import SelfAttentionEncoder
+from model.self_attention_encoder import SelfAttentionEncoderLayer
 
 
 class CNP(nn.Module):
@@ -16,10 +15,10 @@ class CNP(nn.Module):
                  id2w, emb_weight, padding_idx, max_seq_len, dropout=0.1, attn=False, to_cuda=False):
         super(CNP, self).__init__()
         # self.encoder = Encoder(embedding_size * 2, enc_hidden_layers, hidden_repr, dropout, to_cuda)
-        self.encoder = SelfAttentionEncoder(embed_size=embedding_size * 2,
-                                            heads=2,
-                                            dropout=dropout,
-                                            to_cuda=to_cuda)
+        self.encoder = SelfAttentionEncoderLayer(embed_size=embedding_size * 2,
+                                                 heads=2,
+                                                 dropout=dropout,
+                                                 to_cuda=to_cuda)
         if attn:
             # cross-attention
             self.aggregator = AttentionAggregator(hidden_repr, to_cuda)
