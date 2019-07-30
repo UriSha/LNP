@@ -14,7 +14,7 @@ class SelfAttentionEncoderLayer(nn.Module):
         self.norm_1 = Norm(embed_size)
         self.norm_2 = Norm(embed_size)
 
-        self.self_attn = MultiHeadAttention(embed_size=embed_size, num_heads=heads, to_cuda)
+        self.self_attn = MultiHeadAttention(embed_size=embed_size, num_heads=heads, to_cuda=to_cuda)
         self.ff = FeedForward(embed_size=embed_size, dropout=dropout)
 
         self.dropout_1 = nn.Dropout(dropout)
