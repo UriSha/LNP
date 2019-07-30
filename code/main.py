@@ -1,5 +1,3 @@
-from data_processing.dataset_consistent import DatasetConsistent
-from data_processing.text_processors.text_processor import TextProcessor
 from data_processing.dataset_non_contextual import DatasetNonContextual
 from data_processing.text_processors.text_processor_non_contextual import TextProcessorNonContextual
 from model.cnp import CNP
@@ -24,9 +22,11 @@ def main():
     # text_processor = TextProcessor("data/APRC/APRC_small_mock.txt", test_size=0.1, sents_limit=500)
     # text_processor = TextProcessor("data/APRC/APRC_small_mock.txt", test_size=0.05, sents_limit=5)
     train_dataset = DatasetNonContextual(text_processor.train_sents, text_processor.w2id, text_processor.id2w,
-                                text_processor.max_seq_len, text_processor.max_masked_size, mask_ratio=mask_ratio, to_cuda=to_cuda)
+                                         text_processor.max_seq_len, text_processor.max_masked_size,
+                                         mask_ratio=mask_ratio, to_cuda=to_cuda)
     eval_dataset = DatasetNonContextual(text_processor.eval_sents, text_processor.w2id, text_processor.id2w,
-                                text_processor.max_seq_len, text_processor.max_masked_size, mask_ratio=mask_ratio, to_cuda=to_cuda)
+                                        text_processor.max_seq_len, text_processor.max_masked_size,
+                                        mask_ratio=mask_ratio, to_cuda=to_cuda)
     # train_dataset = DatasetConsistent(text_as_list=text_processor.train_sents,
     #                                   tokenizer=text_processor.tokenizer,
     #                                   w2id=text_processor.w2id,
