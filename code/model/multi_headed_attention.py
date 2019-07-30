@@ -10,6 +10,8 @@ class MultiHeadAttention(nn.Module):
     def __init__(self, embed_size, num_heads, dropout=0.1, to_cuda=False):
         super().__init__()
 
+        self.to_cuda = to_cuda
+
         self.embed_size = embed_size
         self.d_k = embed_size // num_heads
         self.heads = num_heads
@@ -61,8 +63,8 @@ class MultiHeadAttention(nn.Module):
             adjusted_context_mask = context_mask.unsqueeze(1)
             adjusted_context_mask = adjusted_context_mask.unsqueeze(2)
 
-            adjusted_context_mask = MultiHeadAttention.tensor_tile(adjusted_context_mask, 1, self.heads)
-            adjusted_context_mask = MultiHeadAttention.tensor_tile(adjusted_context_mask, 2, adjusted_context_mask.size(-1))
+            adjusted_context_mask = MultiHeadAttention.tensor_tile(adjusted_context_mask, 1, self.heads, self.to_cuda)
+            adjusted_context_mask = MultiHeadAttention.tensor_tile(adjusted_context_mask, 2, adjusted_context_mask.size(-1), self.to_cuda)
 
             masked_scores = scores.masked_fill(adjusted_context_mask == 1, -1e9)
 
@@ -78,10 +80,12 @@ class MultiHeadAttention(nn.Module):
         return res
 
     @staticmethod
-    def tensor_tile(input_tensor, dim, n_tile):
+    def tensor_tile(input_tensor, dim, n_tile, to_cuda):
         init_dim = input_tensor.size(dim)
         repeat_idx = [1] * input_tensor.dim()
         repeat_idx[dim] = n_tile
         input_tensor = input_tensor.repeat(*(repeat_idx))
         order_index = torch.LongTensor(np.concatenate([init_dim * np.arange(n_tile) + i for i in range(init_dim)]))
+        if to_cuda:
+            order_index = order_index.cuda()
         return torch.index_select(input_tensor, dim, order_index)
