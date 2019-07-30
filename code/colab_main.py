@@ -90,7 +90,7 @@ def parse_arguments():
                         type=bool)
     parser.add_argument('-uwl', '--use_weight_loss',
                         help="Whether to use weights for unbalanced data (default: False)",
-                        default=True,
+                        default=False,
                         type=bool)
     parser.add_argument('-upe', '--use_pos_embedding',
                         help="Whether to use embeddings for positions (default: True)",
