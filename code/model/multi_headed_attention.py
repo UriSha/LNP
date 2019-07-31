@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
 class MultiHeadAttention(nn.Module):
     def __init__(self, embed_size, num_heads, dropout=0.1, to_cuda=False):
         super().__init__()
@@ -58,26 +57,38 @@ class MultiHeadAttention(nn.Module):
 
         scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(d_k)
 
-        masked_scores = None
         if context_mask is not None:
-            adjusted_context_mask = context_mask.unsqueeze(1)
-            adjusted_context_mask = adjusted_context_mask.unsqueeze(2)
-
-            adjusted_context_mask = MultiHeadAttention.tensor_tile(adjusted_context_mask, 1, self.heads, self.to_cuda)
-            adjusted_context_mask = MultiHeadAttention.tensor_tile(adjusted_context_mask, 2, adjusted_context_mask.size(-1), self.to_cuda)
+            adjusted_context_mask = self.create_adjusted_context_mask(context_mask)
 
             masked_scores = scores.masked_fill(adjusted_context_mask == 1, -1e9)
 
-        if masked_scores is None:
-            soft_max_scores = F.softmax(scores, dim=-1)
-        else:
             soft_max_scores = F.softmax(masked_scores, dim=-1)
+            oposite_mask = torch.tensor(1 - adjusted_context_mask).float()
+            soft_max_scores = torch.min(soft_max_scores, oposite_mask)
+            x = 7
+            g = x + 5
+
+        else:
+            soft_max_scores = F.softmax(scores, dim=-1)
 
         if dropout is not None:
             soft_max_scores = dropout(soft_max_scores)
 
         res = torch.matmul(soft_max_scores, v)
         return res
+
+    def create_adjusted_context_mask(self, context_mask):
+        mask_first_squeeze = context_mask.unsqueeze(1)
+        mask_second_squeeze = mask_first_squeeze.unsqueeze(2)
+
+        mask_first_duplicate = mask_second_squeeze.repeat_interleave(self.heads, dim=1)
+        mask_second_duplicate = mask_first_duplicate.repeat_interleave(mask_first_duplicate.size(-1), dim=2)
+
+        # adjusted_context_mask = MultiHeadAttention.tensor_tile(adjusted_context_mask, 1, self.heads, self.to_cuda)
+        # adjusted_context_mask = MultiHeadAttention.tensor_tile(adjusted_context_mask, 2, adjusted_context_mask.size(-1), self.to_cuda)
+
+        adjusted_context_mask = torch.max(mask_second_duplicate, mask_second_duplicate.transpose(-2,-1))
+        return adjusted_context_mask
 
     @staticmethod
     def tensor_tile(input_tensor, dim, n_tile, to_cuda):

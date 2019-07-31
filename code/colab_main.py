@@ -79,7 +79,7 @@ def parse_arguments():
     parser.add_argument('-dp', '--dropout',
                         help="dropout (default: 0.1)",
                         default=0.1,
-                        type=int)
+                        type=float)
     parser.add_argument('-pi', '--print_interval',
                         help="print interval (default: 60sec)",
                         default=60,
