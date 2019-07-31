@@ -65,8 +65,8 @@ class MultiHeadAttention(nn.Module):
             masked_scores = scores.masked_fill(adjusted_context_mask == 1, -1e9)
 
             soft_max_scores = F.softmax(masked_scores, dim=-1)
-            oposite_mask = (1 - adjusted_context_mask).clone().detach().float()
-            soft_max_scores = torch.min(soft_max_scores, oposite_mask)
+            # oposite_mask = (1 - adjusted_context_mask).clone().detach().float()
+            # soft_max_scores = torch.min(soft_max_scores, oposite_mask)
         else:
             soft_max_scores = F.softmax(scores, dim=-1)
 
