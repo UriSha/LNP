@@ -9,9 +9,9 @@ def main():
     to_cuda = False
     attn = True
     mask_ratio = 0.4
-    topk = 100
+    topk = 1
     use_weight_loss = False
-    use_weight_matrix = True
+    use_weight_matrix = False
     use_pos_embedding = True
     cur_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -33,7 +33,7 @@ def main():
     model = CNP(embedding_size=text_processor.vec_size,
                 hidden_repr=1000,
                 enc_hidden_layers=[600, 600],
-                dec_hidden_layers=[1000, 500, 300],
+                dec_hidden_layers=[200, 100, 50],
                 max_target_size=text_processor.max_masked_size,
                 w2id = text_processor.w2id,
                 id2w = text_processor.id2w,
@@ -48,11 +48,11 @@ def main():
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,
                       evaluation_dataset=eval_dataset,
-                      batch_size=50,
+                      batch_size=16,
                       opt="ADAM",
                       learning_rate=0.001,
                       momentum=0.9,
-                      epoch_count=200,
+                      epoch_count=2000,
                       acc_topk=topk,
                       print_interval=1,
                       word_weights = text_processor.word_weights,
