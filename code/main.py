@@ -7,7 +7,7 @@ from training import Trainer
 def main():
     to_cuda = False
     attn = True
-    mask_ratio = 0.1
+    mask_ratio = 0.25
     use_weight_loss = False
     use_weight_matrix = True
     use_pos_embedding = True
@@ -69,6 +69,7 @@ def main():
                       acc_topk=1,
                       print_interval=1,
                       word_weights = text_processor.word_weights,
+                      use_weight_loss = use_weight_loss,
                       to_cuda=to_cuda)
     trainer.run()
 
