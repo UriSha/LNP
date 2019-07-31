@@ -8,7 +8,8 @@ from training import Trainer
 def main():
     to_cuda = False
     attn = True
-    mask_ratio = 0.25
+    mask_ratio = 0.4
+    topk = 100
     use_weight_loss = False
     use_weight_matrix = True
     use_pos_embedding = True
@@ -52,7 +53,7 @@ def main():
                       learning_rate=0.001,
                       momentum=0.9,
                       epoch_count=200,
-                      acc_topk=1,
+                      acc_topk=topk,
                       print_interval=1,
                       word_weights = text_processor.word_weights,
                       use_weight_loss = use_weight_loss,
