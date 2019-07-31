@@ -58,12 +58,14 @@ class MultiHeadAttention(nn.Module):
         scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(d_k)
 
         if context_mask is not None:
-            adjusted_context_mask = self.create_adjusted_context_mask(context_mask)
+            head_count = q.shape[1]
+            word_count = q.shape[2]
+            adjusted_context_mask = self.create_adjusted_context_mask(context_mask, head_count, word_count)
 
             masked_scores = scores.masked_fill(adjusted_context_mask == 1, -1e9)
 
             soft_max_scores = F.softmax(masked_scores, dim=-1)
-            oposite_mask = torch.tensor(1 - adjusted_context_mask).float()
+            oposite_mask = (1 - adjusted_context_mask).clone().detach().float()
             soft_max_scores = torch.min(soft_max_scores, oposite_mask)
             x = 7
             g = x + 5
@@ -77,17 +79,11 @@ class MultiHeadAttention(nn.Module):
         res = torch.matmul(soft_max_scores, v)
         return res
 
-    def create_adjusted_context_mask(self, context_mask):
-        mask_first_squeeze = context_mask.unsqueeze(1)
-        mask_second_squeeze = mask_first_squeeze.unsqueeze(2)
-
-        mask_first_duplicate = mask_second_squeeze.repeat_interleave(self.heads, dim=1)
-        mask_second_duplicate = mask_first_duplicate.repeat_interleave(mask_first_duplicate.size(-1), dim=2)
-
-        # adjusted_context_mask = MultiHeadAttention.tensor_tile(adjusted_context_mask, 1, self.heads, self.to_cuda)
-        # adjusted_context_mask = MultiHeadAttention.tensor_tile(adjusted_context_mask, 2, adjusted_context_mask.size(-1), self.to_cuda)
-
-        adjusted_context_mask = torch.max(mask_second_duplicate, mask_second_duplicate.transpose(-2,-1))
+    def create_adjusted_context_mask(self, context_mask, head_count, word_count):
+        adjusted_context_mask = context_mask.unsqueeze(dim=1)
+        adjusted_context_mask = adjusted_context_mask.repeat(1, head_count, 1)
+        adjusted_context_mask = adjusted_context_mask.unsqueeze(dim=2)
+        adjusted_context_mask = adjusted_context_mask.repeat(1, 1, word_count, 1)
         return adjusted_context_mask
 
     @staticmethod

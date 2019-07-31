@@ -18,7 +18,6 @@ class AbstractTextProcessor:
         self.train_sents, self.eval_sents = train_test_split(self.sents, test_size=test_size)
 
     def read_data(self, path, sents_limit):
-        import os; print(os.getcwd())
         with open(path, "r") as f:
             if sents_limit:
                 i = 0

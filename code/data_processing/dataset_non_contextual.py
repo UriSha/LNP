@@ -58,7 +58,7 @@ class DatasetNonContextual(Dataset):
         sent = self.data[index].copy()
 
         # print("sent: ", sent)
-        sent, masked_indices, target_xs, target_ys = self.mask_sent(sent)
+        sent, masked_indices, target_xs, target_ys, target_xs_mask = self.mask_sent(sent)
         # print("masked_sent: ", sent)
         masked_indices_set = set(masked_indices)
         anti_mask_indices = [i for i in range(len(sent)) if i not in masked_indices_set]
@@ -76,7 +76,7 @@ class DatasetNonContextual(Dataset):
         anti_mask_indices += [padding_idx] * num_of_paddings
         anti_mask_indices = torch.LongTensor(anti_mask_indices)
 
-        self.mem[index] = padded_sent_ids_tensor, anti_mask_indices, paddings_mask, target_xs, target_ys
+        self.mem[index] = padded_sent_ids_tensor, anti_mask_indices, paddings_mask, target_xs, target_xs_mask, target_ys
         return self.mem[index]
 
     # def generate_data_instance_fron_sentence(self, original_sent, tokenizer, bert_pretrained):
@@ -176,14 +176,16 @@ class DatasetNonContextual(Dataset):
         target_xs.extend(target_xs_padding)
         target_ys.extend(target_ys_padding)
 
+        target_xs_mask = [1 if p == self.max_seq_len else 0 for p in target_xs]
         target_xs = torch.LongTensor(target_xs)
+        target_xs_mask = torch.ByteTensor(target_xs_mask)
         target_ys = torch.tensor(target_ys)
 
         if self.to_cuda:
             target_xs = target_xs.cuda()
             target_ys = target_ys.cuda()
 
-        return sent, indices_to_mask, target_xs, target_ys
+        return sent, indices_to_mask, target_xs, target_ys, target_xs_mask
 
         # def remove_masked_embeddings(self, sent_embedings, indices):
         #     return sent_embedings[:, indices]

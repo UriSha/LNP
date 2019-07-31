@@ -1,3 +1,4 @@
+import os
 from data_processing.dataset_non_contextual import DatasetNonContextual
 from data_processing.text_processors.text_processor_non_contextual import TextProcessorNonContextual
 from model.cnp import CNP
@@ -11,36 +12,21 @@ def main():
     use_weight_loss = False
     use_weight_matrix = True
     use_pos_embedding = True
+    cur_dir = os.path.dirname(os.path.realpath(__file__))
 
-    # text_processor = TextProcessorNonContextual("data/APRC/APRC_new1.txt",
-    #                                             "data/embeddings/wiki-news-300d-1M.vec", test_size=0.1, mask_ratio=mask_ratio,
+    # text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_new1.txt"),
+    #                                             os.path.join(cur_dir, "../data/embeddings/wiki-news-300d-1M.vec"), test_size=0.1, mask_ratio=mask_ratio,
     #                                             sents_limit=10000, rare_word_threshold=1, use_weight_loss=True)
-    text_processor = TextProcessorNonContextual("../data/APRC/APRC_small_mock.txt",
-                                                "../data/embeddings/small_fasttext.txt", test_size=0.1, mask_ratio=mask_ratio,
+    text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_small_mock.txt"),
+                                                os.path.join(cur_dir, "../data/embeddings/small_fasttext.txt"), test_size=0.1, mask_ratio=mask_ratio,
                                                 sents_limit=10000, rare_word_threshold=0, use_weight_loss=use_weight_loss)
                                                 
-    # text_processor = TextProcessor("data/APRC/APRC_small_mock.txt", test_size=0.1, sents_limit=500)
-    # text_processor = TextProcessor("data/APRC/APRC_small_mock.txt", test_size=0.05, sents_limit=5)
     train_dataset = DatasetNonContextual(text_processor.train_sents, text_processor.w2id, text_processor.id2w,
                                          text_processor.max_seq_len, text_processor.max_masked_size,
                                          mask_ratio=mask_ratio, to_cuda=to_cuda)
     eval_dataset = DatasetNonContextual(text_processor.eval_sents, text_processor.w2id, text_processor.id2w,
                                         text_processor.max_seq_len, text_processor.max_masked_size,
                                         mask_ratio=mask_ratio, to_cuda=to_cuda)
-    # train_dataset = DatasetConsistent(text_as_list=text_processor.train_sents,
-    #                                   tokenizer=text_processor.tokenizer,
-    #                                   w2id=text_processor.w2id,
-    #                                   max_seq_len=text_processor.max_seq_len,
-    #                                   max_masked_size=text_processor.max_masked_size,
-    #                                   mask_ratio=mask_ratio,
-    #                                   to_cuda=to_cuda)
-    # eval_dataset = DatasetConsistent(text_as_list=text_processor.eval_sents,
-    #                                  tokenizer=text_processor.tokenizer,
-    #                                  w2id=text_processor.w2id,
-    #                                  max_seq_len=text_processor.max_seq_len,
-    #                                  max_masked_size=text_processor.max_masked_size,
-    #                                  mask_ratio=mask_ratio,
-    #                                  to_cuda=to_cuda)
 
     print("Vocab size: ", len(text_processor.id2w))
     model = CNP(embedding_size=text_processor.vec_size,

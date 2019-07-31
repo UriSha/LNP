@@ -17,8 +17,8 @@ class CrossAttentionAggregator(nn.Module):
                                                  to_cuda=to_cuda)
         self.aggregator = AttentionAggregator(embed_size, to_cuda)
 
-    def forward(self, k, q, r, mask):
+    def forward(self, k, q, r, context_mask, target_mask):
 
-        rep = self.multihead_attention(q, k, r, mask)
-        rep = self.aggregator(rep, mask)
+        rep = self.multihead_attention(q, k, r, context_mask)
+        rep = self.aggregator(rep, target_mask)
         return rep
