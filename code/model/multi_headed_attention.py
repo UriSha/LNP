@@ -80,6 +80,17 @@ class MultiHeadAttention(nn.Module):
         return res
 
     def create_adjusted_context_mask(self, context_mask, head_count, word_count):
+        # mask_first_squeeze = context_mask.unsqueeze(1)
+        # mask_second_squeeze = mask_first_squeeze.unsqueeze(2)
+
+        # mask_first_duplicate = mask_second_squeeze.repeat_interleave(self.heads, dim=1)
+        # mask_second_duplicate = mask_first_duplicate.repeat_interleave(mask_first_duplicate.size(-1), dim=2)
+
+        # # adjusted_context_mask = MultiHeadAttention.tensor_tile(adjusted_context_mask, 1, self.heads, self.to_cuda)
+        # # adjusted_context_mask = MultiHeadAttention.tensor_tile(adjusted_context_mask, 2, adjusted_context_mask.size(-1), self.to_cuda)
+
+        # adjusted_context_mask = torch.max(mask_second_duplicate, mask_second_duplicate.transpose(-2,-1))
+
         adjusted_context_mask = context_mask.unsqueeze(dim=1)
         adjusted_context_mask = adjusted_context_mask.repeat(1, head_count, 1)
         adjusted_context_mask = adjusted_context_mask.unsqueeze(dim=2)
