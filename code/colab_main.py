@@ -100,6 +100,10 @@ def parse_arguments():
                         help="Whether to concat sentence and position embeddings (default: False)",
                         default=False,
                         type=bool)
+    parser.add_argument('-attn', '--use_attention',
+                        help="Whether to use attention (default: True)",
+                        default=True,
+                        type=bool)
     return parser.parse_args()
 
 
@@ -166,6 +170,7 @@ def main():
                 use_weight_matrix = args.use_weight_matrix,
                 dropout=args.dropout,
                 use_pos_embedding = args.use_pos_embedding,
+                attn = args.use_attention,
                 concat_embeddings=args.concat_embeddings,
                 to_cuda=args.to_cuda)
 

@@ -9,6 +9,7 @@ def main():
     to_cuda = False
     attn = False
     mask_ratio = 0.25
+    test_size = 0.1
     topk = 1
     use_weight_loss = False
     use_weight_matrix = False
@@ -17,10 +18,10 @@ def main():
     cur_dir = os.path.dirname(os.path.realpath(__file__))
 
     # text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_new1.txt"),
-    #                                             os.path.join(cur_dir, "../data/embeddings/wiki-news-300d-1M.vec"), test_size=0.1, mask_ratio=mask_ratio,
+    #                                             os.path.join(cur_dir, "../data/embeddings/wiki-news-300d-1M.vec"), test_size=test_size, mask_ratio=mask_ratio,
     #                                             sents_limit=10000, rare_word_threshold=1, use_weight_loss=True)
     text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_small_mock.txt"),
-                                                os.path.join(cur_dir, "../data/embeddings/small_fasttext.txt"), test_size=0.1, mask_ratio=mask_ratio,
+                                                os.path.join(cur_dir, "../data/embeddings/small_fasttext.txt"), test_size=test_size, mask_ratio=mask_ratio,
                                                 sents_limit=10000, rare_word_threshold=0, use_weight_loss=use_weight_loss)
                                                 
     train_dataset = DatasetNonContextual(text_processor.train_sents, text_processor.w2id, text_processor.id2w,
