@@ -16,6 +16,8 @@ class CNP(nn.Module):
         super(CNP, self).__init__()
         self.use_pos_embedding = use_pos_embedding
         self.attn = attn
+        if attn:
+            concat_embeddings = False
         self.concat_embeddings = concat_embeddings
 
         if use_pos_embedding:
