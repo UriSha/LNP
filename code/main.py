@@ -7,12 +7,13 @@ from training import Trainer
 
 def main():
     to_cuda = False
-    attn = True
-    mask_ratio = 0.4
+    attn = False
+    mask_ratio = 0.25
     topk = 1
     use_weight_loss = False
     use_weight_matrix = False
     use_pos_embedding = True
+    concat_embeddings = True
     cur_dir = os.path.dirname(os.path.realpath(__file__))
 
     # text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_new1.txt"),
@@ -44,6 +45,7 @@ def main():
                 dropout=0,
                 attn=attn,
                 use_pos_embedding=use_pos_embedding,
+                concat_embeddings=concat_embeddings,
                 to_cuda=to_cuda)
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,

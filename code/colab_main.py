@@ -96,6 +96,10 @@ def parse_arguments():
                         help="Whether to use embeddings for positions (default: True)",
                         default=True,
                         type=bool)
+    parser.add_argument('-ce', '--concat_embeddings',
+                        help="Whether to concat sentence and position embeddings (default: False)",
+                        default=False,
+                        type=bool)
     return parser.parse_args()
 
 
@@ -162,6 +166,7 @@ def main():
                 use_weight_matrix = args.use_weight_matrix,
                 dropout=args.dropout,
                 use_pos_embedding = args.use_pos_embedding,
+                concat_embeddings=args.concat_embeddings,
                 to_cuda=args.to_cuda)
 
     print("Model has {} parameters".format(sum(p.numel() for p in model.parameters() if p.requires_grad)))

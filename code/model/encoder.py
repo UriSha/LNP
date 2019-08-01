@@ -3,12 +3,11 @@ import torch.nn.functional as F
 
 
 class Encoder(nn.Module):
-    def __init__(self, context_size, target_size, hidden_layers, output_size, dropout, to_cuda=False):
+    def __init__(self, input_size, hidden_layers, output_size, dropout, to_cuda=False):
         super(Encoder, self).__init__()
         self.fcs = []
         self.dps = []
-        # inp = context_size + target_size
-        inp = context_size
+        inp = input_size
         self.dropout = nn.Dropout(dropout)
         for hidden_layer in hidden_layers:
             self.fcs.append(nn.Linear(inp, hidden_layer))
@@ -22,7 +21,7 @@ class Encoder(nn.Module):
                 self.dps[i] = self.dps[i].cuda()
             self.output_fc = self.output_fc.cuda()
 
-    def forward(self, x):
+    def forward(self, x, x_mask):
         for i in range(len(self.fcs)):
             x = self.fcs[i](x)
             x = F.relu(x)

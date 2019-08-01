@@ -7,10 +7,9 @@ from model.norm import Norm
 
 # build an encoder layer with one multi-head attention layer and one feed-forward layer
 class SelfAttentionEncoderLayer(nn.Module):
-    def __init__(self, context_size, target_size, heads, dropout, to_cuda):
+    def __init__(self, input_size, heads, dropout, to_cuda):
         super().__init__()
-        # embed_size = context_size + target_size
-        embed_size = context_size
+        embed_size = input_size
         self.norm_1 = Norm(embed_size)
         self.norm_2 = Norm(embed_size)
 
