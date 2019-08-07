@@ -115,11 +115,12 @@ class TextProcessorNonContextual(AbstractTextProcessor):
         # new_w2id = sorted_w2id
         # word_weights = torch.stack(sorted_weights)
         weights = []
-        for i in range(len(id_freq)):
+        for i in range(1, len(id_freq)):
             freq = id_freq[i]
             if freq == 0:
                 print("invalid frequency")
-            weights.append(n_samples / (n_classes * freq))
+            weight = n_samples / (n_classes * freq)
+            weights.append(torch.tensor(weight).float())
         word_weights = torch.stack(weights)
 
         print(
