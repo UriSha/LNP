@@ -55,15 +55,13 @@ class CNP(nn.Module):
         self.w2id = w2id
         self.id2w = id2w
 
-        self.embedding = nn.Embedding.from_pretrained(
-            emb_weight, padding_idx=padding_idx)
+        self.embedding = nn.Embedding.from_pretrained(emb_weight, padding_idx=padding_idx)
 
         self.embedding_matrix = None
         if use_weight_matrix:
             embedding_matrix = emb_weight[1:].permute([1, 0])  # skip padding
             # normalize matrix by columns. for rows change to: axis=1
-            self.embedding_matrix = torch.FloatTensor(
-                normalize(embedding_matrix, axis=0, norm='l2'))
+            self.embedding_matrix = torch.FloatTensor(normalize(embedding_matrix, axis=0, norm='l2'))
             self.embedding_matrix.requires_grad = False
 
         pos_embeddings_matrix = self.create_pos_embeddings_matrix(

@@ -110,10 +110,11 @@ class TextProcessorNonContextual(AbstractTextProcessor):
                 weight = 1
             sorted_weights.append(torch.tensor(weight).float())
 
-        embed_list = sorted_embed_list
-        new_id2w = sorted_id2w
-        new_w2id = sorted_w2id
-        word_weights = torch.stack(sorted_weights)
+        # embed_list = sorted_embed_list
+        # new_id2w = sorted_id2w
+        # new_w2id = sorted_w2id
+        # word_weights = torch.stack(sorted_weights)
+        word_weights = None
 
         print(
             'With rare_word_threshold = {rare_word_threshold}, the ratio of rare words (that were removed) is: {ratio}'.format(
