@@ -1,6 +1,5 @@
 import re
 from collections import defaultdict
-
 import torch
 
 from .abstract_text_processor import AbstractTextProcessor
@@ -118,8 +117,10 @@ class TextProcessorNonContextual(AbstractTextProcessor):
         for i in range(1, len(id_freq)+1):
             freq = id_freq[i]
             weight = n_samples / (n_classes * freq)
+            # weight = 1
             weights.append(torch.tensor(weight).float())
         word_weights = torch.stack(weights)
+        word_weights = None
 
         print(
             'With rare_word_threshold = {rare_word_threshold}, the ratio of rare words (that were removed) is: {ratio}'.format(
