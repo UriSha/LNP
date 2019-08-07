@@ -111,6 +111,12 @@ def main():
     print("Starting CNP")
     args = parse_arguments()
 
+    print(f"use_weight_matrix: {args.use_weight_matrix}")
+    print(f"use_weight_loss: {args.use_weight_loss}")
+    print(f"use_pos_embedding: {args.use_pos_embedding}")
+    print(f"concat_embeddings: {args.concat_embeddings}")
+    print(f"use_attention: {args.use_attention}")
+
     print("Init text processor")
     text_processor = TextProcessorNonContextual("data/APRC/{}".format(args.data_file),
                                                 "data/embeddings/wiki-news-300d-1M.vec",
