@@ -20,6 +20,8 @@ def parse_arguments():
                         type=int)
     parser.add_argument('-ds', '--dataset_random_every_time',
                         help="random mask every call for getitem or only at init (default: False)",
+                        nargs='?',
+                        const=False,
                         default=False,
                         type=bool)
     parser.add_argument('-lr', '--learning_rate',
@@ -28,6 +30,8 @@ def parse_arguments():
                         type=float)
     parser.add_argument('-c', '--to_cuda',
                         help="to_cuda (default: True)",
+                        nargs='?',
+                        const=True,
                         default=True,
                         type=bool)
     parser.add_argument('-sc', '--sent_count',
@@ -86,22 +90,32 @@ def parse_arguments():
                         type=int)
     parser.add_argument('-uwm', '--use_weight_matrix',
                         help="Whether to multiply last layer by weight matrix (default: True)",
+                        nargs='?',
+                        const=True,
                         default=True,
                         type=bool)
     parser.add_argument('-uwl', '--use_weight_loss',
                         help="Whether to use weights for unbalanced data (default: False)",
+                        nargs='?',
+                        const=False,
                         default=False,
                         type=bool)
     parser.add_argument('-upe', '--use_pos_embedding',
                         help="Whether to use embeddings for positions (default: True)",
+                        nargs='?',
+                        const=True,
                         default=True,
                         type=bool)
     parser.add_argument('-ce', '--concat_embeddings',
                         help="Whether to concat sentence and position embeddings (default: False)",
+                        nargs='?',
+                        const=False,
                         default=False,
                         type=bool)
     parser.add_argument('-attn', '--use_attention',
                         help="Whether to use attention (default: True)",
+                        nargs='?',
+                        const=True,
                         default=True,
                         type=bool)
     return parser.parse_args()
