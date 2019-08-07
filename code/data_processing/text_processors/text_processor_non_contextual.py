@@ -114,7 +114,13 @@ class TextProcessorNonContextual(AbstractTextProcessor):
         # new_id2w = sorted_id2w
         # new_w2id = sorted_w2id
         # word_weights = torch.stack(sorted_weights)
-        word_weights = None
+        weights = []
+        for i in range(len(id_freq)):
+            freq = id_freq[i]
+            if freq == 0:
+                print("invalid frequency")
+            weights.append(n_samples / (n_classes * freq))
+        word_weights = torch.stack(weights)
 
         print(
             'With rare_word_threshold = {rare_word_threshold}, the ratio of rare words (that were removed) is: {ratio}'.format(
