@@ -9,6 +9,17 @@ from model.cnp import CNP
 from training import Trainer
 
 
+def str2bool(v):
+    if isinstance(v, bool):
+       return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-da', '--data_file',
@@ -21,9 +32,9 @@ def parse_arguments():
     parser.add_argument('-ds', '--dataset_random_every_time',
                         help="random mask every call for getitem or only at init (default: False)",
                         nargs='?',
-                        const=False,
+                        const=True,
                         default=False,
-                        type=bool)
+                        type=str2bool)
     parser.add_argument('-lr', '--learning_rate',
                         help="learning rate (default: .0005)",
                         default=.0005,
@@ -33,7 +44,7 @@ def parse_arguments():
                         nargs='?',
                         const=True,
                         default=True,
-                        type=bool)
+                        type=str2bool)
     parser.add_argument('-sc', '--sent_count',
                         help="sent_count (default: no limit)",
                         default=0,
@@ -93,31 +104,31 @@ def parse_arguments():
                         nargs='?',
                         const=True,
                         default=True,
-                        type=bool)
+                        type=str2bool)
     parser.add_argument('-uwl', '--use_weight_loss',
                         help="Whether to use weights for unbalanced data (default: False)",
                         nargs='?',
-                        const=False,
+                        const=True,
                         default=False,
-                        type=bool)
+                        type=str2bool)
     parser.add_argument('-upe', '--use_pos_embedding',
                         help="Whether to use embeddings for positions (default: True)",
                         nargs='?',
                         const=True,
                         default=True,
-                        type=bool)
+                        type=str2bool)
     parser.add_argument('-ce', '--concat_embeddings',
                         help="Whether to concat sentence and position embeddings (default: False)",
                         nargs='?',
-                        const=False,
+                        const=True,
                         default=False,
-                        type=bool)
+                        type=str2bool)
     parser.add_argument('-attn', '--use_attention',
                         help="Whether to use attention (default: True)",
                         nargs='?',
                         const=True,
                         default=True,
-                        type=bool)
+                        type=str2bool)
     return parser.parse_args()
 
 
