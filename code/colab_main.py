@@ -111,6 +111,7 @@ def main():
     print("Starting CNP")
     args = parse_arguments()
 
+    print(f"dec_layers: {args.dec_layers}")
     print(f"use_weight_matrix: {args.use_weight_matrix}")
     print(f"use_weight_loss: {args.use_weight_loss}")
     print(f"use_pos_embedding: {args.use_pos_embedding}")
