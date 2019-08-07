@@ -25,8 +25,7 @@ class Trainer():
         self.use_weight_loss = use_weight_loss
         self.word_weights = word_weights
         if self.to_cuda:
-            if self.word_weights:
-                self.word_weights = self.word_weights.cuda()
+            self.word_weights = self.word_weights.cuda()
 
 
     def train(self, train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc):
