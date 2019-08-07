@@ -1,4 +1,3 @@
-import os
 from data_processing.dataset_non_contextual import DatasetNonContextual
 from data_processing.text_processors.text_processor_non_contextual import TextProcessorNonContextual
 from model.cnp import CNP
@@ -7,35 +6,47 @@ from training import Trainer
 
 def main():
     to_cuda = False
-    attn = False
-    mask_ratio = 0.25
-    test_size = 0.1
-    topk = 1
+    attn = True
+    mask_ratio = 0.1
     use_weight_loss = False
-    use_weight_matrix = False
+    use_weight_matrix = True
     use_pos_embedding = True
-    concat_embeddings = True
-    cur_dir = os.path.dirname(os.path.realpath(__file__))
 
-    # text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_new1.txt"),
-    #                                             os.path.join(cur_dir, "../data/embeddings/wiki-news-300d-1M.vec"), test_size=test_size, mask_ratio=mask_ratio,
+    # text_processor = TextProcessorNonContextual("data/APRC/APRC_new1.txt",
+    #                                             "data/embeddings/wiki-news-300d-1M.vec", test_size=0.1, mask_ratio=mask_ratio,
     #                                             sents_limit=10000, rare_word_threshold=1, use_weight_loss=True)
-    text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_small_mock.txt"),
-                                                os.path.join(cur_dir, "../data/embeddings/small_fasttext.txt"), test_size=test_size, mask_ratio=mask_ratio,
+    text_processor = TextProcessorNonContextual("../data/APRC/APRC_small_mock.txt",
+                                                "../data/embeddings/small_fasttext.txt", test_size=0.1, mask_ratio=mask_ratio,
                                                 sents_limit=10000, rare_word_threshold=0, use_weight_loss=use_weight_loss)
                                                 
+    # text_processor = TextProcessor("data/APRC/APRC_small_mock.txt", test_size=0.1, sents_limit=500)
+    # text_processor = TextProcessor("data/APRC/APRC_small_mock.txt", test_size=0.05, sents_limit=5)
     train_dataset = DatasetNonContextual(text_processor.train_sents, text_processor.w2id, text_processor.id2w,
                                          text_processor.max_seq_len, text_processor.max_masked_size,
                                          mask_ratio=mask_ratio, to_cuda=to_cuda)
     eval_dataset = DatasetNonContextual(text_processor.eval_sents, text_processor.w2id, text_processor.id2w,
                                         text_processor.max_seq_len, text_processor.max_masked_size,
                                         mask_ratio=mask_ratio, to_cuda=to_cuda)
+    # train_dataset = DatasetConsistent(text_as_list=text_processor.train_sents,
+    #                                   tokenizer=text_processor.tokenizer,
+    #                                   w2id=text_processor.w2id,
+    #                                   max_seq_len=text_processor.max_seq_len,
+    #                                   max_masked_size=text_processor.max_masked_size,
+    #                                   mask_ratio=mask_ratio,
+    #                                   to_cuda=to_cuda)
+    # eval_dataset = DatasetConsistent(text_as_list=text_processor.eval_sents,
+    #                                  tokenizer=text_processor.tokenizer,
+    #                                  w2id=text_processor.w2id,
+    #                                  max_seq_len=text_processor.max_seq_len,
+    #                                  max_masked_size=text_processor.max_masked_size,
+    #                                  mask_ratio=mask_ratio,
+    #                                  to_cuda=to_cuda)
 
     print("Vocab size: ", len(text_processor.id2w))
     model = CNP(embedding_size=text_processor.vec_size,
                 hidden_repr=1000,
                 enc_hidden_layers=[600, 600],
-                dec_hidden_layers=[200, 100, 50],
+                dec_hidden_layers=[1000, 500, 300],
                 max_target_size=text_processor.max_masked_size,
                 w2id = text_processor.w2id,
                 id2w = text_processor.id2w,
@@ -46,20 +57,18 @@ def main():
                 dropout=0,
                 attn=attn,
                 use_pos_embedding=use_pos_embedding,
-                concat_embeddings=concat_embeddings,
                 to_cuda=to_cuda)
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,
                       evaluation_dataset=eval_dataset,
-                      batch_size=16,
+                      batch_size=50,
                       opt="ADAM",
                       learning_rate=0.001,
                       momentum=0.9,
-                      epoch_count=2000,
-                      acc_topk=topk,
+                      epoch_count=200,
+                      acc_topk=1,
                       print_interval=1,
                       word_weights = text_processor.word_weights,
-                      use_weight_loss = use_weight_loss,
                       to_cuda=to_cuda)
     trainer.run()
 
