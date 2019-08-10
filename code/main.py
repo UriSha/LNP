@@ -7,11 +7,11 @@ from training import Trainer
 
 def main():
     to_cuda = False
-    attn = False
+    attn = True
     mask_ratio = 0.25
     test_size = 0.1
     topk = 1
-    use_weight_loss = False
+    use_weight_loss = True
     use_weight_matrix = False
     use_pos_embedding = True
     concat_embeddings = True
