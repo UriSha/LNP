@@ -159,10 +159,8 @@ class Trainer():
 
     def run(self):
         if self.use_weight_loss:
-            print("Using weights for loss")
             loss_function = nn.CrossEntropyLoss(weight=self.word_weights, ignore_index=-1)  # padded outputs are ignored
         else:
-            print("Not using weights")
             loss_function = nn.CrossEntropyLoss(ignore_index=-1)
         if self.opt == "SGD":
             nestov = False
