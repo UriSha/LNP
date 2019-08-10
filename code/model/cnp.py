@@ -40,12 +40,12 @@ class CNP(nn.Module):
             # self.encoder = SelfAttentionEncoderLayer(input_size=input_size, heads=2, dropout=dropout, to_cuda=to_cuda)
             self.encoder = TransformerEncoder(TransformerEncoderLayer(input_size, nhead=nheads, dim_feedforward=enc_hidden_layers[0], dropout=dropout), num_layers=len(enc_hidden_layers))
             self.aggregator = CrossAttentionAggregator(embedding_size, nheads, dropout, to_cuda)
-            self.decoder = Decoder(embedding_size, pos_embedding_size, dec_hidden_layers, output_size, dropout, to_cuda)
+            self.decoder = Decoder(input_size, dec_hidden_layers, output_size, dropout, to_cuda)
         else:
             self.encoder = Encoder(input_size, enc_hidden_layers, hidden_repr, dropout, to_cuda)
             self.aggregator = AttentionAggregator(hidden_repr, to_cuda)
             # self.aggregator = AverageAggregator(hidden_repr, to_cuda)
-            self.decoder = Decoder(hidden_repr, pos_embedding_size, dec_hidden_layers, output_size, dropout, to_cuda)
+            self.decoder = Decoder(input_size, dec_hidden_layers, output_size, dropout, to_cuda)
 
 
         self.max_target_size = max_target_size
@@ -102,11 +102,15 @@ class CNP(nn.Module):
             emb_target = target.unsqueeze(dim=2).float()
 
         if self.attn:
-            representations = self.aggregator(pos_embeddings, emb_target, encodings, context_mask, target_mask)
+            representations = self.aggregator(q=emb_target, k=pos_embeddings, r=encodings, context_mask=context_mask, target_mask=target_mask)
+            if self.concat_embeddings:
+                x = torch.cat((representations, emb_target), dim=2)
+            else:
+                x = representations + emb_target
         else:
             representations = self.aggregator(encodings, context_mask)
+            x = self.concat_repr_to_target(representations, emb_target)
 
-        x = self.concat_repr_to_target(representations, emb_target)
         predicted_embeddings = self.decoder(x)
 
         if self.embedding_matrix is not None:

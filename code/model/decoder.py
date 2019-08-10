@@ -3,11 +3,11 @@ import torch.nn.functional as F
 
 
 class Decoder(nn.Module):
-    def __init__(self, hidden_repr, input_size, hidden_layers, output_size, dropout, to_cuda=False):
+    def __init__(self, input_size, hidden_layers, output_size, dropout, to_cuda=False):
         super(Decoder, self).__init__()
         self.fcs = []
         self.dps = []
-        inp = hidden_repr + input_size
+        inp = input_size
         for hidden_layer in hidden_layers:
             self.fcs.append(nn.Linear(inp, hidden_layer))
             self.dps.append(nn.Dropout(dropout))

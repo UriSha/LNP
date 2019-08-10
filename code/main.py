@@ -21,12 +21,12 @@ def main():
     # text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_new1.txt"),
     #                                             os.path.join(cur_dir, "../data/embeddings/wiki-news-300d-1M.vec"), test_size=test_size, mask_ratio=mask_ratio,
     #                                             sents_limit=10000, rare_word_threshold=1, use_weight_loss=True)
-    text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_small_mock.txt"),
-                                                os.path.join(cur_dir, "../data/embeddings/wiki-news-300d-1M.vec"), test_size=test_size, mask_ratio=mask_ratio,
-                                                sents_limit=10000, rare_word_threshold=1, use_weight_loss=True)
     # text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_small_mock.txt"),
-    #                                             os.path.join(cur_dir, "../data/embeddings/small_fasttext.txt"), test_size=test_size, mask_ratio=mask_ratio,
-    #                                             sents_limit=10000, rare_word_threshold=0, use_weight_loss=use_weight_loss)
+    #                                             os.path.join(cur_dir, "../data/embeddings/wiki-news-300d-1M.vec"), test_size=test_size, mask_ratio=mask_ratio,
+    #                                             sents_limit=10000, rare_word_threshold=1, use_weight_loss=True)
+    text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_small_mock.txt"),
+                                                os.path.join(cur_dir, "../data/embeddings/small_fasttext.txt"), test_size=test_size, mask_ratio=mask_ratio,
+                                                sents_limit=10000, rare_word_threshold=0, use_weight_loss=use_weight_loss)
                                                 
     train_dataset = DatasetNonContextual(text_processor.train_sents, text_processor.w2id, text_processor.id2w,
                                          text_processor.max_seq_len, text_processor.max_masked_size,
