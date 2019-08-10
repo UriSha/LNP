@@ -14,9 +14,11 @@ class AverageAggregator(nn.Module):
         weights = F.softmax(weights.masked_fill(x_mask, float('-inf')), dim=1)
         weights = torch.unsqueeze(weights, dim=2)
 
-        x = x.permute([0, 2, 1])  # transpose
+        # x = x.permute([0, 2, 1])  # transpose
+        x = x.transpose(1, 2)
         x = torch.matmul(x, weights)  # batch matrix multiplication
-        x = x.permute([0, 2, 1])  # transpose
+        x = x.transpose(1, 2)
+        # x = x.permute([0, 2, 1])  # transpose
         
         return x
 
@@ -42,8 +44,10 @@ class AttentionAggregator(nn.Module):
         weights = F.softmax(energies, dim=1)
         weights = torch.unsqueeze(weights, dim=2)
 
-        x = x.permute([0, 2, 1])  # transpose
+        # x = x.permute([0, 2, 1])  # transpose
+        x = x.transpose(1, 2)
         x = torch.matmul(x, weights)  # batch matrix multiplication
-        x = x.permute([0, 2, 1])  # transpose
+        x = x.transpose(1, 2)
+        # x = x.permute([0, 2, 1])  # transpose
 
         return x
