@@ -129,6 +129,10 @@ def parse_arguments():
                         const=True,
                         default=True,
                         type=str2bool)
+    parser.add_argument('-nheads', '--number_of_heads',
+                        help="number of heads for attention (default: 2)",
+                        default=2,
+                        type=int)
     return parser.parse_args()
 
 
@@ -201,6 +205,7 @@ def main():
                 padding_idx=text_processor.pad_index,
                 use_weight_matrix = args.use_weight_matrix,
                 dropout=args.dropout,
+                nheads=args.number_of_heads,
                 use_pos_embedding = args.use_pos_embedding,
                 attn = args.use_attention,
                 concat_embeddings=args.concat_embeddings,

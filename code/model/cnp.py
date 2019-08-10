@@ -1,5 +1,4 @@
 import math
-
 import torch
 import torch.nn as nn
 from sklearn.preprocessing import normalize
@@ -8,11 +7,12 @@ from model.aggregator import AttentionAggregator, AverageAggregator
 from model.decoder import Decoder
 from model.self_attention_encoder import SelfAttentionEncoderLayer
 from model.cross_attention_aggregator import CrossAttentionAggregator
+from model.transformer import *
 
 
 class CNP(nn.Module):
     def __init__(self, embedding_size, hidden_repr, enc_hidden_layers, dec_hidden_layers, max_target_size, w2id,
-                 id2w, emb_weight, padding_idx, max_seq_len, use_weight_matrix, use_pos_embedding=True, dropout=0.1, attn=False, concat_embeddings=False, to_cuda=False):
+                 id2w, emb_weight, padding_idx, max_seq_len, use_weight_matrix, nheads=2, use_pos_embedding=True, dropout=0.1, attn=False, concat_embeddings=False, to_cuda=False):
         super(CNP, self).__init__()
         self.use_pos_embedding = use_pos_embedding
         self.attn = attn
@@ -37,11 +37,9 @@ class CNP(nn.Module):
 
 
         if attn:
-            self.encoder = SelfAttentionEncoderLayer(input_size=input_size,
-                                                    heads=2,
-                                                    dropout=dropout,
-                                                    to_cuda=to_cuda)
-            self.aggregator = CrossAttentionAggregator(embedding_size, 1, dropout, to_cuda)
+            # self.encoder = SelfAttentionEncoderLayer(input_size=input_size, heads=2, dropout=dropout, to_cuda=to_cuda)
+            self.encoder = TransformerEncoder(TransformerEncoderLayer(input_size, nhead=nheads, dim_feedforward=enc_hidden_layers[0], dropout=dropout), num_layers=len(enc_hidden_layers))
+            self.aggregator = CrossAttentionAggregator(embedding_size, nheads, dropout, to_cuda)
             self.decoder = Decoder(embedding_size, pos_embedding_size, dec_hidden_layers, output_size, dropout, to_cuda)
         else:
             self.encoder = Encoder(input_size, enc_hidden_layers, hidden_repr, dropout, to_cuda)
@@ -91,7 +89,12 @@ class CNP(nn.Module):
         else:
             context = sent_embeddings + pos_embeddings
 
-        encodings = self.encoder(context, context_mask)
+        if self.attn:
+            context = context.transpose(0, 1)
+            encodings = self.encoder(context, src_key_padding_mask=context_mask)
+            encodings = encodings.transpose(0, 1)
+        else:
+            encodings = self.encoder(context, context_mask)
 
         if self.use_pos_embedding:
             emb_target = self.pos_embeddings(target)
