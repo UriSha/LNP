@@ -158,10 +158,6 @@ class Trainer():
                 if random.random() < p:
                     eval_samples_for_blue_calculation.append(orig)
 
-            print("orig: {}".format(orig))
-            print("pred: {}".format(pred))
-            print()
-
     def print_results(self, context_pos, context_ids, target_pos, target_ids, predictions, is_eval=False):
         if is_eval:
             if time.time() - self.last_print_eval < self.print_interval:
