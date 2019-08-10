@@ -1,10 +1,11 @@
 import torch
 import torch.nn as nn
-import torchvision
 import numpy as np
 import time
 from torch.autograd import Variable
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
+from nltk.translate.bleu_score import corpus_bleu
+import random
 
 
 class Trainer():
@@ -28,8 +29,8 @@ class Trainer():
             if self.word_weights is not None:
                 self.word_weights = self.word_weights.cuda()
 
-
-    def train(self, train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc):
+    def train(self, train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc,
+              predicted_train_sentences, ground_truth_train_sentences):
         for context_ids_batch, context_pos_batch, context_mask_batch, target_xs_batch, target_xs_mask_batch, target_ys_batch in train_loader:
             context_ids = self.batch2var(context_ids_batch, False)
             context_pos = self.batch2var(context_pos_batch, False)
@@ -50,9 +51,13 @@ class Trainer():
             epoch_train_loss.append(loss.item())
             epoch_train_acc.append(self.compute_accuracy_topk(outputs_fixed, target_ys_fixed))
             self.print_results(context_pos[0], context_ids[0], target_xs[0], target_ys[0], outputs[0])
+            self.populate_predicted_and_ground_truth(predicted_train_sentences, ground_truth_train_sentences,
+                                                     context_pos_batch, context_ids_batch, target_xs, target_ys,
+                                                     outputs)
 
-
-    def evaluate(self, eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc):
+    def evaluate(self, eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc, predicted_eval_sentences,
+                 ground_truth_eval_sentences, eval_samples_for_blue_calculation):
+        p_for_sampling_bleu = min(1, 10000/len(eval_loader))
         for context_ids_batch, context_pos_batch, context_mask_batch, target_xs_batch, target_xs_mask_batch, target_ys_batch in eval_loader:
             context_ids = self.batch2var(context_ids_batch, False)
             context_pos = self.batch2var(context_pos_batch, False)
@@ -70,7 +75,9 @@ class Trainer():
             epoch_eval_loss.append(loss.item())
             epoch_eval_acc.append(self.compute_accuracy_topk(outputs_fixed, target_ys_fixed))
             self.print_results(context_pos[0], context_ids[0], target_xs[0], target_ys[0], outputs[0], True)
-
+            self.populate_predicted_and_ground_truth(predicted_eval_sentences, ground_truth_eval_sentences,
+                                                     context_pos_batch, context_ids_batch, target_xs, target_ys,
+                                                     outputs, eval_samples_for_blue_calculation, p_for_sampling_bleu)
 
     def batch2var(self, batch_param, requires_grad):
         # p = torch.stack(batch_param, dim=1).float()
@@ -80,14 +87,12 @@ class Trainer():
 
         return Variable(p, requires_grad=requires_grad)
 
-
     def fix_dimensions(self, outputs, target_ys):
         a, b, c, = outputs.shape
         outputs = outputs.reshape(a * b, c)
         a, b = target_ys.shape
         target_ys = target_ys.reshape(a * b)
         return outputs, target_ys - 1
-
 
     def compute_accuracy(self, outputs, target_ys):
         _, max_indices = outputs.max(dim=1)
@@ -97,7 +102,6 @@ class Trainer():
             mask = mask.cuda()
         mask_size = (target_ys == mask).sum()
         return (max_indices == target_ys).sum() / (len(target_ys) - mask_size)
-
 
     def compute_accuracy_topk(self, outputs, target_ys):
         topk = min(self.acc_topk, outputs.shape[1])
@@ -110,6 +114,53 @@ class Trainer():
         # new_targets = target_ys + ((target_ys == mask).long()*-1)
         return (max_indices == target_ys.unsqueeze(dim=1)).sum().item() / (len(target_ys) - mask_size)
 
+    def populate_predicted_and_ground_truth(self, predicted_sentences, ground_truth_sentences, context_pos, context_ids,
+                                            target_pos, target_ids, predictions,eval_samples_for_blue_calculation=None, p=None):
+
+        for cur_context_pos, cur_context_ids, cur_target_pos, cur_target_ids, cur_predictions in zip(context_pos,context_ids,target_pos,target_ids,predictions):
+
+            orig = []
+            pred = []
+
+
+            i = 0
+            j = 0
+            pos = 0
+
+            while pos < len(cur_context_pos):
+                pred_id = None
+                id = cur_context_ids[i]
+                if cur_context_pos[i] == pos:
+                    if id == 0:
+                        break
+                    i += 1
+                else:
+                    if j >= len(cur_target_pos):
+                        print("error")
+                        return
+                    id = cur_target_ids[j]
+                    if id == 0:
+                        break
+                    pred_id = torch.max(cur_predictions[j], dim=0)[1]
+                    j += 1
+                pos += 1
+                if pred_id is not None:
+                    orig.append(self.model.id2w[int(id.item())])
+                    pred.append(self.model.id2w[int(pred_id.item() + 1)])
+                else:
+                    orig.append(self.model.id2w[int(id.item())])
+                    pred.append(self.model.id2w[int(id.item())])
+            orig_as_reference_for_blue = [orig]
+            ground_truth_sentences.append(orig_as_reference_for_blue)
+            predicted_sentences.append(pred)
+
+            if eval_samples_for_blue_calculation is not None and p is not None:
+                if random.random() < p:
+                    eval_samples_for_blue_calculation.append(orig)
+
+            print("orig: {}".format(orig))
+            print("pred: {}".format(pred))
+            print()
 
     def print_results(self, context_pos, context_ids, target_pos, target_ids, predictions, is_eval=False):
         if is_eval:
@@ -156,7 +207,6 @@ class Trainer():
         print("pred: {}".format(pred))
         print()
 
-
     def run(self):
         if self.use_weight_loss:
             loss_function = nn.CrossEntropyLoss(weight=self.word_weights, ignore_index=-1)  # padded outputs are ignored
@@ -183,34 +233,50 @@ class Trainer():
             self.model.train_model()
             epoch_train_loss = []
             epoch_train_acc = []
-            
-            self.train(train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc)
+            predicted_train_sentences = []
+            ground_truth_train_sentences = []
+            predicted_eval_sentences = []
+            ground_truth_eval_sentences = []
+            eval_samples_for_blue_calculation = []
+
+            self.train(train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc,
+                       predicted_train_sentences, ground_truth_train_sentences)
 
             # evaluate
             if eval_loader:
                 self.model.eval_model()
                 epoch_eval_loss = []
                 epoch_eval_acc = []
-                self.evaluate(eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc)
+                self.evaluate(eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc, predicted_eval_sentences,
+                              ground_truth_eval_sentences, eval_samples_for_blue_calculation)
+
+            cur_train_bleu = corpus_bleu(ground_truth_train_sentences, predicted_train_sentences)
+
 
             # compute epoch loss
             cur_train_loss = sum(epoch_train_loss) / len(epoch_train_loss)
             cur_train_acc = sum(epoch_train_acc) / len(epoch_train_acc)
             train_loss_per_epoch.append(cur_train_loss)
             if eval_loader:
+                cur_eval_bleu = corpus_bleu(ground_truth_eval_sentences, predicted_eval_sentences)
+
                 cur_eval_loss = sum(epoch_eval_loss) / len(epoch_eval_loss)
                 cur_eval_acc = sum(epoch_eval_acc) / len(epoch_eval_acc)
                 cur_eval_perplexity = np.exp(-cur_eval_loss)
                 eval_loss_per_epoch.append(cur_eval_loss)
                 eval_perplexity_per_epoch.append(cur_eval_perplexity)
             else:
+                cur_eval_bleu = 0
                 cur_eval_loss = 0
                 cur_eval_acc = 0
                 cur_eval_perplexity = 0
 
             if epoch % 1 == 0 or epoch == 1:
-                print('Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f, Eval Loss: %.4f, Eval Accuracy: %.4f, Eval Perplexity: %.4f' %
-                      (epoch, self.epoch_count, cur_train_loss, cur_train_acc, cur_eval_loss, cur_eval_acc, cur_eval_perplexity))
-               # print()
+                print(
+                    'Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f, Train Bleu score: %.4f, Eval Loss: %.4f, Eval Accuracy: %.4f, Eval Bleu score: %.4f, Eval Perplexity: %.4f' %
+                    (
+                    epoch, self.epoch_count, cur_train_loss, cur_train_acc, cur_train_bleu, cur_eval_loss, cur_eval_acc,
+                    cur_eval_bleu, cur_eval_perplexity))
+                # print()
 
         return train_loss_per_epoch, eval_loss_per_epoch
