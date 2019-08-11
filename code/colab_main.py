@@ -11,7 +11,7 @@ from training import Trainer
 
 def str2bool(v):
     if isinstance(v, bool):
-       return v
+        return v
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
     elif v.lower() in ('no', 'false', 'f', 'n', '0'):
@@ -20,119 +20,56 @@ def str2bool(v):
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
+class InputArgument():
+    def __init__(self, name, short_name, help_str, default_val, param_type=str, nargs=None, const=None):
+        self.name = name
+        self.inp_args = [f"-{short_name}", f"--{name}"]
+        self.inp_kwargs = {
+            "default" : default_val,
+            "help" : help_str
+        }
+        if param_type != str:
+            self.inp_kwargs["type"] = param_type
+        if nargs is not None:
+            self.inp_kwargs["nargs"] = nargs
+        if const is not None:
+            self.inp_kwargs["const"] = const
+
+
+input_arguments = [
+    InputArgument("data_file", "da", "data_file (default: APRC_new1.txt)", "APRC_new1.txt"),
+    InputArgument("epochs", "e", "training epochs (default: 200)", 200, int),
+    InputArgument("dataset_random_every_time", "ds", "random mask every call for getitem or only at init (default: False)", False, str2bool, nargs="?", const=True),
+    InputArgument("learning_rate", "lr", "learning rate (default: .0005)", .0005, float),
+    InputArgument("to_cuda", "c", "use cuda (default: True)", True, str2bool, nargs="?", const=True),
+    InputArgument("sent_count", "sc", "sent count (default: no limit)", 0, int),
+    InputArgument("batch_size", "bs", "batch_size (default: 50)", 50, int),
+    InputArgument("mask_ratio", "mr", "max_ratio (default: 0.25)", .25, float),
+    InputArgument("topk", "topk", "topk (default: 1)", 1, int),
+    InputArgument("momentum", "moment", "momentum (default: 0.9)", .9, float),
+    InputArgument("test_size", "ts", "test_size (default: 0.1)", .1, float),
+    InputArgument("rare_threshold", "rt", "rare word threshold (default: 10)", 10, float),
+    InputArgument("hidden_repr", "hr", "hidden_repr (default: 1000)", 1000, int),
+    InputArgument("enc_layers", "encl", "enc_layers (default: [600, 600, 600, 600])", [600, 600, 600, 600], int, nargs="+"),
+    InputArgument("dec_layers", "decl", "dec_layers (default: [600, 600, 600, 300])", [600, 600, 600, 300], int, nargs="+"),
+    InputArgument("opt", "opt", "opt (default: \"ADAM\")", "ADAM"),
+    InputArgument("dropout", "dp", "dropout (default: 0.1)", .1, float),
+    InputArgument("print_interval", "pi", "print interval (default: 60sec)", 60, int),
+    InputArgument("use_weight_matrix", "uwm", "Whether to multiply last layer by weight matrix (default: True)", True, str2bool, nargs="?", const=True),
+    InputArgument("use_weight_loss", "uwl", "Whether to use weights for unbalanced data (default: False)", False, str2bool, nargs="?", const=True),
+    InputArgument("use_pos_embedding", "upe", "Whether to use embeddings for positions (default: True)", True, str2bool, nargs="?", const=True),
+    InputArgument("concat_embeddings", "ce", "Whether to concat sentence and position embeddings (default: False)", False, str2bool, nargs="?", const=True),
+    InputArgument("use_attention", "attn", "Whether to use attention (default: True)", True, str2bool, nargs="?", const=True),
+    InputArgument("number_of_heads", "nheads", "number of heads for attention (default: 2)", 2, int)
+]
+
+
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-da', '--data_file',
-                        help="data_file (default: APRC_new1.txt)",
-                        default='APRC_new1.txt')
-    parser.add_argument('-e', '--epochs',
-                        help="training epochs (default: 200)",
-                        default=200,
-                        type=int)
-    parser.add_argument('-ds', '--dataset_random_every_time',
-                        help="random mask every call for getitem or only at init (default: False)",
-                        nargs='?',
-                        const=True,
-                        default=False,
-                        type=str2bool)
-    parser.add_argument('-lr', '--learning_rate',
-                        help="learning rate (default: .0005)",
-                        default=.0005,
-                        type=float)
-    parser.add_argument('-c', '--to_cuda',
-                        help="to_cuda (default: True)",
-                        nargs='?',
-                        const=True,
-                        default=True,
-                        type=str2bool)
-    parser.add_argument('-sc', '--sent_count',
-                        help="sent_count (default: no limit)",
-                        default=0,
-                        type=int)
-    parser.add_argument('-bs', '--batch_size',
-                        help="batch_size (default: 50)",
-                        default=50,
-                        type=int)
-    parser.add_argument('-mr', '--mask_ratio',
-                        help="max_ratio (default: 0.25)",
-                        default=.25,
-                        type=float)
-    parser.add_argument('-topk', '--topk',
-                        help="topk (default: 5)",
-                        default=5,
-                        type=int)
-    parser.add_argument('-moment', '--momentum',
-                        help="momentum (default: 0)",
-                        default=0,
-                        type=float)
-    parser.add_argument('-ts', '--test_size',
-                        help="test_size (default: 0.1)",
-                        default=0.1,
-                        type=float)
-    parser.add_argument('-rt', '--rare_threshold',
-                        help="rare word threshold (default: 10)",
-                        default=10,
-                        type=float)
-    parser.add_argument('-hr', '--hidden_repr',
-                        help="hidden_repr (default: 1000)",
-                        default=1000,
-                        type=int)
-    parser.add_argument('-encl', '--enc_layers',
-                        help="enc_layers (default: [600, 600, 600, 600])",
-                        nargs="+",
-                        type=int,
-                        default=[600, 600, 600, 600])
-    parser.add_argument('-decl', '--dec_layers',
-                        help="dec_layers (default: [600, 600, 600, 300])",
-                        nargs="+",
-                        type=int,
-                        default=[600, 600, 600, 300])
-    parser.add_argument('-opt', '--opt',
-                        help="opt (default: \"ADAM\")",
-                        default="ADAM",
-                        type=str)
-    parser.add_argument('-dp', '--dropout',
-                        help="dropout (default: 0.1)",
-                        default=0.1,
-                        type=float)
-    parser.add_argument('-pi', '--print_interval',
-                        help="print interval (default: 60sec)",
-                        default=60,
-                        type=int)
-    parser.add_argument('-uwm', '--use_weight_matrix',
-                        help="Whether to multiply last layer by weight matrix (default: True)",
-                        nargs='?',
-                        const=True,
-                        default=True,
-                        type=str2bool)
-    parser.add_argument('-uwl', '--use_weight_loss',
-                        help="Whether to use weights for unbalanced data (default: False)",
-                        nargs='?',
-                        const=True,
-                        default=False,
-                        type=str2bool)
-    parser.add_argument('-upe', '--use_pos_embedding',
-                        help="Whether to use embeddings for positions (default: True)",
-                        nargs='?',
-                        const=True,
-                        default=True,
-                        type=str2bool)
-    parser.add_argument('-ce', '--concat_embeddings',
-                        help="Whether to concat sentence and position embeddings (default: False)",
-                        nargs='?',
-                        const=True,
-                        default=False,
-                        type=str2bool)
-    parser.add_argument('-attn', '--use_attention',
-                        help="Whether to use attention (default: True)",
-                        nargs='?',
-                        const=True,
-                        default=True,
-                        type=str2bool)
-    parser.add_argument('-nheads', '--number_of_heads',
-                        help="number of heads for attention (default: 2)",
-                        default=2,
-                        type=int)
+
+    for input_argument in input_arguments:
+        parser.add_argument(*input_argument.inp_args, **input_argument.inp_kwargs)
+
     return parser.parse_args()
 
 
@@ -140,13 +77,13 @@ def main():
     print("Starting CNP")
     args = parse_arguments()
 
-    print(f"dec_layers: {args.dec_layers}")
-    print(f"use_weight_matrix: {args.use_weight_matrix}")
-    print(f"use_weight_loss: {args.use_weight_loss}")
-    print(f"use_pos_embedding: {args.use_pos_embedding}")
-    print(f"concat_embeddings: {args.concat_embeddings}")
-    print(f"use_attention: {args.use_attention}")
-
+    print()
+    print("Argument Values:")
+    for input_argument in input_arguments:
+        exec(f"inp_value=args.{input_argument.name}")
+        exec(f"print(input_argument.name + ': ' + str(inp_value))")
+    print()
+    
     print("Init text processor")
     text_processor = TextProcessorNonContextual("data/APRC/{}".format(args.data_file),
                                                 "data/embeddings/wiki-news-300d-1M.vec",
