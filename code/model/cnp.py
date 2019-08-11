@@ -12,12 +12,11 @@ from model.transformer import *
 
 class CNP(nn.Module):
     def __init__(self, embedding_size, hidden_repr, enc_hidden_layers, dec_hidden_layers, max_target_size, w2id,
-                 id2w, emb_weight, padding_idx, max_seq_len, use_weight_matrix, nheads=2, use_pos_embedding=True, dropout=0.1, attn=False, concat_embeddings=False, to_cuda=False):
+                 id2w, emb_weight, padding_idx, max_seq_len, use_weight_matrix, nheads=2, use_pos_embedding=True, dropout=0.1, attn=False, concat_embeddings=False, normalize_weights=True, to_cuda=False):
         super(CNP, self).__init__()
         self.use_pos_embedding = use_pos_embedding
         self.attn = attn
-        if attn:
-            concat_embeddings = False
+
         self.concat_embeddings = concat_embeddings
 
         if use_pos_embedding:
@@ -38,8 +37,13 @@ class CNP(nn.Module):
 
         if attn:
             # self.encoder = SelfAttentionEncoderLayer(input_size=input_size, heads=2, dropout=dropout, to_cuda=to_cuda)
-            self.encoder = TransformerEncoder(TransformerEncoderLayer(input_size, nhead=nheads, dim_feedforward=enc_hidden_layers[0], dropout=dropout), num_layers=len(enc_hidden_layers))
-            self.aggregator = CrossAttentionAggregator(embedding_size, nheads, dropout, to_cuda)
+            
+
+            self.encoder = Transformer(input_size, nhead=nheads, num_encoder_layers=len(enc_hidden_layers), num_decoder_layers=len(enc_hidden_layers), dim_feedforward=enc_hidden_layers[0], dropout=dropout)
+            self.aggregator = None
+            # self.encoder = TransformerEncoder(TransformerEncoderLayer(input_size, nhead=nheads, dim_feedforward=enc_hidden_layers[0], dropout=dropout), num_layers=len(enc_hidden_layers))
+            # self.aggregator = CrossAttentionAggregator(embedding_size, nheads, dropout, to_cuda)
+            
             self.decoder = Decoder(input_size, dec_hidden_layers, output_size, dropout, to_cuda)
         else:
             self.encoder = Encoder(input_size, enc_hidden_layers, hidden_repr, dropout, to_cuda)
@@ -59,7 +63,10 @@ class CNP(nn.Module):
         if use_weight_matrix:
             embedding_matrix = emb_weight[1:].permute([1, 0])  # skip padding
             # normalize matrix by columns. for rows change to: axis=1
-            self.embedding_matrix = torch.FloatTensor(normalize(embedding_matrix, axis=0, norm='l2'))
+            if normalize_weights:
+                self.embedding_matrix = torch.FloatTensor(normalize(embedding_matrix, axis=0, norm='l2'))
+            else:
+                self.embedding_matrix = torch.FloatTensor(embedding_matrix)
             self.embedding_matrix.requires_grad = False
 
         pos_embeddings_matrix = self.create_pos_embeddings_matrix(
@@ -89,25 +96,27 @@ class CNP(nn.Module):
         else:
             context = sent_embeddings + pos_embeddings
 
-        if self.attn:
-            context = context.transpose(0, 1)
-            encodings = self.encoder(context, src_key_padding_mask=context_mask)
-            encodings = encodings.transpose(0, 1)
-        else:
-            encodings = self.encoder(context, context_mask)
-
         if self.use_pos_embedding:
             emb_target = self.pos_embeddings(target)
         else:
             emb_target = target.unsqueeze(dim=2).float()
 
         if self.attn:
-            representations = self.aggregator(q=emb_target, k=pos_embeddings, r=encodings, context_mask=context_mask, target_mask=target_mask)
+            # context = context.transpose(0, 1)
+            # encodings = self.encoder(context, src_key_padding_mask=context_mask)
+            # encodings = encodings.transpose(0, 1)
+            # representations = self.aggregator(q=emb_target, k=pos_embeddings, r=encodings, context_mask=context_mask, target_mask=target_mask)
+
+            representations = self.encoder(context.transpose(0, 1), emb_target.transpose(0, 1), src_key_padding_mask=context_mask, tgt_key_padding_mask=target_mask)
+            representations = representations.transpose(0, 1)
+
+            
             if self.concat_embeddings:
                 x = torch.cat((representations, emb_target), dim=2)
             else:
                 x = representations + emb_target
         else:
+            encodings = self.encoder(context, context_mask)
             representations = self.aggregator(encodings, context_mask)
             x = self.concat_repr_to_target(representations, emb_target)
 
@@ -139,10 +148,12 @@ class CNP(nn.Module):
         self.eval()
         self.encoder.eval()
         self.decoder.eval()
-        self.aggregator.eval()
+        if self.aggregator:
+            self.aggregator.eval()
 
     def train_model(self):
         self.train()
         self.encoder.train()
         self.decoder.train()
-        self.aggregator.train()
+        if self.aggregator:
+            self.aggregator.train()

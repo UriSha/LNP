@@ -11,11 +11,12 @@ def main():
     mask_ratio = 0.25
     test_size = 0.1
     topk = 1
-    nheads = 2
+    nheads = 1
     use_weight_loss = False
     use_weight_matrix = True
     use_pos_embedding = True
     concat_embeddings = False
+    normalize_weights = True
     cur_dir = os.path.dirname(os.path.realpath(__file__))
 
     # text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_new1.txt"),
@@ -38,8 +39,8 @@ def main():
     print("Vocab size: ", len(text_processor.id2w))
     model = CNP(embedding_size=text_processor.vec_size,
                 hidden_repr=300,
-                enc_hidden_layers=[600, 600],
-                dec_hidden_layers=[300, 300, 300],
+                enc_hidden_layers=[1024, 1024, 1024],
+                dec_hidden_layers=[600, 600, 600],
                 max_target_size=text_processor.max_masked_size,
                 w2id = text_processor.w2id,
                 id2w = text_processor.id2w,
@@ -52,6 +53,7 @@ def main():
                 nheads=nheads,
                 use_pos_embedding=use_pos_embedding,
                 concat_embeddings=concat_embeddings,
+                normalize_weights=normalize_weights,
                 to_cuda=to_cuda)
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,
