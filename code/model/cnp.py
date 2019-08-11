@@ -80,7 +80,8 @@ class CNP(nn.Module):
                 self.embedding_matrix = self.embedding_matrix.cuda()
             self.embedding = self.embedding.cuda()
             self.encoder = self.encoder.cuda()
-            self.aggregator = self.aggregator.cuda()
+            if self.aggregator is not None:
+                self.aggregator = self.aggregator.cuda()
             self.decoder = self.decoder.cuda()
             self.pos_embeddings = self.pos_embeddings.cuda()
 
@@ -110,7 +111,7 @@ class CNP(nn.Module):
             representations = self.encoder(context.transpose(0, 1), emb_target.transpose(0, 1), src_key_padding_mask=context_mask, tgt_key_padding_mask=target_mask)
             representations = representations.transpose(0, 1)
 
-            
+
             if self.concat_embeddings:
                 x = torch.cat((representations, emb_target), dim=2)
             else:
