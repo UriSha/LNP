@@ -34,10 +34,8 @@ class CNP(nn.Module):
         else:
             input_size = embedding_size
 
-
         if attn:
             # self.encoder = SelfAttentionEncoderLayer(input_size=input_size, heads=2, dropout=dropout, to_cuda=to_cuda)
-            
 
             self.encoder = Transformer(input_size, nhead=nheads, num_encoder_layers=len(enc_hidden_layers), num_decoder_layers=len(enc_hidden_layers), dim_feedforward=enc_hidden_layers[0], dropout=dropout)
             self.aggregator = None
@@ -50,7 +48,6 @@ class CNP(nn.Module):
             self.aggregator = AttentionAggregator(hidden_repr, to_cuda)
             # self.aggregator = AverageAggregator(hidden_repr, to_cuda)
             self.decoder = Decoder(input_size, dec_hidden_layers, output_size, dropout, to_cuda)
-
 
         self.max_target_size = max_target_size
         self.max_seq_len = max_seq_len
@@ -110,7 +107,6 @@ class CNP(nn.Module):
 
             representations = self.encoder(context.transpose(0, 1), emb_target.transpose(0, 1), src_key_padding_mask=context_mask, tgt_key_padding_mask=target_mask)
             representations = representations.transpose(0, 1)
-
 
             if self.concat_embeddings:
                 x = torch.cat((representations, emb_target), dim=2)

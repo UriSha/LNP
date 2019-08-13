@@ -4,9 +4,9 @@ import torch.nn.functional as F
 
 
 class AverageAggregator(nn.Module):
-    def __init__(self, hidden_repr, to_cuda=False):
+    # def __init__(self, hidden_repr, to_cuda=False):
+    def __init__(self):
         super(AverageAggregator, self).__init__()
-
 
     def forward(self, x, x_mask):
 
