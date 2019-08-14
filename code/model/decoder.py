@@ -5,14 +5,15 @@ import torch.nn.functional as F
 class Decoder(nn.Module):
     def __init__(self, input_size, hidden_layers, output_size, dropout, to_cuda=False):
         super(Decoder, self).__init__()
-        self.fcs = []
-        self.dps = []
+        self.fcs = nn.ModuleList()
+        self.dps = nn.ModuleList()
         inp = input_size
         for hidden_layer in hidden_layers:
             self.fcs.append(nn.Linear(inp, hidden_layer))
             self.dps.append(nn.Dropout(dropout))
             inp = hidden_layer
         self.output_fc = nn.Linear(inp, output_size)
+        self.more = nn.Linear(100, 200)
 
         if to_cuda:
             for i in range(len(self.fcs)):
