@@ -1,15 +1,17 @@
+import random
+import time
+
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
-import time
+from nltk.translate.bleu_score import corpus_bleu
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
-from nltk.translate.bleu_score import corpus_bleu
-import random
 
 
 class Trainer():
-    def __init__(self, model, training_dataset, evaluation_dataset, batch_size, opt, learning_rate, momentum, epoch_count, acc_topk, print_interval, word_weights, use_weight_loss, to_cuda):
+    def __init__(self, model, training_dataset, evaluation_dataset, batch_size, opt, learning_rate, momentum,
+                 epoch_count, acc_topk, print_interval, word_weights, use_weight_loss, to_cuda):
         self.model = model
         self.training_dataset = training_dataset
         self.evaluation_dataset = evaluation_dataset
@@ -51,13 +53,17 @@ class Trainer():
             epoch_train_loss.append(loss.item())
             epoch_train_acc.append(self.compute_accuracy_topk(outputs_fixed, target_ys_fixed))
             self.print_results(context_pos[0], context_ids[0], target_xs[0], target_ys[0], outputs[0])
-            self.populate_predicted_and_ground_truth(predicted_train_sentences, ground_truth_train_sentences,
-                                                     context_pos_batch, context_ids_batch, target_xs, target_ys,
-                                                     outputs)
+
+            if predicted_train_sentences is not None and ground_truth_train_sentences is not None:
+                self.populate_predicted_and_ground_truth(predicted_train_sentences, ground_truth_train_sentences,
+                                                         context_pos_batch, context_ids_batch, target_xs, target_ys,
+                                                         outputs)
 
     def evaluate(self, eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc, predicted_eval_sentences,
                  ground_truth_eval_sentences, eval_samples_for_blue_calculation):
-        p_for_sampling_bleu = min(1, 10000/len(eval_loader))
+
+        p_for_sampling_bleu = min(1, 10000 / len(eval_loader))
+
         for context_ids_batch, context_pos_batch, context_mask_batch, target_xs_batch, target_xs_mask_batch, target_ys_batch in eval_loader:
             context_ids = self.batch2var(context_ids_batch, False)
             context_pos = self.batch2var(context_pos_batch, False)
@@ -75,9 +81,12 @@ class Trainer():
             epoch_eval_loss.append(loss.item())
             epoch_eval_acc.append(self.compute_accuracy_topk(outputs_fixed, target_ys_fixed))
             self.print_results(context_pos[0], context_ids[0], target_xs[0], target_ys[0], outputs[0], True)
-            self.populate_predicted_and_ground_truth(predicted_eval_sentences, ground_truth_eval_sentences,
-                                                     context_pos_batch, context_ids_batch, target_xs, target_ys,
-                                                     outputs, eval_samples_for_blue_calculation, p_for_sampling_bleu)
+
+            if predicted_eval_sentences is not None and ground_truth_eval_sentences is not None and eval_samples_for_blue_calculation is not None:
+                self.populate_predicted_and_ground_truth(predicted_eval_sentences, ground_truth_eval_sentences,
+                                                         context_pos_batch, context_ids_batch, target_xs, target_ys,
+                                                         outputs, eval_samples_for_blue_calculation,
+                                                         p_for_sampling_bleu)
 
     def batch2var(self, batch_param, requires_grad):
         # p = torch.stack(batch_param, dim=1).float()
@@ -115,13 +124,17 @@ class Trainer():
         return (max_indices == target_ys.unsqueeze(dim=1)).sum().item() / (len(target_ys) - mask_size)
 
     def populate_predicted_and_ground_truth(self, predicted_sentences, ground_truth_sentences, context_pos, context_ids,
-                                            target_pos, target_ids, predictions,eval_samples_for_blue_calculation=None, p=None):
+                                            target_pos, target_ids, predictions, eval_samples_for_blue_calculation=None,
+                                            p=None):
 
-        for cur_context_pos, cur_context_ids, cur_target_pos, cur_target_ids, cur_predictions in zip(context_pos,context_ids,target_pos,target_ids,predictions):
+        for cur_context_pos, cur_context_ids, cur_target_pos, cur_target_ids, cur_predictions in zip(context_pos,
+                                                                                                     context_ids,
+                                                                                                     target_pos,
+                                                                                                     target_ids,
+                                                                                                     predictions):
 
             orig = []
             pred = []
-
 
             i = 0
             j = 0
@@ -191,7 +204,7 @@ class Trainer():
             pos += 1
             if pred_id is not None:
                 orig += "*" + self.model.id2w[int(id.item())] + "* "
-                pred += "*" + self.model.id2w[int(pred_id.item()+1)] + "* "
+                pred += "*" + self.model.id2w[int(pred_id.item() + 1)] + "* "
             else:
                 orig += self.model.id2w[int(id.item())] + " "
                 pred += self.model.id2w[int(id.item())] + " "
@@ -212,7 +225,8 @@ class Trainer():
             nestov = False
             if self.momentum > 0:
                 nestov = True
-            optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=self.momentum, nesterov=nestov)
+            optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=self.momentum,
+                                        nesterov=nestov)
         else:
             optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
         train_loader = DataLoader(dataset=self.training_dataset, batch_size=self.batch_size, shuffle=True)
@@ -224,16 +238,24 @@ class Trainer():
         eval_loss_per_epoch = []
         eval_perplexity_per_epoch = []
 
-        for epoch in range(1, self.epoch_count+1):
+        for epoch in range(1, self.epoch_count + 1):
             # train
             self.model.train_model()
             epoch_train_loss = []
             epoch_train_acc = []
-            predicted_train_sentences = []
-            ground_truth_train_sentences = []
-            predicted_eval_sentences = []
-            ground_truth_eval_sentences = []
-            eval_samples_for_blue_calculation = []
+
+            predicted_train_sentences = None
+            ground_truth_train_sentences = None
+            predicted_eval_sentences = None
+            ground_truth_eval_sentences = None
+            eval_samples_for_blue_calculation = None
+
+            if epoch % 100 == 0:
+                predicted_train_sentences = []
+                ground_truth_train_sentences = []
+                predicted_eval_sentences = []
+                ground_truth_eval_sentences = []
+                eval_samples_for_blue_calculation = []
 
             self.train(train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc,
                        predicted_train_sentences, ground_truth_train_sentences)
@@ -246,15 +268,18 @@ class Trainer():
                 self.evaluate(eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc, predicted_eval_sentences,
                               ground_truth_eval_sentences, eval_samples_for_blue_calculation)
 
-            cur_train_bleu = corpus_bleu(ground_truth_train_sentences, predicted_train_sentences)
-
+            cur_train_bleu = None
+            if epoch % 100 == 0:
+                cur_train_bleu = corpus_bleu(ground_truth_train_sentences, predicted_train_sentences)
 
             # compute epoch loss
             cur_train_loss = sum(epoch_train_loss) / len(epoch_train_loss)
             cur_train_acc = sum(epoch_train_acc) / len(epoch_train_acc)
             train_loss_per_epoch.append(cur_train_loss)
             if eval_loader:
-                cur_eval_bleu = corpus_bleu(ground_truth_eval_sentences, predicted_eval_sentences)
+                cur_eval_bleu = None
+                if epoch % 100 == 0:
+                    cur_eval_bleu = corpus_bleu(ground_truth_eval_sentences, predicted_eval_sentences)
 
                 cur_eval_loss = sum(epoch_eval_loss) / len(epoch_eval_loss)
                 cur_eval_acc = sum(epoch_eval_acc) / len(epoch_eval_acc)
@@ -268,11 +293,19 @@ class Trainer():
                 cur_eval_perplexity = 0
 
             if epoch % 1 == 0 or epoch == 1:
-                print(
-                    'Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f, Train Bleu score: %.4f, Eval Loss: %.4f, Eval Accuracy: %.4f, Eval Bleu score: %.4f, Eval Perplexity: %.4f' %
-                    (
-                    epoch, self.epoch_count, cur_train_loss, cur_train_acc, cur_train_bleu, cur_eval_loss, cur_eval_acc,
-                    cur_eval_bleu, cur_eval_perplexity))
+                if epoch % 100 == 0:
+                    print(
+                        'Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f, Train Bleu score: %.4f, Eval Loss: %.4f, Eval Accuracy: %.4f, Eval Bleu score: %.4f, Eval Perplexity: %.4f' %
+                        (
+                            epoch, self.epoch_count, cur_train_loss, cur_train_acc, cur_train_bleu, cur_eval_loss,
+                            cur_eval_acc, cur_eval_bleu, cur_eval_perplexity))
+                else:
+                    print(
+                        'Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f, Eval Loss: %.4f, Eval Accuracy: %.4f, Eval Perplexity: %.4f' %
+                        (
+                            epoch, self.epoch_count, cur_train_loss, cur_train_acc, cur_eval_loss,
+                            cur_eval_acc,
+                            cur_eval_perplexity))
                 # print()
 
         return train_loss_per_epoch, eval_loss_per_epoch
