@@ -37,10 +37,10 @@ class CNP(nn.Module):
         if attn:
             # self.encoder = SelfAttentionEncoderLayer(input_size=input_size, heads=2, dropout=dropout, to_cuda=to_cuda)
 
-            self.encoder = Transformer(input_size, nhead=nheads, num_encoder_layers=len(enc_hidden_layers), num_decoder_layers=len(enc_hidden_layers), dim_feedforward=enc_hidden_layers[0], dropout=dropout)
-            self.aggregator = None
-            # self.encoder = TransformerEncoder(TransformerEncoderLayer(input_size, nhead=nheads, dim_feedforward=enc_hidden_layers[0], dropout=dropout), num_layers=len(enc_hidden_layers))
-            # self.aggregator = CrossAttentionAggregator(embedding_size, nheads, dropout, to_cuda)
+            # self.encoder = Transformer(input_size, nhead=nheads, num_encoder_layers=len(enc_hidden_layers), num_decoder_layers=len(enc_hidden_layers), dim_feedforward=enc_hidden_layers[0], dropout=dropout)
+            # self.aggregator = None
+            self.encoder = TransformerEncoder(TransformerEncoderLayer(input_size, nhead=nheads, dim_feedforward=enc_hidden_layers[0], dropout=dropout), num_layers=len(enc_hidden_layers))
+            self.aggregator = CrossAttentionAggregator(embedding_size, nheads, dropout, to_cuda)
             
             self.decoder = Decoder(input_size, dec_hidden_layers, output_size, dropout, to_cuda)
         else:
@@ -100,13 +100,13 @@ class CNP(nn.Module):
             emb_target = target.unsqueeze(dim=2).float()
 
         if self.attn:
-            # context = context.transpose(0, 1)
-            # encodings = self.encoder(context, src_key_padding_mask=context_mask)
-            # encodings = encodings.transpose(0, 1)
-            # representations = self.aggregator(q=emb_target, k=pos_embeddings, r=encodings, context_mask=context_mask, target_mask=target_mask)
+            context = context.transpose(0, 1)
+            encodings = self.encoder(context, src_key_padding_mask=context_mask)
+            encodings = encodings.transpose(0, 1)
+            representations = self.aggregator(q=emb_target, k=pos_embeddings, r=encodings, context_mask=context_mask, target_mask=target_mask)
 
-            representations = self.encoder(context.transpose(0, 1), emb_target.transpose(0, 1), src_key_padding_mask=context_mask, tgt_key_padding_mask=target_mask)
-            representations = representations.transpose(0, 1)
+            # representations = self.encoder(context.transpose(0, 1), emb_target.transpose(0, 1), src_key_padding_mask=context_mask, tgt_key_padding_mask=target_mask)
+            # representations = representations.transpose(0, 1)
 
             if self.concat_embeddings:
                 x = torch.cat((representations, emb_target), dim=2)
