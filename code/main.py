@@ -3,6 +3,7 @@ from data_processing.dataset_non_contextual import DatasetNonContextual
 from data_processing.text_processors.text_processor_non_contextual import TextProcessorNonContextual
 from model.cnp import CNP
 from training import Trainer
+from plotter import Plotter
 
 
 def main():
@@ -62,13 +63,16 @@ def main():
                       opt="ADAM",
                       learning_rate=0.001,
                       momentum=0.9,
-                      epoch_count=2000,
+                      epoch_count=20,
                       acc_topk=topk,
                       print_interval=1,
                       word_weights = text_processor.word_weights,
                       use_weight_loss = use_weight_loss,
                       to_cuda=to_cuda)
-    trainer.run()
+    train_loss, eval_loss = trainer.run()
+    plotter = Plotter(train_loss, eval_loss)
+    plotter.plot_train()
+    plotter.plot_eval()
 
 
 if __name__ == "__main__":
