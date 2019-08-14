@@ -1,6 +1,5 @@
 import random
 import time
-
 import numpy as np
 import torch
 import torch.nn as nn
@@ -27,9 +26,18 @@ class Trainer():
         self.print_interval = print_interval
         self.use_weight_loss = use_weight_loss
         self.word_weights = word_weights
+        self.log_file = open("log.txt", "w")
         if self.to_cuda:
             if self.word_weights is not None:
                 self.word_weights = self.word_weights.cuda()
+
+    
+    def log(self, *args, **kwargs):
+        time_prefix = f"[{time.strftime('%H:%M:%S', time.localtime())}]"
+        print(time_prefix, *args, **kwargs)
+        print(time_prefix, *args, **kwargs, file=self.log_file)
+        self.log_file.flush()
+
 
     def train(self, train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc,
               predicted_train_sentences, ground_truth_train_sentences):
@@ -149,7 +157,7 @@ class Trainer():
                     i += 1
                 else:
                     if j >= len(cur_target_pos):
-                        print("error")
+                        self.log("error")
                         return
                     id = cur_target_ids[j]
                     if id == 0:
@@ -194,7 +202,7 @@ class Trainer():
                 i += 1
             else:
                 if j >= len(target_pos):
-                    print("error")
+                    self.log("error")
                     return
                 id = target_ids[j]
                 if id == 0:
@@ -209,12 +217,12 @@ class Trainer():
                 orig += self.model.id2w[int(id.item())] + " "
                 pred += self.model.id2w[int(id.item())] + " "
         if is_eval:
-            print("Eval Sample:")
+            self.log("Eval Sample:")
         else:
-            print("Train Sample:")
-        print("orig: {}".format(orig))
-        print("pred: {}".format(pred))
-        print()
+            self.log("Train Sample:")
+        self.log("orig: {}".format(orig))
+        self.log("pred: {}".format(pred))
+        self.log()
 
     def run(self):
         if self.use_weight_loss:
@@ -292,13 +300,13 @@ class Trainer():
 
             if epoch % 1 == 0 or epoch == 1:
                 if calculate_blue:
-                    print(
+                    self.log(
                         'Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f, Train Bleu score: %.4f, Eval Loss: %.4f, Eval Accuracy: %.4f, Eval Bleu score: %.4f' %
                         (epoch, self.epoch_count, cur_train_loss, cur_train_acc, cur_train_bleu, cur_eval_loss, cur_eval_acc, cur_eval_bleu))
                 else:
-                    print(
+                    self.log(
                         'Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f, Eval Loss: %.4f, Eval Accuracy: %.4f' %
                         (epoch, self.epoch_count, cur_train_loss, cur_train_acc, cur_eval_loss, cur_eval_acc))
-                    # print()
+                    # self.log()
 
         return train_loss_per_epoch, eval_loss_per_epoch

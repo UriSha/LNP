@@ -26,6 +26,7 @@ class Plotter():
         else:
             plt.show()
 
+
     def plot(self):
         if self.save:
             with open("train_results.txt", "w") as f:
