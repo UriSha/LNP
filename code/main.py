@@ -12,7 +12,7 @@ def main():
     mask_ratio = 0.25
     test_size = 0.1
     topk = 1
-    nheads = 1
+    nheads = 2
     use_weight_loss = False
     use_weight_matrix = True
     use_pos_embedding = True
@@ -40,8 +40,8 @@ def main():
     print("Vocab size: ", len(text_processor.id2w))
     model = CNP(embedding_size=text_processor.vec_size,
                 hidden_repr=300,
-                enc_hidden_layers=[1024, 1024, 1024],
-                dec_hidden_layers=[600, 600, 600],
+                enc_hidden_layers=[512, 768],
+                dec_hidden_layers=[768, 1024, 512],
                 max_target_size=text_processor.max_masked_size,
                 w2id = text_processor.w2id,
                 id2w = text_processor.id2w,
@@ -65,7 +65,7 @@ def main():
                       opt="ADAM",
                       learning_rate=0.001,
                       momentum=0.9,
-                      epoch_count=20,
+                      epoch_count=200,
                       acc_topk=topk,
                       print_interval=1,
                       word_weights = text_processor.word_weights,
