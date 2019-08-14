@@ -167,8 +167,8 @@ def main():
                       use_weight_loss = args.use_weight_loss,
                       to_cuda=args.to_cuda)
     print("Start training")
-    trainer.run()
-    plotter = Plotter(train_loss, eval_loss)
+    train_loss_per_epoch, eval_loss_per_epoch = trainer.run()
+    plotter = Plotter(train_loss_per_epoch, eval_loss_per_epoch)
     plotter.plot()
 
 
