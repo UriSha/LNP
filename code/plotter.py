@@ -26,6 +26,7 @@ class Plotter():
         else:
             plt.show()
 
+
     def plot(self):
         if self.save:
             with open("train_results.txt", "w") as f:
@@ -36,12 +37,16 @@ class Plotter():
                 for l in self.eval_loss_per_epoch:
                     print(f"{l}", file=f)
 
-        import matplotlib.pyplot as plt
-        plt.plot(range(len(self.train_loss_per_epoch)), self.train_loss_per_epoch, label="Training")
-        plt.plot(range(len(self.eval_loss_per_epoch)), self.eval_loss_per_epoch, label="Evaluation")
-        plt.xlabel('epoch')
-        plt.ylabel('loss')
-        plt.title('NLL Loss Per Epoch')
-        plt.grid(self.grid)
-        plt.legend()
-        plt.savefig('loss_graph.png')
+        try:
+            import matplotlib.pyplot as plt
+            plt.plot(range(len(self.train_loss_per_epoch)), self.train_loss_per_epoch, label="Training")
+            plt.plot(range(len(self.eval_loss_per_epoch)), self.eval_loss_per_epoch, label="Evaluation")
+            plt.xlabel('epoch')
+            plt.ylabel('loss')
+            plt.title('NLL Loss Per Epoch')
+            plt.grid(self.grid)
+            plt.legend()
+            plt.savefig('loss_graph.png')
+        except Exception:
+            # fix for nova not having matplotlib installed
+            print("Failed generating graph")

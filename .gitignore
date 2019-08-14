@@ -111,3 +111,4 @@ venv.bak/
 eval_results.txt
 train_results.txt
 loss_graph.png
+log.txt
