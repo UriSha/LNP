@@ -236,7 +236,6 @@ class Trainer():
             eval_loader = None
         train_loss_per_epoch = []
         eval_loss_per_epoch = []
-        eval_perplexity_per_epoch = []
 
         for epoch in range(1, self.epoch_count + 1):
             # train
@@ -285,29 +284,21 @@ class Trainer():
 
                 cur_eval_loss = sum(epoch_eval_loss) / len(epoch_eval_loss)
                 cur_eval_acc = sum(epoch_eval_acc) / len(epoch_eval_acc)
-                cur_eval_perplexity = np.exp(-cur_eval_loss)
                 eval_loss_per_epoch.append(cur_eval_loss)
-                eval_perplexity_per_epoch.append(cur_eval_perplexity)
             else:
                 cur_eval_bleu = 0
                 cur_eval_loss = 0
                 cur_eval_acc = 0
-                cur_eval_perplexity = 0
 
             if epoch % 1 == 0 or epoch == 1:
                 if calculate_blue:
                     print(
-                        'Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f, Train Bleu score: %.4f, Eval Loss: %.4f, Eval Accuracy: %.4f, Eval Bleu score: %.4f, Eval Perplexity: %.4f' %
-                        (
-                            epoch, self.epoch_count, cur_train_loss, cur_train_acc, cur_train_bleu, cur_eval_loss,
-                            cur_eval_acc, cur_eval_bleu, cur_eval_perplexity))
+                        'Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f, Train Bleu score: %.4f, Eval Loss: %.4f, Eval Accuracy: %.4f, Eval Bleu score: %.4f' %
+                        (epoch, self.epoch_count, cur_train_loss, cur_train_acc, cur_train_bleu, cur_eval_loss, cur_eval_acc, cur_eval_bleu))
                 else:
                     print(
-                        'Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f, Eval Loss: %.4f, Eval Accuracy: %.4f, Eval Perplexity: %.4f' %
-                        (
-                            epoch, self.epoch_count, cur_train_loss, cur_train_acc, cur_eval_loss,
-                            cur_eval_acc,
-                            cur_eval_perplexity))
+                        'Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f, Eval Loss: %.4f, Eval Accuracy: %.4f' %
+                        (epoch, self.epoch_count, cur_train_loss, cur_train_acc, cur_eval_loss, cur_eval_acc))
                     # print()
 
         return train_loss_per_epoch, eval_loss_per_epoch
