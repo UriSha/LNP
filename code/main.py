@@ -56,6 +56,8 @@ def main():
                 concat_embeddings=concat_embeddings,
                 normalize_weights=normalize_weights,
                 to_cuda=to_cuda)
+    print("Model has {} parameters".format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
+    # print(list(model.decoder.parameters()))
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,
                       evaluation_dataset=eval_dataset,
