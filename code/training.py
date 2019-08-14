@@ -243,7 +243,7 @@ class Trainer():
             epoch_train_loss = []
             epoch_train_acc = []
 
-            calculate_blue = False #epoch == 5 or epoch % 100 == 0
+            calculate_blue = epoch == self.epoch_count or epoch % 100 == 0
 
             predicted_train_sentences = None
             ground_truth_train_sentences = None
