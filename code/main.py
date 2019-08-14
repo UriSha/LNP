@@ -71,8 +71,7 @@ def main():
                       to_cuda=to_cuda)
     train_loss, eval_loss = trainer.run()
     plotter = Plotter(train_loss, eval_loss)
-    plotter.plot_train()
-    plotter.plot_eval()
+    plotter.plot()
 
 
 if __name__ == "__main__":

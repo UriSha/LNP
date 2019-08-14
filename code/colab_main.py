@@ -169,8 +169,7 @@ def main():
     print("Start training")
     trainer.run()
     plotter = Plotter(train_loss, eval_loss)
-    plotter.plot_train()
-    plotter.plot_eval()
+    plotter.plot()
 
 
 if __name__ == "__main__":
