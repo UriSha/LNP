@@ -244,13 +244,15 @@ class Trainer():
             epoch_train_loss = []
             epoch_train_acc = []
 
+            calculate_blue = epoch == 5 or epoch % 100 == 0
+
             predicted_train_sentences = None
             ground_truth_train_sentences = None
             predicted_eval_sentences = None
             ground_truth_eval_sentences = None
             eval_samples_for_blue_calculation = None
 
-            if epoch % 100 == 0:
+            if calculate_blue:
                 predicted_train_sentences = []
                 ground_truth_train_sentences = []
                 predicted_eval_sentences = []
@@ -269,7 +271,7 @@ class Trainer():
                               ground_truth_eval_sentences, eval_samples_for_blue_calculation)
 
             cur_train_bleu = None
-            if epoch % 100 == 0:
+            if calculate_blue:
                 cur_train_bleu = corpus_bleu(ground_truth_train_sentences, predicted_train_sentences)
 
             # compute epoch loss
@@ -278,7 +280,7 @@ class Trainer():
             train_loss_per_epoch.append(cur_train_loss)
             if eval_loader:
                 cur_eval_bleu = None
-                if epoch % 100 == 0:
+                if calculate_blue:
                     cur_eval_bleu = corpus_bleu(ground_truth_eval_sentences, predicted_eval_sentences)
 
                 cur_eval_loss = sum(epoch_eval_loss) / len(epoch_eval_loss)
@@ -293,7 +295,7 @@ class Trainer():
                 cur_eval_perplexity = 0
 
             if epoch % 1 == 0 or epoch == 1:
-                if epoch % 100 == 0:
+                if calculate_blue:
                     print(
                         'Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f, Train Bleu score: %.4f, Eval Loss: %.4f, Eval Accuracy: %.4f, Eval Bleu score: %.4f, Eval Perplexity: %.4f' %
                         (
@@ -306,6 +308,6 @@ class Trainer():
                             epoch, self.epoch_count, cur_train_loss, cur_train_acc, cur_eval_loss,
                             cur_eval_acc,
                             cur_eval_perplexity))
-                # print()
+                    # print()
 
         return train_loss_per_epoch, eval_loss_per_epoch
