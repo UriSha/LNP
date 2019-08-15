@@ -1,5 +1,5 @@
 import argparse
-
+import time
 # from data_processing.dataset_consistent import DatasetConsistent
 # from data_processing.dataset_random import DatasetRandom
 # from data_processing.text_processors.text_processor import TextProcessor
@@ -153,6 +153,7 @@ def main():
 
     print("Model has {} parameters".format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
     print("Init Trainer")
+    files_timestamp = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,
                       evaluation_dataset=eval_dataset,
@@ -162,13 +163,14 @@ def main():
                       momentum=args.momentum,
                       epoch_count=args.epochs,
                       acc_topk=args.topk,
-                      print_interval = args.print_interval,
-                      word_weights = text_processor.word_weights,
-                      use_weight_loss = args.use_weight_loss,
-                      to_cuda=args.to_cuda)
+                      print_interval=args.print_interval,
+                      word_weights=text_processor.word_weights,
+                      use_weight_loss=args.use_weight_loss,
+                      to_cuda=args.to_cuda,
+                      files_timestamp=files_timestamp)
     print("Start training")
     train_loss_per_epoch, eval_loss_per_epoch = trainer.run()
-    plotter = Plotter(train_loss_per_epoch, eval_loss_per_epoch)
+    plotter = Plotter(train_loss_per_epoch, eval_loss_per_epoch, files_timestamp)
     plotter.plot()
 
 

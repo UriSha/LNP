@@ -1,4 +1,5 @@
 import os
+import time
 from data_processing.dataset_non_contextual import DatasetNonContextual
 from data_processing.text_processors.text_processor_non_contextual import TextProcessorNonContextual
 from model.cnp import CNP
@@ -37,6 +38,7 @@ def main():
                                         text_processor.max_seq_len, text_processor.max_masked_size,
                                         mask_ratio=mask_ratio, to_cuda=to_cuda)
 
+    files_timestamp = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
     print("Vocab size: ", len(text_processor.id2w))
     model = CNP(embedding_size=text_processor.vec_size,
                 hidden_repr=300,
@@ -69,10 +71,11 @@ def main():
                       acc_topk=topk,
                       print_interval=1,
                       word_weights = text_processor.word_weights,
-                      use_weight_loss = use_weight_loss,
-                      to_cuda=to_cuda)
+                      use_weight_loss=use_weight_loss,
+                      to_cuda=to_cuda,
+                      files_timestamp=files_timestamp)
     train_loss, eval_loss = trainer.run()
-    plotter = Plotter(train_loss, eval_loss)
+    plotter = Plotter(train_loss, eval_loss, files_timestamp)
     plotter.plot()
 
 
