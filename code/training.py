@@ -6,11 +6,12 @@ import torch.nn as nn
 from nltk.translate.bleu_score import corpus_bleu
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
+import os
 
 
 class Trainer():
     def __init__(self, model, training_dataset, evaluation_dataset, batch_size, opt, learning_rate, momentum,
-                 epoch_count, acc_topk, print_interval, word_weights, use_weight_loss, to_cuda, files_timestamp):
+                 epoch_count, acc_topk, print_interval, word_weights, use_weight_loss, to_cuda, log_dir):
         self.model = model
         self.training_dataset = training_dataset
         self.evaluation_dataset = evaluation_dataset
