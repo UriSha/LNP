@@ -19,7 +19,11 @@ def main():
     use_pos_embedding = True
     concat_embeddings = False
     normalize_weights = True
+    
+    files_timestamp = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
     cur_dir = os.path.dirname(os.path.realpath(__file__))
+    log_dir = os.path.join(cur_dir, "..", "logs", files_timestamp)
+    os.makedirs(log_dir)
 
     # text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_new1.txt"),
     #                                             os.path.join(cur_dir, "../data/embeddings/wiki-news-300d-1M.vec"), test_size=test_size, mask_ratio=mask_ratio,
@@ -38,7 +42,6 @@ def main():
                                         text_processor.max_seq_len, text_processor.max_masked_size,
                                         mask_ratio=mask_ratio, to_cuda=to_cuda)
 
-    files_timestamp = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
     print("Vocab size: ", len(text_processor.id2w))
     model = CNP(embedding_size=text_processor.vec_size,
                 hidden_repr=300,
@@ -73,9 +76,9 @@ def main():
                       word_weights = text_processor.word_weights,
                       use_weight_loss=use_weight_loss,
                       to_cuda=to_cuda,
-                      files_timestamp=files_timestamp)
+                      log_dir=log_dir)
     train_loss, eval_loss = trainer.run()
-    plotter = Plotter(train_loss, eval_loss, files_timestamp)
+    plotter = Plotter(train_loss, eval_loss, log_dir)
     plotter.plot()
 
 
