@@ -1,3 +1,4 @@
+import os
 import random
 import time
 import numpy as np
@@ -10,7 +11,7 @@ from torch.utils.data import DataLoader
 
 class Trainer():
     def __init__(self, model, training_dataset, evaluation_dataset, batch_size, opt, learning_rate, momentum,
-                 epoch_count, acc_topk, print_interval, word_weights, use_weight_loss, to_cuda, files_timestamp):
+                 epoch_count, acc_topk, print_interval, word_weights, use_weight_loss, to_cuda, log_dir):
         self.model = model
         self.training_dataset = training_dataset
         self.evaluation_dataset = evaluation_dataset
@@ -26,7 +27,8 @@ class Trainer():
         self.print_interval = print_interval
         self.use_weight_loss = use_weight_loss
         self.word_weights = word_weights
-        self.log_file = open(f"{files_timestamp}_log.txt", "w")
+        
+        self.log_file = open(os.path.join(log_dir, "log.txt"), "w")
         if self.to_cuda:
             if self.word_weights is not None:
                 self.word_weights = self.word_weights.cuda()
