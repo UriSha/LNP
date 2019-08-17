@@ -290,6 +290,7 @@ class Trainer():
             if eval_loader:
                 cur_eval_bleu = None
                 if calculate_blue:
+                    cur_eval_bleu_without_big_ref = corpus_bleu(ground_truth_eval_sentences, predicted_eval_sentences)
 
                     num_of_eval_sents = min(len(eval_samples_for_blue_calculation), 10000)
                     random.shuffle(eval_samples_for_blue_calculation)
@@ -302,7 +303,8 @@ class Trainer():
                     print()
                     for gt_sent in ground_truth_eval_sentences:
                         gt_sent.extend(eval_samples_for_blue_calculation)
-                    cur_eval_bleu = corpus_bleu(ground_truth_eval_sentences, predicted_eval_sentences)
+
+                    cur_eval_bleu_with_big_ref = corpus_bleu(ground_truth_eval_sentences, predicted_eval_sentences)
 
                 cur_eval_loss = sum(epoch_eval_loss) / len(epoch_eval_loss)
                 cur_eval_acc = sum(epoch_eval_acc) / len(epoch_eval_acc)
@@ -311,13 +313,15 @@ class Trainer():
                 cur_eval_bleu = 0
                 cur_eval_loss = 0
                 cur_eval_acc = 0
+                cur_eval_bleu_with_big_ref = 0
+                cur_eval_bleu_without_big_ref = 0
 
             if epoch % 1 == 0 or epoch == 1:
                 if calculate_blue:
                     self.log(
-                        'Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f, Train Bleu score: %.4f, Eval Loss: %.4f, Eval Accuracy: %.4f, Eval Bleu score: %.4f' %
+                        'Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f, Train Bleu score: %.4f, Eval Loss: %.4f, Eval Accuracy: %.4f, Eval Bleu score (big ref): %.4f, Eval Bleu score (only gt as ref): %.4f' %
                         (epoch, self.epoch_count, cur_train_loss, cur_train_acc, cur_train_bleu, cur_eval_loss,
-                         cur_eval_acc, cur_eval_bleu))
+                         cur_eval_acc, cur_eval_bleu_with_big_ref, cur_eval_bleu_without_big_ref))
                 else:
                     self.log(
                         'Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f, Eval Loss: %.4f, Eval Accuracy: %.4f' %
