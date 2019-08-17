@@ -1,4 +1,3 @@
-import os
 import random
 import time
 import numpy as np
@@ -7,6 +6,7 @@ import torch.nn as nn
 from nltk.translate.bleu_score import corpus_bleu
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
+import os
 
 
 class Trainer():
@@ -27,7 +27,7 @@ class Trainer():
         self.print_interval = print_interval
         self.use_weight_loss = use_weight_loss
         self.word_weights = word_weights
-        
+
         self.log_file = open(os.path.join(log_dir, "log.txt"), "w")
         if self.to_cuda:
             if self.word_weights is not None:
@@ -72,8 +72,8 @@ class Trainer():
     def evaluate(self, eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc, predicted_eval_sentences,
                  ground_truth_eval_sentences, eval_samples_for_blue_calculation):
 
-        p_for_sampling_bleu = min(1, 10000 / len(eval_loader))
-        print("p is {}".format(p_for_sampling_bleu))
+        # p_for_sampling_bleu = min(1, 10000 / len(eval_loader))
+        # print("p is {}".format(p_for_sampling_bleu))
 
         for context_ids_batch, context_pos_batch, context_mask_batch, target_xs_batch, target_xs_mask_batch, target_ys_batch in eval_loader:
             context_ids = self.batch2var(context_ids_batch, False)
@@ -96,8 +96,7 @@ class Trainer():
             if predicted_eval_sentences is not None and ground_truth_eval_sentences is not None and eval_samples_for_blue_calculation is not None:
                 self.populate_predicted_and_ground_truth(predicted_eval_sentences, ground_truth_eval_sentences,
                                                          context_pos_batch, context_ids_batch, target_xs, target_ys,
-                                                         outputs, eval_samples_for_blue_calculation,
-                                                         p_for_sampling_bleu)
+                                                         outputs, eval_samples_for_blue_calculation)
 
     def batch2var(self, batch_param, requires_grad):
         # p = torch.stack(batch_param, dim=1).float()
@@ -135,8 +134,8 @@ class Trainer():
         return (max_indices == target_ys.unsqueeze(dim=1)).sum().item() / (len(target_ys) - mask_size)
 
     def populate_predicted_and_ground_truth(self, predicted_sentences, ground_truth_sentences, context_pos, context_ids,
-                                            target_pos, target_ids, predictions, eval_samples_for_blue_calculation=None,
-                                            p=None):
+                                            target_pos, target_ids, predictions,
+                                            eval_samples_for_blue_calculation=None):
 
         for cur_context_pos, cur_context_ids, cur_target_pos, cur_target_ids, cur_predictions in zip(context_pos,
                                                                                                      context_ids,
@@ -178,9 +177,8 @@ class Trainer():
             ground_truth_sentences.append(orig_as_reference_for_blue)
             predicted_sentences.append(pred)
 
-            if eval_samples_for_blue_calculation is not None and p is not None:
-                if random.random() < p:
-                    eval_samples_for_blue_calculation.append(orig)
+            if eval_samples_for_blue_calculation is not None:
+                eval_samples_for_blue_calculation.append(orig)
 
     def print_results(self, context_pos, context_ids, target_pos, target_ids, predictions, is_eval=False):
         if is_eval:
@@ -282,6 +280,10 @@ class Trainer():
 
             cur_train_bleu = None
             if calculate_blue:
+                num_of_eval_sents = min(len(eval_samples_for_blue_calculation), 10000)
+                eval_samples_for_blue_calculation = np.random.choice(eval_samples_for_blue_calculation,
+                                                                     num_of_eval_sents,
+                                                                     replace=False)
                 cur_train_bleu = corpus_bleu(ground_truth_train_sentences, predicted_train_sentences)
 
             # compute epoch loss
@@ -292,7 +294,9 @@ class Trainer():
                 cur_eval_bleu = None
                 if calculate_blue:
                     print()
-                    print("=============== Adding {} eval sentences to every reference for blue calculation ==================".format(len(eval_samples_for_blue_calculation)))
+                    print(
+                        "=============== Adding {} eval sentences to every reference for blue calculation ==================".format(
+                            len(eval_samples_for_blue_calculation)))
                     print()
                     for gt_sent in ground_truth_eval_sentences:
                         gt_sent.extend(eval_samples_for_blue_calculation)
@@ -310,7 +314,8 @@ class Trainer():
                 if calculate_blue:
                     self.log(
                         'Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f, Train Bleu score: %.4f, Eval Loss: %.4f, Eval Accuracy: %.4f, Eval Bleu score: %.4f' %
-                        (epoch, self.epoch_count, cur_train_loss, cur_train_acc, cur_train_bleu, cur_eval_loss, cur_eval_acc, cur_eval_bleu))
+                        (epoch, self.epoch_count, cur_train_loss, cur_train_acc, cur_train_bleu, cur_eval_loss,
+                         cur_eval_acc, cur_eval_bleu))
                 else:
                     self.log(
                         'Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f, Eval Loss: %.4f, Eval Accuracy: %.4f' %

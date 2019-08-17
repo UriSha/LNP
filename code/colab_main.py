@@ -8,6 +8,7 @@ from data_processing.text_processors.text_processor_non_contextual import TextPr
 from model.cnp import CNP
 from training import Trainer
 from plotter import Plotter
+import os
 
 
 def str2bool(v):
