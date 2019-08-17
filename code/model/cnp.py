@@ -41,12 +41,16 @@ class CNP(nn.Module):
             # self.aggregator = None
             self.encoder = TransformerEncoder(TransformerEncoderLayer(input_size, nhead=nheads, dim_feedforward=enc_hidden_layers[0], dropout=dropout), num_layers=len(enc_hidden_layers))
             self.aggregator = CrossAttentionAggregator(embedding_size, nheads, dropout, to_cuda)
+            self.latent_encoder = TransformerEncoder(TransformerEncoderLayer(input_size, nhead=nheads, dim_feedforward=enc_hidden_layers[0], dropout=dropout), num_layers=len(enc_hidden_layers))
+            self.latent_aggregator = AverageAggregator()
             
-            self.decoder = Decoder(input_size, dec_hidden_layers, output_size, dropout, to_cuda)
+            self.decoder = Decoder(input_size + embedding_size, dec_hidden_layers, output_size, dropout, to_cuda)
         else:
             self.encoder = Encoder(input_size, enc_hidden_layers, hidden_repr, dropout, to_cuda)
             self.aggregator = AttentionAggregator(hidden_repr, to_cuda)
-            # self.aggregator = AverageAggregator(hidden_repr, to_cuda)
+            # self.aggregator = AverageAggregator()
+            self.latent_encoder = None
+            self.latent_aggregator = None
             self.decoder = Decoder(input_size, dec_hidden_layers, output_size, dropout, to_cuda)
 
         self.max_target_size = max_target_size
@@ -79,6 +83,10 @@ class CNP(nn.Module):
             self.encoder = self.encoder.cuda()
             if self.aggregator is not None:
                 self.aggregator = self.aggregator.cuda()
+            if self.latent_encoder is not None:
+                self.latent_encoder = self.latent_encoder.cuda()
+            if self.latent_aggregator is not None:
+                self.latent_aggregator = self.latent_aggregator.cuda()
             self.decoder = self.decoder.cuda()
             self.pos_embeddings = self.pos_embeddings.cuda()
 
@@ -105,6 +113,10 @@ class CNP(nn.Module):
             encodings = encodings.transpose(0, 1)
             representations = self.aggregator(q=emb_target, k=pos_embeddings, r=encodings, context_mask=context_mask, target_mask=target_mask)
 
+            latent_encodings = self.latent_encoder(context, src_key_padding_mask=context_mask)
+            latent_encodings = latent_encodings.transpose(0, 1)
+            latent_representations = self.latent_aggregator(latent_encodings, context_mask)
+
             # representations = self.encoder(context.transpose(0, 1), emb_target.transpose(0, 1), src_key_padding_mask=context_mask, tgt_key_padding_mask=target_mask)
             # representations = representations.transpose(0, 1)
 
@@ -112,6 +124,9 @@ class CNP(nn.Module):
                 x = torch.cat((representations, emb_target), dim=2)
             else:
                 x = representations + emb_target
+            
+            latent_representations = torch.repeat_interleave(latent_representations, self.max_target_size, dim=1)
+            x = torch.cat((x, latent_representations), dim=2)
         else:
             encodings = self.encoder(context, context_mask)
             representations = self.aggregator(encodings, context_mask)
