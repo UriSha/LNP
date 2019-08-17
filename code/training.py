@@ -288,6 +288,8 @@ class Trainer():
             if eval_loader:
                 cur_eval_bleu = None
                 if calculate_blue:
+                    for gt_sent in ground_truth_eval_sentences:
+                        gt_sent.extend(eval_samples_for_blue_calculation)
                     cur_eval_bleu = corpus_bleu(ground_truth_eval_sentences, predicted_eval_sentences)
 
                 cur_eval_loss = sum(epoch_eval_loss) / len(epoch_eval_loss)
