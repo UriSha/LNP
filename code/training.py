@@ -261,8 +261,8 @@ class Trainer():
             eval_samples_for_blue_calculation = None
 
             if calculate_blue:
-                predicted_train_sentences = []
-                ground_truth_train_sentences = []
+        #        predicted_train_sentences = []
+        #        ground_truth_train_sentences = []
                 predicted_eval_sentences = []
                 ground_truth_eval_sentences = []
                 eval_samples_for_blue_calculation = []
@@ -280,11 +280,8 @@ class Trainer():
 
             cur_train_bleu = None
             if calculate_blue:
-                num_of_eval_sents = min(len(eval_samples_for_blue_calculation), 10000)
-                eval_samples_for_blue_calculation = np.random.choice(eval_samples_for_blue_calculation,
-                                                                     num_of_eval_sents,
-                                                                     replace=False)
-                cur_train_bleu = corpus_bleu(ground_truth_train_sentences, predicted_train_sentences)
+          #     cur_train_bleu = corpus_bleu(ground_truth_train_sentences, predicted_train_sentences)
+                cur_train_bleu = -1
 
             # compute epoch loss
             cur_train_loss = sum(epoch_train_loss) / len(epoch_train_loss)
@@ -293,6 +290,11 @@ class Trainer():
             if eval_loader:
                 cur_eval_bleu = None
                 if calculate_blue:
+
+                    num_of_eval_sents = min(len(eval_samples_for_blue_calculation), 10000)
+                    random.shuffle(eval_samples_for_blue_calculation)
+                    eval_samples_for_blue_calculation = eval_samples_for_blue_calculation[:num_of_eval_sents]
+
                     print()
                     print(
                         "=============== Adding {} eval sentences to every reference for blue calculation ==================".format(
