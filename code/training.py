@@ -71,6 +71,7 @@ class Trainer():
                  ground_truth_eval_sentences, eval_samples_for_blue_calculation):
 
         p_for_sampling_bleu = min(1, 10000 / len(eval_loader))
+        print("p is {}".format(p_for_sampling_bleu))
 
         for context_ids_batch, context_pos_batch, context_mask_batch, target_xs_batch, target_xs_mask_batch, target_ys_batch in eval_loader:
             context_ids = self.batch2var(context_ids_batch, False)
