@@ -77,13 +77,17 @@ def parse_arguments():
 
 def main():
     print("Starting CNP")
+
+    files_timestamp = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
     args = parse_arguments()
 
     print()
     print("Argument Values:")
-    for input_argument in input_arguments:
-        exec(f"inp_value=args.{input_argument.name}")
-        exec(f"print(input_argument.name + ': ' + str(inp_value))")
+    with open(f"{files_timestamp}_config.txt") as config_f:
+        for input_argument in input_arguments:
+            exec(f"inp_value=args.{input_argument.name}")
+            exec(f"print(input_argument.name + ': ' + str(inp_value))")
+            exec(f"print(input_argument.name + ': ' + str(inp_value), file=config_f)")
     print()
     
     print("Init text processor")
@@ -153,7 +157,7 @@ def main():
 
     print("Model has {} parameters".format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
     print("Init Trainer")
-    files_timestamp = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
+    
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,
                       evaluation_dataset=eval_dataset,
