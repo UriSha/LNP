@@ -108,8 +108,4 @@ venv.bak/
 
 .DS_Store
 *.vec
-*eval_results.txt
-*train_results.txt
-*loss_graph.png
-*log.txt
-*config.txt
+/logs

@@ -1,5 +1,5 @@
+import random
 import time
-
 import numpy as np
 import torch
 import torch.nn as nn
@@ -26,16 +26,19 @@ class Trainer():
         self.print_interval = print_interval
         self.use_weight_loss = use_weight_loss
         self.word_weights = word_weights
-        self.log_file = open(f"{files_timestamp}_log.txt", "w")
+
+        self.log_file = open(os.path.join(log_dir, "log.txt"), "w")
         if self.to_cuda:
             if self.word_weights is not None:
                 self.word_weights = self.word_weights.cuda()
 
+    
     def log(self, *args, **kwargs):
         time_prefix = f"[{time.strftime('%H:%M:%S', time.localtime())}]"
         print(time_prefix, *args, **kwargs)
         print(time_prefix, *args, **kwargs, file=self.log_file)
         self.log_file.flush()
+
 
     def train(self, train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc,
               predicted_train_sentences, ground_truth_train_sentences):

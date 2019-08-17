@@ -79,11 +79,17 @@ def main():
     print("Starting CNP")
 
     files_timestamp = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
+    cur_dir = os.path.dirname(os.path.realpath(__file__))
+    log_dir = os.path.join(cur_dir, "..", "logs", files_timestamp)
+    os.makedirs(log_dir)
+
+
     args = parse_arguments()
 
     print()
     print("Argument Values:")
-    config_f = open(f"{files_timestamp}_config.txt", "w")
+    
+    config_f = open(os.path.join(log_dir, "config.txt"), "w")
     for input_argument in input_arguments:
         exec(f"inp_value=args.{input_argument.name}")
         exec(f"print(input_argument.name + ': ' + str(inp_value))")
@@ -159,6 +165,7 @@ def main():
 
     print("Model has {} parameters".format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
     print("Model has {} parameters".format(sum(p.numel() for p in model.parameters() if p.requires_grad)), file=config_f)
+    config_f.close()
     print("Init Trainer")
     
     trainer = Trainer(model=model,
@@ -174,10 +181,10 @@ def main():
                       word_weights=text_processor.word_weights,
                       use_weight_loss=args.use_weight_loss,
                       to_cuda=args.to_cuda,
-                      files_timestamp=files_timestamp)
+                      log_dir=log_dir)
     print("Start training")
     train_loss_per_epoch, eval_loss_per_epoch = trainer.run()
-    plotter = Plotter(train_loss_per_epoch, eval_loss_per_epoch, files_timestamp)
+    plotter = Plotter(train_loss_per_epoch, eval_loss_per_epoch, log_dir)
     plotter.plot()
 
 
