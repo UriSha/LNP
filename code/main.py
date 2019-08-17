@@ -9,7 +9,7 @@ from plotter import Plotter
 
 def main():
     to_cuda = False
-    attn = True
+    attn = False
     mask_ratio = 0.25
     test_size = 0.1
     topk = 1

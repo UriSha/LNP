@@ -115,7 +115,7 @@ class CNP(nn.Module):
         else:
             encodings = self.encoder(context, context_mask)
             representations = self.aggregator(encodings, context_mask)
-            x = self.concat_repr_to_target(representations, emb_target)
+            x = self.repeat_and_merge(representations, emb_target)
 
         predicted_embeddings = self.decoder(x)
 
@@ -135,10 +135,13 @@ class CNP(nn.Module):
 
         return pe
 
-    def concat_repr_to_target(self, representations, target):
+    def repeat_and_merge(self, representations, target):
         x = torch.repeat_interleave(representations, self.max_target_size, dim=1)
         # target = torch.unsqueeze(target, dim=2)
-        x = torch.cat((x, target), dim=2)
+        if self.concat_embeddings:
+            x = torch.cat((x, target), dim=2)
+        else:
+            x = representations + target
         return x
 
     def eval_model(self):
