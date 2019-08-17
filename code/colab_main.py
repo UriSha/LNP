@@ -83,11 +83,11 @@ def main():
 
     print()
     print("Argument Values:")
-    with open(f"{files_timestamp}_config.txt", "w") as config_f:
-        for input_argument in input_arguments:
-            exec(f"inp_value=args.{input_argument.name}")
-            exec(f"print(input_argument.name + ': ' + str(inp_value))")
-            exec(f"print(input_argument.name + ': ' + str(inp_value), file=config_f)")
+    config_f = open(f"{files_timestamp}_config.txt", "w")
+    for input_argument in input_arguments:
+        exec(f"inp_value=args.{input_argument.name}")
+        exec(f"print(input_argument.name + ': ' + str(inp_value))")
+        exec(f"print(input_argument.name + ': ' + str(inp_value), file=config_f)")
     print()
     
     print("Init text processor")
@@ -135,6 +135,8 @@ def main():
                                         to_cuda=args.to_cuda)
 
     print("Vocab size: ", len(text_processor.id2w))
+    print("Vocab size: ", len(text_processor.id2w), file=config_f)
+    
     print("Init model")
     model = CNP(embedding_size=text_processor.vec_size,
                 hidden_repr=args.hidden_repr,
@@ -156,6 +158,7 @@ def main():
                 to_cuda=args.to_cuda)
 
     print("Model has {} parameters".format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
+    print("Model has {} parameters".format(sum(p.numel() for p in model.parameters() if p.requires_grad)), file=config_f)
     print("Init Trainer")
     
     trainer = Trainer(model=model,
