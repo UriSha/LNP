@@ -83,7 +83,7 @@ def main():
 
     print()
     print("Argument Values:")
-    with open(f"{files_timestamp}_config.txt") as config_f:
+    with open(f"{files_timestamp}_config.txt", "w") as config_f:
         for input_argument in input_arguments:
             exec(f"inp_value=args.{input_argument.name}")
             exec(f"print(input_argument.name + ': ' + str(inp_value))")
