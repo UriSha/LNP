@@ -49,6 +49,7 @@ def main():
                                         text_processor.max_seq_len,
                                         mask_ratio=0.75, to_cuda=to_cuda))
 
+    tags = [eval_ds.mask_ratio for eval_ds in eval_datasets]
     print("Vocab size: ", len(text_processor.id2w))
     model = CNP(embedding_size=text_processor.vec_size,
                 hidden_repr=300,
@@ -72,6 +73,7 @@ def main():
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,
                       evaluation_datasets=eval_datasets,
+                      tags=tags,
                       batch_size=70,
                       opt="ADAM",
                       learning_rate=0.001,
@@ -84,7 +86,7 @@ def main():
                       to_cuda=to_cuda,
                       log_dir=log_dir)
     train_loss, eval_losses = trainer.run()
-    plotter = Plotter(train_loss, eval_losses, [eval_ds.mask_ratio for eval_ds in eval_datasets], log_dir)
+    plotter = Plotter(train_loss, eval_losses, tags, log_dir)
     plotter.plot()
 
 

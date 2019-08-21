@@ -183,9 +183,11 @@ def main():
     config_f.close()
     print("Init Trainer")
 
+    tags = [eval_ds.mask_ratio for eval_ds in eval_datasets]
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,
                       evaluation_datasets=eval_datasets,
+                      tags=tags,
                       batch_size=args.batch_size,
                       opt=args.opt,
                       learning_rate=args.learning_rate,
@@ -198,8 +200,8 @@ def main():
                       to_cuda=args.to_cuda,
                       log_dir=log_dir)
     print("Start training")
-    train_loss_per_epoch, eval_loss_per_epoch = trainer.run()
-    plotter = Plotter(train_loss_per_epoch, eval_loss_per_epoch, log_dir)
+    train_loss_per_epoch, eval_losses_per_epoch = trainer.run()
+    plotter = Plotter(train_loss_per_epoch, eval_losses_per_epoch, tags, log_dir)
     plotter.plot()
 
 
