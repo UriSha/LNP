@@ -11,7 +11,7 @@ def main():
     to_cuda = False
     attn = True
     mask_ratio = 0.75
-    test_size = 0.1
+    test_size = 0.5
     topk = 1
     nheads = 2
     use_weight_loss = False
@@ -32,22 +32,28 @@ def main():
     #                                             os.path.join(cur_dir, "../data/embeddings/wiki-news-300d-1M.vec"), test_size=test_size, mask_ratio=mask_ratio,
     #                                             sents_limit=10000, rare_word_threshold=1, use_weight_loss=True)
     text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_small_mock.txt"),
-                                                os.path.join(cur_dir, "../data/embeddings/small_fasttext.txt"), test_size=test_size, mask_ratio=mask_ratio,
+                                                os.path.join(cur_dir, "../data/embeddings/small_fasttext.txt"), test_size=test_size,
                                                 sents_limit=10000, rare_word_threshold=0, use_weight_loss=use_weight_loss)
                                                 
     train_dataset = DatasetNonContextual(text_processor.train_sents, text_processor.w2id, text_processor.id2w,
-                                         text_processor.max_seq_len, text_processor.max_masked_size,
+                                         text_processor.max_seq_len,
                                          mask_ratio=mask_ratio, to_cuda=to_cuda)
-    eval_dataset = DatasetNonContextual(text_processor.eval_sents, text_processor.w2id, text_processor.id2w,
-                                        text_processor.max_seq_len, text_processor.max_masked_size,
-                                        mask_ratio=mask_ratio, to_cuda=to_cuda)
+    eval_datasets = []
+    eval_datasets.append(DatasetNonContextual(text_processor.eval25, text_processor.w2id, text_processor.id2w,
+                                        text_processor.max_seq_len,
+                                        mask_ratio=0.25, to_cuda=to_cuda))
+    eval_datasets.append(DatasetNonContextual(text_processor.eval50, text_processor.w2id, text_processor.id2w,
+                                        text_processor.max_seq_len,
+                                        mask_ratio=0.5, to_cuda=to_cuda))
+    eval_datasets.append(DatasetNonContextual(text_processor.eval75, text_processor.w2id, text_processor.id2w,
+                                        text_processor.max_seq_len,
+                                        mask_ratio=0.75, to_cuda=to_cuda))
 
     print("Vocab size: ", len(text_processor.id2w))
     model = CNP(embedding_size=text_processor.vec_size,
                 hidden_repr=300,
                 enc_hidden_layers=[512, 768],
                 dec_hidden_layers=[768, 1024, 512],
-                max_target_size=text_processor.max_masked_size,
                 w2id = text_processor.w2id,
                 id2w = text_processor.id2w,
                 emb_weight = text_processor.embed_matrix,
@@ -65,7 +71,7 @@ def main():
     # print(list(model.decoder.parameters()))
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,
-                      evaluation_dataset=eval_dataset,
+                      evaluation_datasets=eval_datasets,
                       batch_size=70,
                       opt="ADAM",
                       learning_rate=0.001,
@@ -77,8 +83,8 @@ def main():
                       use_weight_loss=use_weight_loss,
                       to_cuda=to_cuda,
                       log_dir=log_dir)
-    train_loss, eval_loss = trainer.run()
-    plotter = Plotter(train_loss, eval_loss, log_dir)
+    train_loss, eval_losses = trainer.run()
+    plotter = Plotter(train_loss, eval_losses, [eval_ds.mask_ratio for eval_ds in eval_datasets], log_dir)
     plotter.plot()
 
 

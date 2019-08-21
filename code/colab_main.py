@@ -115,50 +115,45 @@ def main():
     if args.abs_test_size == -1:
         test_size = args.test_size
 
-    print("Init text processor")
+    print("Init Text Processor")
     text_processor = TextProcessorNonContextual("data/APRC/{}".format(args.data_file),
                                                 "data/embeddings/wiki-news-300d-1M.vec",
                                                 test_size=test_size,
-                                                mask_ratio=args.mask_ratio,
                                                 sents_limit=args.sent_count,
                                                 rare_word_threshold=args.rare_threshold,
                                                 use_weight_loss=args.use_weight_loss)
 
-    # if args.dataset_random_every_time:
-    #     train_dataset = DatasetRandom(text_as_list=text_processor.train_sents,
-    #                                   tokenizer=text_processor.tokenizer,
-    #                                   w2id=text_processor.w2id,
-    #                                   max_seq_len=text_processor.max_seq_len,
-    #                                   max_masked_size=text_processor.max_masked_size,
-    #                                   mask_ratio=args.mask_ratio,
-    #                                   to_cuda=args.to_cuda)
 
-    # else:
-    #     train_dataset = DatasetConsistent(text_as_list=text_processor.train_sents,
-    #                                       tokenizer=text_processor.tokenizer,
-    #                                       w2id=text_processor.w2id,
-    #                                       max_seq_len=text_processor.max_seq_len,
-    #                                       max_masked_size=text_processor.max_masked_size,
-    #                                       mask_ratio=args.mask_ratio,
-    #                                       to_cuda=args.to_cuda)
-
-    print("Init train Dataset")
+    print("Init Train Dataset")
     train_dataset = DatasetNonContextual(text_as_list=text_processor.train_sents,
                                          w2id=text_processor.w2id,
                                          id2w=text_processor.id2w,
                                          max_seq_len=text_processor.max_seq_len,
-                                         max_masked_size=text_processor.max_masked_size,
                                          mask_ratio=args.mask_ratio,
                                          to_cuda=args.to_cuda)
 
-    print("Init test Dataset")
-    eval_dataset = DatasetNonContextual(text_as_list=text_processor.eval_sents,
+    print("Init Test Datasets")
+    eval_datasets = []
+    eval_datasets.append(DatasetNonContextual(text_as_list=text_processor.eval25,
                                         w2id=text_processor.w2id,
                                         id2w=text_processor.id2w,
                                         max_seq_len=text_processor.max_seq_len,
-                                        max_masked_size=text_processor.max_masked_size,
-                                        mask_ratio=args.mask_ratio,
-                                        to_cuda=args.to_cuda)
+                                        mask_ratio=0.25,
+                                        to_cuda=args.to_cuda))
+    
+    eval_datasets.append(DatasetNonContextual(text_as_list=text_processor.eval50,
+                                        w2id=text_processor.w2id,
+                                        id2w=text_processor.id2w,
+                                        max_seq_len=text_processor.max_seq_len,
+                                        mask_ratio=0.5,
+                                        to_cuda=args.to_cuda))
+
+    eval_datasets.append(DatasetNonContextual(text_as_list=text_processor.eval75,
+                                        w2id=text_processor.w2id,
+                                        id2w=text_processor.id2w,
+                                        max_seq_len=text_processor.max_seq_len,
+                                        mask_ratio=0.75,
+                                        to_cuda=args.to_cuda))
 
     print("Vocab size: ", len(text_processor.id2w))
     print("Vocab size: ", len(text_processor.id2w), file=config_f)
@@ -168,7 +163,6 @@ def main():
                 hidden_repr=args.hidden_repr,
                 enc_hidden_layers=args.enc_layers,
                 dec_hidden_layers=args.dec_layers,
-                max_target_size=text_processor.max_masked_size,
                 w2id=text_processor.w2id,
                 id2w=text_processor.id2w,
                 emb_weight=text_processor.embed_matrix,
@@ -191,7 +185,7 @@ def main():
 
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,
-                      evaluation_dataset=eval_dataset,
+                      evaluation_datasets=eval_datasets,
                       batch_size=args.batch_size,
                       opt=args.opt,
                       learning_rate=args.learning_rate,

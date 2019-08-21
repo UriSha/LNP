@@ -10,11 +10,11 @@ import os
 
 
 class Trainer():
-    def __init__(self, model, training_dataset, evaluation_dataset, batch_size, opt, learning_rate, momentum,
+    def __init__(self, model, training_dataset, evaluation_datasets, batch_size, opt, learning_rate, momentum,
                  epoch_count, acc_topk, print_interval, word_weights, use_weight_loss, to_cuda, log_dir):
         self.model = model
         self.training_dataset = training_dataset
-        self.evaluation_dataset = evaluation_dataset
+        self.evaluation_datasets = evaluation_datasets
         self.opt = opt
         self.learning_rate = learning_rate
         self.momentum = momentum
@@ -71,9 +71,6 @@ class Trainer():
 
     def evaluate(self, eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc, predicted_eval_sentences,
                  ground_truth_eval_sentences, eval_samples_for_blue_calculation):
-
-        # p_for_sampling_bleu = min(1, 10000 / len(eval_loader))
-        # print("p is {}".format(p_for_sampling_bleu))
 
         for context_ids_batch, context_pos_batch, context_mask_batch, target_xs_batch, target_xs_mask_batch, target_ys_batch in eval_loader:
             context_ids = self.batch2var(context_ids_batch, False)
@@ -239,12 +236,17 @@ class Trainer():
         else:
             optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
         train_loader = DataLoader(dataset=self.training_dataset, batch_size=self.batch_size, shuffle=True)
-        if self.evaluation_dataset:
-            eval_loader = DataLoader(dataset=self.evaluation_dataset, batch_size=self.batch_size, shuffle=False)
+        if self.evaluation_datasets:
+            eval_loaders = []
+            for eval_dataset in self.evaluation_datasets:
+                eval_loaders.append((DataLoader(dataset=eval_dataset, batch_size=self.batch_size, shuffle=False), eval_dataset.mask_ratio))
         else:
-            eval_loader = None
+            eval_loaders = None
         train_loss_per_epoch = []
-        eval_loss_per_epoch = []
+        if self.evaluation_datasets:
+            eval_losses_per_epoch = [[] for _ in range(len(self.evaluation_datasets))]
+        else:
+            eval_losses_per_epoch = []
 
         for epoch in range(1, self.epoch_count + 1):
             # train
@@ -252,7 +254,7 @@ class Trainer():
             epoch_train_loss = []
             epoch_train_acc = []
 
-            calculate_blue = epoch == self.epoch_count # or epoch % 100 == 0
+            calculate_blue = False # epoch == self.epoch_count # or epoch % 100 == 0
 
             predicted_train_sentences = None
             ground_truth_train_sentences = None
@@ -271,12 +273,17 @@ class Trainer():
                        predicted_train_sentences, ground_truth_train_sentences)
 
             # evaluate
-            if eval_loader:
+            if eval_loaders:
                 self.model.eval_model()
-                epoch_eval_loss = []
-                epoch_eval_acc = []
-                self.evaluate(eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc, predicted_eval_sentences,
+                epoch_eval_losses = []
+                epoch_eval_accs = []
+                for eval_loader in eval_loaders:
+                    epoch_eval_loss = []
+                    epoch_eval_acc = []
+                    self.evaluate(eval_loader[0], loss_function, epoch_eval_loss, epoch_eval_acc, predicted_eval_sentences,
                               ground_truth_eval_sentences, eval_samples_for_blue_calculation)
+                    epoch_eval_losses.append(epoch_eval_loss)
+                    epoch_eval_accs.append(epoch_eval_acc)
 
             cur_train_bleu = None
             if calculate_blue:
@@ -287,7 +294,7 @@ class Trainer():
             cur_train_loss = sum(epoch_train_loss) / len(epoch_train_loss)
             cur_train_acc = sum(epoch_train_acc) / len(epoch_train_acc)
             train_loss_per_epoch.append(cur_train_loss)
-            if eval_loader:
+            if eval_loaders:
                 cur_eval_bleu = None
                 if calculate_blue:
                     cur_eval_bleu_without_big_ref = corpus_bleu(ground_truth_eval_sentences, predicted_eval_sentences)
@@ -306,9 +313,12 @@ class Trainer():
 
                     cur_eval_bleu_with_big_ref = corpus_bleu(ground_truth_eval_sentences, predicted_eval_sentences)
 
-                cur_eval_loss = sum(epoch_eval_loss) / len(epoch_eval_loss)
-                cur_eval_acc = sum(epoch_eval_acc) / len(epoch_eval_acc)
-                eval_loss_per_epoch.append(cur_eval_loss)
+                cur_eval_losses = []
+                cur_eval_accs = []
+                for i in range(len(eval_loaders)):
+                    cur_eval_losses.append(sum(epoch_eval_losses[i]) / len(epoch_eval_losses[i]))
+                    cur_eval_accs.append(sum(epoch_eval_accs[i]) / len(epoch_eval_accs[i]))
+                    eval_losses_per_epoch[i].append(cur_eval_losses[i])
             else:
                 cur_eval_bleu = 0
                 cur_eval_loss = 0
@@ -323,9 +333,12 @@ class Trainer():
                         (epoch, self.epoch_count, cur_train_loss, cur_train_acc, cur_train_bleu, cur_eval_loss,
                          cur_eval_acc, cur_eval_bleu_with_big_ref, cur_eval_bleu_without_big_ref))
                 else:
-                    self.log(
-                        'Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f, Eval Loss: %.4f, Eval Accuracy: %.4f' %
-                        (epoch, self.epoch_count, cur_train_loss, cur_train_acc, cur_eval_loss, cur_eval_acc))
+                    self.log('Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f' %
+                        (epoch, self.epoch_count, cur_train_loss, cur_train_acc))
+                    if eval_loaders:
+                        for i, eval_loader in enumerate(eval_loaders): 
+                            self.log('Epoch [%d/%d] Eval Loss (%.2f): %.4f, Eval Accuracy: %.4f' %
+                                (epoch, self.epoch_count, eval_loader[1], cur_eval_losses[i], cur_eval_accs[i]))
                     # self.log()
 
-        return train_loss_per_epoch, eval_loss_per_epoch
+        return train_loss_per_epoch, eval_losses_per_epoch

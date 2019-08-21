@@ -10,7 +10,7 @@ from torch.utils.data import Dataset
 
 
 class DatasetNonContextual(Dataset):
-    def __init__(self, text_as_list, w2id, id2w, max_seq_len, max_masked_size, mask_ratio=.25, transform=None,
+    def __init__(self, text_as_list, w2id, id2w, max_seq_len, mask_ratio=.25, transform=None,
                  to_cuda=True):
         self.data = text_as_list
         self.transform = transform
@@ -18,7 +18,7 @@ class DatasetNonContextual(Dataset):
         self.w2id = w2id
         self.id2w = id2w
         self.max_seq_len = max_seq_len
-        self.max_masked_size = max_masked_size
+        self.max_masked_size = math.ceil(max_seq_len * mask_ratio)
         self.to_cuda = to_cuda
         self.MASK_SYMBOL = '<MASK>'
         self.mem = {}
