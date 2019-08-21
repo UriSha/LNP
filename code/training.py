@@ -53,9 +53,12 @@ class Trainer():
 
             # feedforward - backprop
             optimizer.zero_grad()
-            outputs = self.model(context_ids, context_pos, context_mask, target_xs, target_xs_mask)
+            outputs, prior_mu, prior_var, posterior_mu, posterior_var = self.model(context_ids, context_pos, context_mask, target_xs, target_xs_mask, target_ys)
             outputs_fixed, target_ys_fixed = self.fix_dimensions(outputs, target_ys)
-            loss = loss_function(outputs_fixed, target_ys_fixed)
+
+            kl = self.kl_div(prior_mu, prior_var, posterior_mu, posterior_var)
+
+            loss = loss_function(outputs_fixed, target_ys_fixed) + kl
             loss.backward()
             optimizer.step()
 
@@ -68,6 +71,13 @@ class Trainer():
                 self.populate_predicted_and_ground_truth(predicted_train_sentences, ground_truth_train_sentences,
                                                          context_pos_batch, context_ids_batch, target_xs, target_ys,
                                                          outputs)
+
+
+    def kl_div(self, prior_mu, prior_var, posterior_mu, posterior_var):
+        kl_div = (torch.exp(posterior_var) + (posterior_mu-prior_mu) ** 2) / torch.exp(prior_var) - 1. + (prior_var - posterior_var)
+        kl_div = 0.5 * kl_div.sum()
+        return kl_div
+    
 
     def evaluate(self, eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc, predicted_eval_sentences,
                  ground_truth_eval_sentences, eval_samples_for_blue_calculation):
@@ -84,7 +94,7 @@ class Trainer():
             target_ys = self.batch2var(target_ys_batch, False)
 
             # feedforward
-            outputs = self.model(context_ids, context_pos, context_mask, target_xs, target_xs_mask)
+            outputs, _, _, _, _ = self.model(context_ids, context_pos, context_mask, target_xs, target_xs_mask)
             outputs_fixed, target_ys_fixed = self.fix_dimensions(outputs, target_ys)
             loss = loss_function(outputs_fixed, target_ys_fixed)
 

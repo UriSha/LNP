@@ -1,11 +1,12 @@
-from aggregator import AverageAggregator
-from transformer import *
+from model.aggregator import AverageAggregator
+from model.transformer import *
 
 
 class LatentEncoder(torch.nn.Module):
     """The Latent Encoder."""
 
     def __init__(self, d_model, num_hidden, num_latent, nhead, dim_feedforward=2048, dropout=0.1):
+        super(LatentEncoder, self).__init__()
         """(A)NP latent encoder.
 
         Args:
@@ -28,10 +29,10 @@ class LatentEncoder(torch.nn.Module):
         self.mu = Linear(num_hidden, num_latent)
         self.log_sigma = Linear(num_hidden, num_latent)
 
-    def forward(self, src, src_mask=None, src_key_padding_mask=None):
-        latent_representations = self.encoder(src=src, mask=src_mask, src_key_padding_mask=src_key_padding_mask)
+    def forward(self, src, src_mask=None):
+        latent_representations = self.encoder(src=src, src_key_padding_mask=src_mask)
 
-        latent_aggregated_representation = self.aggregator(x=latent_representations, x_mask=src_mask)
+        latent_aggregated_representation = self.aggregator(x=latent_representations.transpose(0, 1), x_mask=src_mask)
 
         # get mu and sigma
         mu = self.mu(latent_aggregated_representation)

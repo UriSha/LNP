@@ -48,8 +48,8 @@ class CNP(nn.Module):
 
             self.latent_encoder = LatentEncoder(d_model=input_size,
                                                 nhead=nheads,
-                                                num_hidden=len(enc_hidden_layers),
-                                                num_latent=len(enc_hidden_layers),
+                                                num_hidden=input_size,
+                                                num_latent=input_size,
                                                 dim_feedforward=enc_hidden_layers[0],
                                                 dropout=dropout)
             # self.latent_encoder = TransformerEncoder(
@@ -107,7 +107,7 @@ class CNP(nn.Module):
             self.decoder = self.decoder.cuda()
             self.pos_embeddings = self.pos_embeddings.cuda()
 
-    def forward(self, context_ids, context_pos, context_mask, target, target_mask):
+    def forward(self, context_ids, context_pos, context_mask, target, target_mask, target_ys=None):
         sent_embeddings = self.embedding(context_ids)
         if self.use_pos_embedding:
             pos_embeddings = self.pos_embeddings(context_pos)
@@ -134,14 +134,19 @@ class CNP(nn.Module):
             # latent path- new
             prior_mu, prior_var, prior = self.latent_encoder(context, context_mask)
 
-            train = 1
             # For training
-            if train is not None:       # TODO- check how to change it
-                posterior_mu, posterior_var, posterior = self.latent_encoder(emb_target, target)
+            if target_ys is not None:
+                target_embeddings = self.embedding(target_ys)
+                latent_target = emb_target + target_embeddings # position emb + word emb
+                latent_target = latent_target.transpose(0, 1)
+                latent_target = torch.cat((latent_target, context), dim=0)
+                latent_mask = torch.cat((target_mask, context_mask), dim=1)
+                posterior_mu, posterior_var, posterior = self.latent_encoder(latent_target, latent_mask)
                 z = posterior
 
             # For Generation
             else:
+                posterior_mu, posterior_var = None, None
                 z = prior
 
             # latent path- old
@@ -169,7 +174,7 @@ class CNP(nn.Module):
         if self.embedding_matrix is not None:
             predicted_embeddings = torch.matmul(predicted_embeddings, self.embedding_matrix)
 
-        return predicted_embeddings
+        return predicted_embeddings, prior_mu, prior_var, posterior_mu, posterior_var
 
     def create_pos_embeddings_matrix(self, max_seq_len, embed_size):
         pe = torch.zeros(max_seq_len + 1, embed_size)
