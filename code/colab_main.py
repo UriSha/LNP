@@ -52,7 +52,8 @@ input_arguments = [
     InputArgument("mask_ratio", "mr", "max_ratio (default: 0.25)", .25, float),
     InputArgument("topk", "topk", "topk (default: 1)", 1, int),
     InputArgument("momentum", "moment", "momentum (default: 0.9)", .9, float),
-    InputArgument("test_size", "ts", "test_size (default: 0.1)", .1, float),
+    InputArgument("test_size", "ts", "test_size (default: -1)", -1.0, float),
+    InputArgument("abs_test_size", "ats", "test_size (default: -1)", -1, int),
     InputArgument("rare_threshold", "rt", "rare word threshold (default: 10)", 10, float),
     InputArgument("hidden_repr", "hr", "hidden_repr (default: 1000)", 1000, int),
     InputArgument("enc_layers", "encl", "enc_layers (default: [512, 768])", [512, 768], int, nargs="+"),
@@ -105,10 +106,19 @@ def main():
         exec(f"print(input_argument.name + ': ' + str(inp_value), file=config_f)")
     print()
 
+    if abs(args.test_size - -1.0) < 0.01 and args.abs_test_size == -1:
+        raise Exception("At least one of test size parameters must be set")
+    if abs(args.test_size - -1.0) >= 0.01 and args.abs_test_size != -1:
+        raise Exception("Only one of test size parameters should be set")
+
+    test_size = args.abs_test_size
+    if args.abs_test_size == -1:
+        test_size = args.test_size
+
     print("Init text processor")
     text_processor = TextProcessorNonContextual("data/APRC/{}".format(args.data_file),
                                                 "data/embeddings/wiki-news-300d-1M.vec",
-                                                test_size=args.test_size,
+                                                test_size=test_size,
                                                 mask_ratio=args.mask_ratio,
                                                 sents_limit=args.sent_count,
                                                 rare_word_threshold=args.rare_threshold,
