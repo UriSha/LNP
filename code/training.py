@@ -7,6 +7,7 @@ from nltk.translate.bleu_score import corpus_bleu
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 import os
+from blue import corpus_bleu_with_joint_refrences
 
 
 class Trainer():
@@ -258,14 +259,14 @@ class Trainer():
             ground_truth_train_sentences = None
             predicted_eval_sentences = None
             ground_truth_eval_sentences = None
-            eval_samples_for_blue_calculation = None
+            eval_sentences_for_blue_calculation = None
 
             if calculate_blue:
         #        predicted_train_sentences = []
         #        ground_truth_train_sentences = []
                 predicted_eval_sentences = []
                 ground_truth_eval_sentences = []
-                eval_samples_for_blue_calculation = []
+                eval_sentences_for_blue_calculation = []
 
             self.train(train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc,
                        predicted_train_sentences, ground_truth_train_sentences)
@@ -276,7 +277,7 @@ class Trainer():
                 epoch_eval_loss = []
                 epoch_eval_acc = []
                 self.evaluate(eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc, predicted_eval_sentences,
-                              ground_truth_eval_sentences, eval_samples_for_blue_calculation)
+                              ground_truth_eval_sentences, eval_sentences_for_blue_calculation)
 
             cur_train_bleu = None
             if calculate_blue:
@@ -292,19 +293,16 @@ class Trainer():
                 if calculate_blue:
                     cur_eval_bleu_without_big_ref = corpus_bleu(ground_truth_eval_sentences, predicted_eval_sentences)
 
-                    num_of_eval_sents = min(len(eval_samples_for_blue_calculation), 10000)
-                    random.shuffle(eval_samples_for_blue_calculation)
-                    eval_samples_for_blue_calculation = eval_samples_for_blue_calculation[:num_of_eval_sents]
+                    num_of_eval_sents = min(len(eval_sentences_for_blue_calculation), 10000)
+                    random.shuffle(eval_sentences_for_blue_calculation)
+                    eval_sentences_for_blue_calculation = eval_sentences_for_blue_calculation[:num_of_eval_sents]
 
                     print()
                     print(
                         "=============== Adding {} eval sentences to every reference for blue calculation ==================".format(
-                            len(eval_samples_for_blue_calculation)))
+                            len(eval_sentences_for_blue_calculation)))
                     print()
-                    for gt_sent in ground_truth_eval_sentences:
-                        gt_sent.extend(eval_samples_for_blue_calculation)
-
-                    cur_eval_bleu_with_big_ref = corpus_bleu(ground_truth_eval_sentences, predicted_eval_sentences)
+                    cur_eval_bleu_with_big_ref = corpus_bleu_with_joint_refrences(eval_sentences_for_blue_calculation, ground_truth_eval_sentences, predicted_eval_sentences)
 
                 cur_eval_loss = sum(epoch_eval_loss) / len(epoch_eval_loss)
                 cur_eval_acc = sum(epoch_eval_acc) / len(epoch_eval_acc)
