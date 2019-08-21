@@ -1,9 +1,7 @@
-import sys
 import codecs
-import os
 import math
 import operator
-import json
+import os
 from functools import reduce
 
 
@@ -202,3 +200,9 @@ def _BLEU(candidate, ref_counts_n, ref_lengths_n, gram):
         bleu_gram.append(bleu)
 
     return bleu_gram
+
+
+sent = ["i love this book it is really good"]
+ref = [["i love this book it is really 2"], ["i love this book it is really 2"]]
+bleu_score = BLEU(sent, ref)
+print(bleu_score)
