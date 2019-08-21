@@ -10,7 +10,7 @@ from plotter import Plotter
 def main():
     to_cuda = False
     attn = True
-    mask_ratio = 0.25
+    mask_ratio = 0.75
     test_size = 0.1
     topk = 1
     nheads = 2
@@ -66,11 +66,11 @@ def main():
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,
                       evaluation_dataset=eval_dataset,
-                      batch_size=16,
+                      batch_size=70,
                       opt="ADAM",
                       learning_rate=0.001,
                       momentum=0.9,
-                      epoch_count=200,
+                      epoch_count=10,
                       acc_topk=topk,
                       print_interval=1,
                       word_weights = text_processor.word_weights,
