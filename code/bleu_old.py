@@ -201,8 +201,8 @@ def _BLEU(candidate, ref_counts_n, ref_lengths_n, gram):
 
     return bleu_gram
 
-
-sent = ["i love this book it is really good"]
-ref = [["i love this book it is really 2"], ["i love this book it is really 2"]]
-bleu_score = BLEU(sent, ref)
-print(bleu_score)
+if __name__ == "__main__":
+    sent = ["i love this book it is really good"]
+    ref = [["i love this book it is really 2"], ["i love this book it is really 2"]]
+    bleu_score = BLEU(sent, ref)
+    print(bleu_score)
