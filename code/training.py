@@ -261,8 +261,8 @@ class Trainer():
 
             calculate_blue = epoch == self.epoch_count # or epoch % 100 == 0
 
-            predicted_train_sentences = [None for _ in range(len(self.evaluation_datasets))]
-            ground_truth_train_sentences = [None for _ in range(len(self.evaluation_datasets))]
+            predicted_train_sentences = None
+            ground_truth_train_sentences = None
             predicted_eval_sentences = [None for _ in range(len(self.evaluation_datasets))]
             ground_truth_eval_sentences = [None for _ in range(len(self.evaluation_datasets))]
             eval_sentences_for_blue_calculation = [None for _ in range(len(self.evaluation_datasets))]
