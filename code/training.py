@@ -316,7 +316,7 @@ class Trainer():
 
 
                         self.log(
-                            "Calculating blue score for (%.2f) with total of %d sentences" % (self.tags[i],len(eval_sentences_for_blue_calculation) + len(ground_truth_eval_sentences[i])))
+                            "Calculating blue score for (%.2f) with total of %d references" % (self.tags[i],len(eval_sentences_for_blue_calculation) + len(ground_truth_eval_sentences[i])))
                         cur_eval_bleu_with_big_ref.append(corpus_bleu_with_joint_refrences(eval_sentences_for_blue_calculation, ground_truth_eval_sentences[i], predicted_eval_sentences[i]))
 
                     self.log("")
