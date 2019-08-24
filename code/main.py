@@ -10,15 +10,18 @@ from plotter import Plotter
 def main():
     to_cuda = False
     attn = True
-    mask_ratio = 0.25
-    test_size = 0.1
-    topk = 1
+    train_mask_rations = [0.25, 0.5]
+    test_size = 0.5
+    topk = [1, 5, 10]
     nheads = 2
     use_weight_loss = False
     use_weight_matrix = True
     use_pos_embedding = True
     concat_embeddings = False
     normalize_weights = True
+
+    dropout = 0
+    epoch_count = 100
     
     files_timestamp = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
     cur_dir = os.path.dirname(os.path.realpath(__file__))
@@ -31,29 +34,36 @@ def main():
     #                                             os.path.join(cur_dir, "../data/embeddings/wiki-news-300d-1M.vec"), test_size=test_size, mask_ratio=mask_ratio,
     #                                             sents_limit=10000, rare_word_threshold=1, use_weight_loss=True)
     text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_small_mock.txt"),
-                                                os.path.join(cur_dir, "../data/embeddings/small_fasttext.txt"), test_size=test_size, mask_ratio=mask_ratio,
+                                                os.path.join(cur_dir, "../data/embeddings/small_fasttext.txt"), test_size=test_size,
                                                 sents_limit=10000, rare_word_threshold=0, use_weight_loss=use_weight_loss)
                                                 
     train_dataset = DatasetNonContextual(text_processor.train_sents, text_processor.w2id, text_processor.id2w,
-                                         text_processor.max_seq_len, text_processor.max_masked_size,
-                                         mask_ratio=mask_ratio, to_cuda=to_cuda)
-    eval_dataset = DatasetNonContextual(text_processor.eval_sents, text_processor.w2id, text_processor.id2w,
-                                        text_processor.max_seq_len, text_processor.max_masked_size,
-                                        mask_ratio=mask_ratio, to_cuda=to_cuda)
+                                         text_processor.max_seq_len,
+                                         mask_ratios=train_mask_rations, to_cuda=to_cuda)
+    eval_datasets = []
+    eval_datasets.append(DatasetNonContextual(text_processor.eval25, text_processor.w2id, text_processor.id2w,
+                                        text_processor.max_seq_len,
+                                        mask_ratios=[0.25], to_cuda=to_cuda))
+    eval_datasets.append(DatasetNonContextual(text_processor.eval50, text_processor.w2id, text_processor.id2w,
+                                        text_processor.max_seq_len,
+                                        mask_ratios=[0.5], to_cuda=to_cuda))
+    eval_datasets.append(DatasetNonContextual(text_processor.eval75, text_processor.w2id, text_processor.id2w,
+                                        text_processor.max_seq_len,
+                                        mask_ratios=[0.75], to_cuda=to_cuda))
 
+    tags = [eval_ds.mask_ratios[0] for eval_ds in eval_datasets]
     print("Vocab size: ", len(text_processor.id2w))
     model = CNP(embedding_size=text_processor.vec_size,
                 hidden_repr=300,
                 enc_hidden_layers=[512, 768],
                 dec_hidden_layers=[768, 1024, 512],
-                max_target_size=text_processor.max_masked_size,
                 w2id = text_processor.w2id,
                 id2w = text_processor.id2w,
                 emb_weight = text_processor.embed_matrix,
                 max_seq_len = text_processor.max_seq_len,
                 padding_idx = text_processor.pad_index,
                 use_weight_matrix = use_weight_matrix,
-                dropout=0,
+                dropout=dropout,
                 attn=attn,
                 nheads=nheads,
                 use_pos_embedding=use_pos_embedding,
@@ -64,20 +74,21 @@ def main():
     # print(list(model.decoder.parameters()))
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,
-                      evaluation_dataset=eval_dataset,
+                      evaluation_datasets=eval_datasets,
+                      tags=tags,
                       batch_size=70,
                       opt="ADAM",
                       learning_rate=0.001,
                       momentum=0.9,
-                      epoch_count=100,
+                      epoch_count=epoch_count,
                       acc_topk=topk,
                       print_interval=1,
                       word_weights = text_processor.word_weights,
                       use_weight_loss=use_weight_loss,
                       to_cuda=to_cuda,
                       log_dir=log_dir)
-    train_loss, eval_loss = trainer.run()
-    plotter = Plotter(train_loss, eval_loss, log_dir)
+    train_loss, eval_losses = trainer.run()
+    plotter = Plotter(train_loss, eval_losses, tags, log_dir)
     plotter.plot()
 
 

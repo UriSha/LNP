@@ -12,9 +12,8 @@ from model.transformer import *
 
 
 class CNP(nn.Module):
-    def __init__(self, embedding_size, hidden_repr, enc_hidden_layers, dec_hidden_layers, max_target_size, w2id,
-                 id2w, emb_weight, padding_idx, max_seq_len, use_weight_matrix, nheads=2, use_pos_embedding=True,
-                 dropout=0.1, attn=False, concat_embeddings=False, normalize_weights=True, to_cuda=False):
+    def __init__(self, embedding_size, hidden_repr, enc_hidden_layers, dec_hidden_layers, w2id,
+                 id2w, emb_weight, padding_idx, max_seq_len, use_weight_matrix, nheads=2, use_pos_embedding=True, dropout=0.1, attn=False, concat_embeddings=False, normalize_weights=True, to_cuda=False):
         super(CNP, self).__init__()
         self.use_pos_embedding = use_pos_embedding
         self.attn = attn
@@ -66,7 +65,6 @@ class CNP(nn.Module):
             self.latent_aggregator = None
             self.decoder = Decoder(input_size, dec_hidden_layers, output_size, dropout, to_cuda)
 
-        self.max_target_size = max_target_size
         self.max_seq_len = max_seq_len
         self.w2id = w2id
         self.id2w = id2w
@@ -213,7 +211,7 @@ class CNP(nn.Module):
         return pe
 
     def repeat_and_merge(self, representations, target):
-        x = torch.repeat_interleave(representations, self.max_target_size, dim=1)
+        x = torch.repeat_interleave(representations, target.shape[1], dim=1)
         # target = torch.unsqueeze(target, dim=2)
         if self.concat_embeddings:
             x = torch.cat((x, target), dim=2)
