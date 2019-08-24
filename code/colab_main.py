@@ -49,7 +49,6 @@ input_arguments = [
     InputArgument("to_cuda", "c", "use cuda (default: True)", True, str2bool, nargs="?", const=True),
     InputArgument("sent_count", "sc", "sent count (default: no limit)", 0, int),
     InputArgument("batch_size", "bs", "batch_size (default: 50)", 50, int),
-    InputArgument("mask_ratio", "mr", "max_ratio (default: 0.25)", .25, float),
     InputArgument("topk", "topk", "topk (default: [1, 5, 10])", [1, 5, 10], int, nargs="+"),
     InputArgument("train_mask_ratios", "mr", "train_mask_ratios (default: [0.25, 0.5])", [0.25, 0.5], float, nargs="+"),
     InputArgument("momentum", "moment", "momentum (default: 0.9)", .9, float),
