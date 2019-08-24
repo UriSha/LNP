@@ -10,7 +10,7 @@ from plotter import Plotter
 def main():
     to_cuda = False
     attn = True
-    mask_ratio = 0.75
+    train_mask_rations = [0.25, 0.5]
     test_size = 0.5
     topk = 1
     nheads = 2
@@ -37,19 +37,19 @@ def main():
                                                 
     train_dataset = DatasetNonContextual(text_processor.train_sents, text_processor.w2id, text_processor.id2w,
                                          text_processor.max_seq_len,
-                                         mask_ratio=mask_ratio, to_cuda=to_cuda)
+                                         mask_ratios=train_mask_rations, to_cuda=to_cuda)
     eval_datasets = []
     eval_datasets.append(DatasetNonContextual(text_processor.eval25, text_processor.w2id, text_processor.id2w,
                                         text_processor.max_seq_len,
-                                        mask_ratio=0.25, to_cuda=to_cuda))
+                                        mask_ratios=[0.25], to_cuda=to_cuda))
     eval_datasets.append(DatasetNonContextual(text_processor.eval50, text_processor.w2id, text_processor.id2w,
                                         text_processor.max_seq_len,
-                                        mask_ratio=0.5, to_cuda=to_cuda))
+                                        mask_ratios=[0.5], to_cuda=to_cuda))
     eval_datasets.append(DatasetNonContextual(text_processor.eval75, text_processor.w2id, text_processor.id2w,
                                         text_processor.max_seq_len,
-                                        mask_ratio=0.75, to_cuda=to_cuda))
+                                        mask_ratios=[0.75], to_cuda=to_cuda))
 
-    tags = [eval_ds.mask_ratio for eval_ds in eval_datasets]
+    tags = [eval_ds.mask_ratios[0] for eval_ds in eval_datasets]
     print("Vocab size: ", len(text_processor.id2w))
     model = CNP(embedding_size=text_processor.vec_size,
                 hidden_repr=300,
