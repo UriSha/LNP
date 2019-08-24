@@ -56,9 +56,9 @@ class Trainer():
                                                                                    target_xs_mask, target_ys)
             outputs_fixed, target_ys_fixed = self.fix_dimensions(outputs, target_ys)
 
-            kl = self.kl_div(prior_mu, prior_var, posterior_mu, posterior_var)
+            # kl = self.kl_div(prior_mu, prior_var, posterior_mu, posterior_var)
 
-            loss = loss_function(outputs_fixed, target_ys_fixed) + kl
+            loss = loss_function(outputs_fixed, target_ys_fixed) #+ kl
             loss.backward()
             optimizer.step()
 

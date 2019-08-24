@@ -98,8 +98,8 @@ class CNP(nn.Module):
             if self.aggregator is not None:
                 self.aggregator = self.aggregator.cuda()
 
-            if self.latent_encoder is not None:
-                self.latent_encoder = self.latent_encoder.cuda()
+            # if self.latent_encoder is not None:
+            #     self.latent_encoder = self.latent_encoder.cuda()
 
             if self.latent_aggregator is not None:
                 self.latent_aggregator = self.latent_aggregator.cuda()
@@ -136,34 +136,34 @@ class CNP(nn.Module):
 
             # For training
             if target_ys is not None:
-                full_sentence = torch.zeros(context_mask.shape).long()
+                full_sentence = torch.zeros(context_mask.shape).long().cuda()
 
                 for batch in range(context_mask.shape[0]):
                     for index in range(context_mask.shape[1]):
-                        if context_mask[batch][index] == 1:
+                        if context_mask[batch.cuda()][index.cuda()] == 1:
                             break
-                        position_in_sent = context_pos[batch][index]
-                        value = context_ids[batch][index]
-                        full_sentence[batch][position_in_sent] = value
+                        position_in_sent = context_pos[batch.cuda()][index.cuda()]
+                        value = context_ids[batch.cuda()][index.cuda()]
+                        full_sentence[batch.cuda()][position_in_sent.cuda()] = value.cuda()
 
                 for batch in range(target_mask.shape[0]):
                     for index in range(target_mask.shape[1]):
-                        if target_mask[batch][index] == 1:
+                        if target_mask[batch.cuda()][index.cuda()] == 1:
                             break
-                        position_in_sent = target[batch][index]
-                        value = target_ys[batch][index]
-                        full_sentence[batch][position_in_sent] = value
+                        position_in_sent = target[batch.cuda()][index.cuda()]
+                        value = target_ys[batch.cuda()][index.cuda()]
+                        full_sentence[batch.cuda()][position_in_sent.cuda()] = value
 
-                sentence_positions = [i for i in range(full_sentence.shape[1])]
+                sentence_positions = [i for i in range(full_sentence.shape[1])].cuda()
                 batch_positions = [sentence_positions for _ in range(full_sentence.shape[0])]
-                batch_positions = torch.LongTensor(batch_positions)
+                batch_positions = torch.LongTensor(batch_positions).cuda()
 
-                sent_pos_embeddings = self.pos_embeddings(batch_positions)
-                full_sentence = torch.LongTensor(full_sentence)
+                sent_pos_embeddings = self.pos_embeddings(batch_positions).cuda()
+                full_sentence = torch.LongTensor(full_sentence).cuda()
 
-                target_word_embeddings = self.embedding(full_sentence)
+                target_word_embeddings = self.embedding(full_sentence).cuda()
                 latent_target = sent_pos_embeddings + target_word_embeddings # position emb + word emb
-                latent_target = latent_target.transpose(0, 1)
+                latent_target = latent_target.transpose(0, 1).cuda()
                 # latent_target = torch.cat((latent_target, context), dim=0)
                 # latent_mask = torch.cat((target_mask, context_mask), dim=1)
                 posterior_mu, posterior_var, posterior = self.latent_encoder(latent_target)
