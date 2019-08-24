@@ -31,22 +31,6 @@ class DatasetNonContextual(Dataset):
         return len(self.sents)
 
 
-    def pad_embedded_sentence(self, embedded_sent):
-
-        num_of_paddings = self.max_seq_len - embedded_sent.shape[0]
-        paddings = torch.zeros(num_of_paddings, dtype=torch.long)
-        if self.to_cuda:
-            paddings = paddings.cuda()
-            embedded_sent = embedded_sent.cuda()
-        padded_sent = torch.cat((embedded_sent, paddings), 0)
-        paddings_mask = [0] * embedded_sent.shape[0] + [1] * num_of_paddings
-        paddings_mask = torch.ByteTensor(paddings_mask)
-
-        if self.to_cuda:
-            paddings_mask = paddings_mask.cuda()
-        return padded_sent, paddings_mask, num_of_paddings
-
-
     def mask_sent(self, sent):
         context_xs = [self.max_seq_len] * self.max_seq_len
         context_ys = [0] * self.max_seq_len
