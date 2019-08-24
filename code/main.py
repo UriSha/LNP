@@ -19,6 +19,9 @@ def main():
     use_pos_embedding = True
     concat_embeddings = False
     normalize_weights = True
+
+    dropout = 0
+    epoch_count = 100
     
     files_timestamp = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
     cur_dir = os.path.dirname(os.path.realpath(__file__))
@@ -61,7 +64,7 @@ def main():
                 max_seq_len = text_processor.max_seq_len,
                 padding_idx = text_processor.pad_index,
                 use_weight_matrix = use_weight_matrix,
-                dropout=0,
+                dropout=dropout,
                 attn=attn,
                 nheads=nheads,
                 use_pos_embedding=use_pos_embedding,
@@ -78,7 +81,7 @@ def main():
                       opt="ADAM",
                       learning_rate=0.001,
                       momentum=0.9,
-                      epoch_count=10,
+                      epoch_count=epoch_count,
                       acc_topk=topk,
                       print_interval=1,
                       word_weights = text_processor.word_weights,
