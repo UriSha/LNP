@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 
 
 class DatasetNonContextual(Dataset):
-    def __init__(self, sents, max_seq_len, mask_ratios, transform=None, to_cuda=True):
+    def __init__(self, sents, max_seq_len, mask_ratios, transform=None, random_every_time=False, to_cuda=True):
         self.sents = sents
         self.transform = transform
         self.mask_ratios = mask_ratios
@@ -14,6 +14,7 @@ class DatasetNonContextual(Dataset):
         self.to_cuda = to_cuda
         self.mem = {}
         self.current_mask_ratio_index = 0
+        self.random_every_time = random_every_time
 
 
     def __getitem__(self, index):
@@ -21,8 +22,10 @@ class DatasetNonContextual(Dataset):
             return self.mem[index]
 
         sent = self.sents[index]
-        self.mem[index] = self.mask_sent(sent)
-        return self.mem[index]
+        context_xs, context_ys, context_mask, target_xs, target_ys, target_mask = self.mask_sent(sent)
+        if not self.random_every_time:
+            self.mem[index] = context_xs, context_ys, context_mask, target_xs, target_ys, target_mask
+        return context_xs, context_ys, context_mask, target_xs, target_ys, target_mask
 
 
     def __len__(self):

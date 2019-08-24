@@ -128,6 +128,7 @@ def main():
     train_dataset = DatasetNonContextual(text_as_list=text_processor.train_sents,
                                          max_seq_len=text_processor.max_seq_len,
                                          mask_ratios=args.train_mask_ratios,
+                                         random_every_time=args.dataset_random_every_time
                                          to_cuda=args.to_cuda)
 
     print("Init Test Datasets")
