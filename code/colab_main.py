@@ -125,7 +125,7 @@ def main():
 
 
     print("Init Train Dataset")
-    train_dataset = DatasetNonContextual(text_as_list=text_processor.train_sents,
+    train_dataset = DatasetNonContextual(sents=text_processor.train_sents,
                                          max_seq_len=text_processor.max_seq_len,
                                          mask_ratios=args.train_mask_ratios,
                                          random_every_time=args.dataset_random_every_time,
@@ -133,17 +133,17 @@ def main():
 
     print("Init Test Datasets")
     eval_datasets = []
-    eval_datasets.append(DatasetNonContextual(text_as_list=text_processor.eval25,
+    eval_datasets.append(DatasetNonContextual(sents=text_processor.eval25,
                                         max_seq_len=text_processor.max_seq_len,
                                         mask_ratios=[.25],
                                         to_cuda=args.to_cuda))
     
-    eval_datasets.append(DatasetNonContextual(text_as_list=text_processor.eval50,
+    eval_datasets.append(DatasetNonContextual(sents=text_processor.eval50,
                                         max_seq_len=text_processor.max_seq_len,
                                         mask_ratios=[0.5],
                                         to_cuda=args.to_cuda))
 
-    eval_datasets.append(DatasetNonContextual(text_as_list=text_processor.eval75,
+    eval_datasets.append(DatasetNonContextual(sents=text_processor.eval75,
                                         max_seq_len=text_processor.max_seq_len,
                                         mask_ratios=[0.75],
                                         to_cuda=args.to_cuda))
