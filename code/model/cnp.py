@@ -120,15 +120,15 @@ class CNP(nn.Module):
             context = sent_embeddings + pos_embeddings
 
         if self.use_pos_embedding:
-            emb_target = self.pos_embeddings(target)
+            target_pos_embeddings = self.pos_embeddings(target)
         else:
-            emb_target = target.unsqueeze(dim=2).float()
+            target_pos_embeddings = target.unsqueeze(dim=2).float()
 
         if self.attn:
             context = context.transpose(0, 1)
             encodings = self.encoder(context, src_key_padding_mask=context_mask)
             encodings = encodings.transpose(0, 1)
-            representations = self.aggregator(q=emb_target, k=pos_embeddings, r=encodings, context_mask=context_mask,
+            representations = self.aggregator(q=target_pos_embeddings, k=pos_embeddings, r=encodings, context_mask=context_mask,
                                               target_mask=target_mask)
 
             # latent path- new
@@ -136,12 +136,37 @@ class CNP(nn.Module):
 
             # For training
             if target_ys is not None:
-                target_embeddings = self.embedding(target_ys)
-                latent_target = emb_target + target_embeddings # position emb + word emb
+                full_sentence = torch.zeros(context_mask.shape).long()
+
+                for batch in range(context_mask.shape[0]):
+                    for index in range(context_mask.shape[1]):
+                        if context_mask[batch][index] == 1:
+                            break
+                        position_in_sent = context_pos[batch][index]
+                        value = context_ids[batch][index]
+                        full_sentence[batch][position_in_sent] = value
+
+                for batch in range(target_mask.shape[0]):
+                    for index in range(target_mask.shape[1]):
+                        if target_mask[batch][index] == 1:
+                            break
+                        position_in_sent = target[batch][index]
+                        value = target_ys[batch][index]
+                        full_sentence[batch][position_in_sent] = value
+
+                sentence_positions = [i for i in range(full_sentence.shape[1])]
+                batch_positions = [sentence_positions for _ in range(full_sentence.shape[0])]
+                batch_positions = torch.LongTensor(batch_positions)
+
+                sent_pos_embeddings = self.pos_embeddings(batch_positions)
+                full_sentence = torch.LongTensor(full_sentence)
+
+                target_word_embeddings = self.embedding(full_sentence)
+                latent_target = sent_pos_embeddings + target_word_embeddings # position emb + word emb
                 latent_target = latent_target.transpose(0, 1)
-                latent_target = torch.cat((latent_target, context), dim=0)
-                latent_mask = torch.cat((target_mask, context_mask), dim=1)
-                posterior_mu, posterior_var, posterior = self.latent_encoder(latent_target, latent_mask)
+                # latent_target = torch.cat((latent_target, context), dim=0)
+                # latent_mask = torch.cat((target_mask, context_mask), dim=1)
+                posterior_mu, posterior_var, posterior = self.latent_encoder(latent_target)
                 z = posterior
 
             # For Generation
@@ -154,20 +179,20 @@ class CNP(nn.Module):
             # latent_encodings = latent_encodings.transpose(0, 1)
             # latent_representations = self.latent_aggregator(latent_encodings, context_mask)
 
-            # representations = self.encoder(context.transpose(0, 1), emb_target.transpose(0, 1), src_key_padding_mask=context_mask, tgt_key_padding_mask=target_mask)
+            # representations = self.encoder(context.transpose(0, 1), target_pos_embeddings.transpose(0, 1), src_key_padding_mask=context_mask, tgt_key_padding_mask=target_mask)
             # representations = representations.transpose(0, 1)
 
             if self.concat_embeddings:
-                x = torch.cat((representations, emb_target), dim=2)
+                x = torch.cat((representations, target_pos_embeddings), dim=2)
             else:
-                x = representations + emb_target
+                x = representations + target_pos_embeddings
 
             latent_representations = torch.repeat_interleave(z, self.max_target_size, dim=1)
             x = torch.cat((x, latent_representations), dim=2)
         else:
             encodings = self.encoder(context, context_mask)
             representations = self.aggregator(encodings, context_mask)
-            x = self.repeat_and_merge(representations, emb_target)
+            x = self.repeat_and_merge(representations, target_pos_embeddings)
 
         predicted_embeddings = self.decoder(x)
 

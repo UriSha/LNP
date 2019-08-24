@@ -1,12 +1,12 @@
+import os
 import random
 import time
-import numpy as np
+
 import torch
 import torch.nn as nn
 from nltk.translate.bleu_score import corpus_bleu
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
-import os
 
 
 class Trainer():
@@ -33,13 +33,11 @@ class Trainer():
             if self.word_weights is not None:
                 self.word_weights = self.word_weights.cuda()
 
-    
     def log(self, *args, **kwargs):
         time_prefix = f"[{time.strftime('%H:%M:%S', time.localtime())}]"
         print(time_prefix, *args, **kwargs)
         print(time_prefix, *args, **kwargs, file=self.log_file)
         self.log_file.flush()
-
 
     def train(self, train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc,
               predicted_train_sentences, ground_truth_train_sentences):
@@ -53,7 +51,9 @@ class Trainer():
 
             # feedforward - backprop
             optimizer.zero_grad()
-            outputs, prior_mu, prior_var, posterior_mu, posterior_var = self.model(context_ids, context_pos, context_mask, target_xs, target_xs_mask, target_ys)
+            outputs, prior_mu, prior_var, posterior_mu, posterior_var = self.model(context_ids, context_pos,
+                                                                                   context_mask, target_xs,
+                                                                                   target_xs_mask, target_ys)
             outputs_fixed, target_ys_fixed = self.fix_dimensions(outputs, target_ys)
 
             kl = self.kl_div(prior_mu, prior_var, posterior_mu, posterior_var)
@@ -72,12 +72,11 @@ class Trainer():
                                                          context_pos_batch, context_ids_batch, target_xs, target_ys,
                                                          outputs)
 
-
     def kl_div(self, prior_mu, prior_var, posterior_mu, posterior_var):
-        kl_div = (torch.exp(posterior_var) + (posterior_mu-prior_mu) ** 2) / torch.exp(prior_var) - 1. + (prior_var - posterior_var)
+        kl_div = (torch.exp(posterior_var) + (posterior_mu - prior_mu) ** 2) / torch.exp(prior_var) - 1. + (
+                    prior_var - posterior_var)
         kl_div = 0.5 * kl_div.sum()
         return kl_div
-    
 
     def evaluate(self, eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc, predicted_eval_sentences,
                  ground_truth_eval_sentences, eval_samples_for_blue_calculation):
@@ -262,7 +261,7 @@ class Trainer():
             epoch_train_loss = []
             epoch_train_acc = []
 
-            calculate_blue = epoch == self.epoch_count # or epoch % 100 == 0
+            calculate_blue = epoch == self.epoch_count  # or epoch % 100 == 0
 
             predicted_train_sentences = None
             ground_truth_train_sentences = None
@@ -271,8 +270,8 @@ class Trainer():
             eval_samples_for_blue_calculation = None
 
             if calculate_blue:
-        #        predicted_train_sentences = []
-        #        ground_truth_train_sentences = []
+                #        predicted_train_sentences = []
+                #        ground_truth_train_sentences = []
                 predicted_eval_sentences = []
                 ground_truth_eval_sentences = []
                 eval_samples_for_blue_calculation = []
@@ -290,7 +289,7 @@ class Trainer():
 
             cur_train_bleu = None
             if calculate_blue:
-          #     cur_train_bleu = corpus_bleu(ground_truth_train_sentences, predicted_train_sentences)
+                #     cur_train_bleu = corpus_bleu(ground_truth_train_sentences, predicted_train_sentences)
                 cur_train_bleu = -1
 
             # compute epoch loss
