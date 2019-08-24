@@ -10,18 +10,19 @@ from torch.utils.data import Dataset
 
 
 class DatasetNonContextual(Dataset):
-    def __init__(self, text_as_list, w2id, id2w, max_seq_len, mask_ratio=.25, transform=None,
+    def __init__(self, text_as_list, w2id, id2w, max_seq_len, mask_ratios, transform=None,
                  to_cuda=True):
         self.data = text_as_list
         self.transform = transform
-        self.mask_ratio = mask_ratio
+        self.mask_ratios = mask_ratios
         self.w2id = w2id
         self.id2w = id2w
         self.max_seq_len = max_seq_len
-        self.max_masked_size = math.ceil(max_seq_len * mask_ratio)
+        self.max_masked_size = int(math.ceil(max_seq_len * max(mask_ratios)))
         self.to_cuda = to_cuda
         self.MASK_SYMBOL = '<MASK>'
         self.mem = {}
+        self.current_mask_ratio_index = 0
         # self.data = self.create_data(text_as_list, tokenizer)
 
     # def create_data(self, text_as_list, tokenizer):
@@ -159,7 +160,8 @@ class DatasetNonContextual(Dataset):
         target_xs = []
         target_ys = []
 
-        num_of_masks = int(math.floor(len(sent) * self.mask_ratio))
+        mask_ratio = self.mask_ratios[self.current_mask_ratio_index]
+        num_of_masks = int(math.floor(len(sent) * mask_ratio))
         num_of_masks = max(1, num_of_masks)
 
         indices_to_mask = sorted(random.sample(range(len(sent)), num_of_masks))
@@ -184,6 +186,8 @@ class DatasetNonContextual(Dataset):
         if self.to_cuda:
             target_xs = target_xs.cuda()
             target_ys = target_ys.cuda()
+
+        self.current_mask_ratio_index = (self.current_mask_ratio_index + 1) % len(self.mask_ratios)
 
         return sent, indices_to_mask, target_xs, target_ys, target_xs_mask
 
