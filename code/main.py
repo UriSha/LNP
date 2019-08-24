@@ -24,7 +24,6 @@ def main():
     cur_dir = os.path.dirname(os.path.realpath(__file__))
     log_dir = os.path.join(cur_dir, "..", "logs", files_timestamp)
     os.makedirs(log_dir)
-
     # text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_new1.txt"),
     #                                             os.path.join(cur_dir, "../data/embeddings/wiki-news-300d-1M.vec"), test_size=test_size, mask_ratio=mask_ratio,
     #                                             sents_limit=10000, rare_word_threshold=1, use_weight_loss=True)
