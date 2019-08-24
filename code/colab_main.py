@@ -183,7 +183,9 @@ def main():
     config_f.close()
     print("Init Trainer")
 
-    tags = [eval_ds.mask_ratio for eval_ds in eval_datasets]
+    # assume every eval_ds has only one mask ration
+    tags = [eval_ds.mask_ratios[0] for eval_ds in eval_datasets]
+
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,
                       evaluation_datasets=eval_datasets,
