@@ -12,7 +12,7 @@ def main():
     attn = True
     mask_ratio = 0.75
     test_size = 0.5
-    topk = 1
+    topk = [1, 5, 10]
     nheads = 2
     use_weight_loss = False
     use_weight_matrix = True

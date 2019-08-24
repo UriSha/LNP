@@ -50,7 +50,7 @@ input_arguments = [
     InputArgument("sent_count", "sc", "sent count (default: no limit)", 0, int),
     InputArgument("batch_size", "bs", "batch_size (default: 50)", 50, int),
     InputArgument("mask_ratio", "mr", "max_ratio (default: 0.25)", .25, float),
-    InputArgument("topk", "topk", "topk (default: 1)", 1, int),
+    InputArgument("topk", "topk", "topk (default: [1, 5, 10])", [1, 5, 10], int, nargs="+"),
     InputArgument("momentum", "moment", "momentum (default: 0.9)", .9, float),
     InputArgument("test_size", "ts", "test_size (default: -1)", -1.0, float),
     InputArgument("abs_test_size", "ats", "test_size (default: -1)", -1, int),
