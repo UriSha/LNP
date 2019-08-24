@@ -22,6 +22,7 @@ def main():
 
     dropout = 0
     epoch_count = 100
+    random_every_time = True
     
     files_timestamp = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
     cur_dir = os.path.dirname(os.path.realpath(__file__))
@@ -40,7 +41,9 @@ def main():
                                                 
     train_dataset = DatasetNonContextual(text_processor.train_sents,
                                          text_processor.max_seq_len,
-                                         mask_ratios=train_mask_rations, to_cuda=to_cuda)
+                                         mask_ratios=train_mask_rations,
+                                         random_every_time=random_every_time,
+                                         to_cuda=to_cuda)
     eval_datasets = []
     eval_datasets.append(DatasetNonContextual(text_processor.eval25,
                                         text_processor.max_seq_len,
