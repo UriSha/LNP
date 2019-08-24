@@ -48,17 +48,17 @@ class Trainer():
 
     def train(self, train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc,
               predicted_train_sentences, ground_truth_train_sentences):
-        for context_ids_batch, context_pos_batch, context_mask_batch, target_xs_batch, target_xs_mask_batch, target_ys_batch in train_loader:
-            context_ids = self.batch2var(context_ids_batch, False)
-            context_pos = self.batch2var(context_pos_batch, False)
+        for context_xs_batch, context_ys_batch, context_mask_batch, target_xs_batch, target_ys_batch, target_mask_batch in train_loader:
+            context_xs = self.batch2var(context_xs_batch, False)
+            context_ys = self.batch2var(context_ys_batch, False)
             context_mask = self.batch2var(context_mask_batch, False)
             target_xs = self.batch2var(target_xs_batch, False)
-            target_xs_mask = self.batch2var(target_xs_mask_batch, False)
             target_ys = self.batch2var(target_ys_batch, False)
+            target_mask = self.batch2var(target_mask_batch, False)
 
             # feedforward - backprop
             optimizer.zero_grad()
-            outputs = self.model(context_ids, context_pos, context_mask, target_xs, target_xs_mask)
+            outputs = self.model(context_ys, context_xs, context_mask, target_xs, target_mask)
             outputs_fixed, target_ys_fixed = self.fix_dimensions(outputs, target_ys)
             loss = loss_function(outputs_fixed, target_ys_fixed)
             loss.backward()
@@ -67,37 +67,38 @@ class Trainer():
             # train loss
             epoch_train_loss.append(loss.item())
             epoch_train_acc.append(self.compute_accuracy_topk(outputs_fixed, target_ys_fixed))
-            self.print_results(context_pos[0], context_ids[0], target_xs[0], target_ys[0], outputs[0])
+            self.print_results(context_xs[0], context_ys[0], target_xs[0], target_ys[0], outputs[0])
 
             if predicted_train_sentences is not None and ground_truth_train_sentences is not None:
                 self.populate_predicted_and_ground_truth(predicted_train_sentences, ground_truth_train_sentences,
-                                                         context_pos_batch, context_ids_batch, target_xs, target_ys,
+                                                         context_xs_batch, context_ys_batch, target_xs, target_ys,
                                                          outputs)
+
 
     def evaluate(self, eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc, predicted_eval_sentences,
                  ground_truth_eval_sentences, eval_samples_for_blue_calculation, eval_idx):
 
-        for context_ids_batch, context_pos_batch, context_mask_batch, target_xs_batch, target_xs_mask_batch, target_ys_batch in eval_loader:
-            context_ids = self.batch2var(context_ids_batch, False)
-            context_pos = self.batch2var(context_pos_batch, False)
+        for context_xs_batch, context_ys_batch, context_mask_batch, target_xs_batch, target_ys_batch, target_mask_batch in eval_loader:
+            context_xs = self.batch2var(context_xs_batch, False)
+            context_ys = self.batch2var(context_ys_batch, False)
             context_mask = self.batch2var(context_mask_batch, False)
             target_xs = self.batch2var(target_xs_batch, False)
-            target_xs_mask = self.batch2var(target_xs_mask_batch, False)
             target_ys = self.batch2var(target_ys_batch, False)
+            target_mask = self.batch2var(target_mask_batch, False)
 
             # feedforward
-            outputs = self.model(context_ids, context_pos, context_mask, target_xs, target_xs_mask)
+            outputs = self.model(context_ys, context_xs, context_mask, target_xs, target_mask)
             outputs_fixed, target_ys_fixed = self.fix_dimensions(outputs, target_ys)
             loss = loss_function(outputs_fixed, target_ys_fixed)
 
             # train loss
             epoch_eval_loss.append(loss.item())
             epoch_eval_acc.append(self.compute_accuracy_topk(outputs_fixed, target_ys_fixed))
-            self.print_results(context_pos[0], context_ids[0], target_xs[0], target_ys[0], outputs[0], eval_idx)
+            self.print_results(context_xs[0], context_ys[0], target_xs[0], target_ys[0], outputs[0], eval_idx)
 
             if predicted_eval_sentences is not None and ground_truth_eval_sentences is not None and eval_samples_for_blue_calculation is not None:
                 self.populate_predicted_and_ground_truth(predicted_eval_sentences, ground_truth_eval_sentences,
-                                                         context_pos_batch, context_ids_batch, target_xs, target_ys,
+                                                         context_xs_batch, context_ys_batch, target_xs, target_ys,
                                                          outputs, eval_samples_for_blue_calculation)
 
     def batch2var(self, batch_param, requires_grad):

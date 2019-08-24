@@ -23,27 +23,7 @@ class DatasetNonContextual(Dataset):
             return self.mem[index]
 
         sent = self.sents[index]
-
-        # print("sent: ", sent)
-        sent, masked_indices, target_xs, target_ys, target_xs_mask = self.mask_sent(sent)
-        # print("masked_sent: ", sent)
-        masked_indices_set = set(masked_indices)
-        anti_mask_indices = [i for i in range(len(sent)) if i not in masked_indices_set]
-
-        sent = [word for word in sent if word != self.MASK_SYMBOL]
-
-        sent_ids = [self.w2id[word] for word in sent]
-
-        sent_ids_tensor = torch.tensor(sent_ids)
-
-        padded_sent_ids_tensor, paddings_mask, num_of_paddings = self.pad_embedded_sentence(
-            sent_ids_tensor)
-
-        padding_idx = self.max_seq_len
-        anti_mask_indices += [padding_idx] * num_of_paddings
-        anti_mask_indices = torch.LongTensor(anti_mask_indices)
-
-        self.mem[index] = padded_sent_ids_tensor, anti_mask_indices, paddings_mask, target_xs, target_xs_mask, target_ys
+        self.mem[index] = self.mask_sent(sent)
         return self.mem[index]
 
 
@@ -68,37 +48,48 @@ class DatasetNonContextual(Dataset):
 
 
     def mask_sent(self, sent):
-
-        target_xs = []
-        target_ys = []
+        context_xs = [self.max_seq_len] * self.max_seq_len
+        context_ys = [0] * self.max_seq_len
+        context_mask = [1] * self.max_seq_len
+        target_xs = [self.max_seq_len] * self.max_masked_size
+        target_ys = [0] * self.max_masked_size
+        target_mask = [1] * self.max_masked_size
 
         mask_ratio = self.mask_ratios[self.current_mask_ratio_index]
-        num_of_masks = int(math.floor(len(sent) * mask_ratio))
+        self.current_mask_ratio_index = (self.current_mask_ratio_index + 1) % len(self.mask_ratios)
+
+        num_of_masks = int(len(sent) * mask_ratio)
         num_of_masks = max(1, num_of_masks)
 
         indices_to_mask = sorted(random.sample(range(len(sent)), num_of_masks))
 
-        for idx in indices_to_mask:
-            target_xs.append(idx)
-            word = sent[idx]
-            word_id = self.w2id[word]
-            target_ys.append(word_id)
-            sent[idx] = self.MASK_SYMBOL
+        j = 0
+        k = 0
+        for i in range(len(sent)):
+            if j < len(indices_to_mask) and i == indices_to_mask[j]:
+                target_xs[j] = indices_to_mask[j]
+                target_ys[j] = sent[indices_to_mask[j]]
+                target_mask[j] = 0
+                j += 1
+            else:
+                context_xs[k] = i
+                context_ys[k] = sent[i]
+                context_mask[k] = 0
+                k += 1
 
-        target_xs_padding = [self.max_seq_len for _ in range(self.max_masked_size - len(target_xs))]
-        target_ys_padding = [0 for _ in range(self.max_masked_size - len(target_xs))]
-        target_xs.extend(target_xs_padding)
-        target_ys.extend(target_ys_padding)
-
-        target_xs_mask = [1 if p == self.max_seq_len else 0 for p in target_xs]
+        context_xs = torch.LongTensor(context_xs)
+        context_ys = torch.LongTensor(context_ys)
+        context_mask = torch.ByteTensor(context_mask)
         target_xs = torch.LongTensor(target_xs)
-        target_xs_mask = torch.ByteTensor(target_xs_mask)
-        target_ys = torch.tensor(target_ys)
+        target_ys = torch.LongTensor(target_ys)
+        target_mask = torch.ByteTensor(target_mask)
+        
 
         if self.to_cuda:
+            context_xs = context_xs.cuda()
+            context_ys = context_ys.cuda()
             target_xs = target_xs.cuda()
             target_ys = target_ys.cuda()
 
-        self.current_mask_ratio_index = (self.current_mask_ratio_index + 1) % len(self.mask_ratios)
 
-        return sent, indices_to_mask, target_xs, target_ys, target_xs_mask
+        return context_xs, context_ys, context_mask, target_xs, target_ys, target_mask
