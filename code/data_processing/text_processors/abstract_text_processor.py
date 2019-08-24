@@ -12,8 +12,10 @@ class AbstractTextProcessor:
         self.rare_word_threshold = rare_word_threshold
         self.embed_file_path = embed_file_path
         self.tokenizer = tokenizer
-        self.sents, self.w2id, self.id2w, self.max_seq_len, self.word_weights = self.initiate_vocab(sents)
+        self.orig_sents, self.w2id, self.id2w, self.max_seq_len, self.word_weights = self.initiate_vocab(sents)
         # self.sents = self.remove_rare_words(sents)
+
+        self.sents = [[self.w2id[word] for word in sent] for sent in self.orig_sents]
         self.train_sents, self.eval_sents = train_test_split(self.sents, test_size=test_size)
         leftover, self.eval25 = train_test_split(self.eval_sents, test_size=(1/3))
         self.eval50, self.eval75 = train_test_split(leftover, test_size=0.5)
