@@ -38,17 +38,17 @@ def main():
                                                 os.path.join(cur_dir, "../data/embeddings/small_fasttext.txt"), test_size=test_size,
                                                 sents_limit=10000, rare_word_threshold=0, use_weight_loss=use_weight_loss)
                                                 
-    train_dataset = DatasetNonContextual(text_processor.train_sents, text_processor.w2id, text_processor.id2w,
+    train_dataset = DatasetNonContextual(text_processor.train_sents,
                                          text_processor.max_seq_len,
                                          mask_ratios=train_mask_rations, to_cuda=to_cuda)
     eval_datasets = []
-    eval_datasets.append(DatasetNonContextual(text_processor.eval25, text_processor.w2id, text_processor.id2w,
+    eval_datasets.append(DatasetNonContextual(text_processor.eval25,
                                         text_processor.max_seq_len,
                                         mask_ratios=[0.25], to_cuda=to_cuda))
-    eval_datasets.append(DatasetNonContextual(text_processor.eval50, text_processor.w2id, text_processor.id2w,
+    eval_datasets.append(DatasetNonContextual(text_processor.eval50,
                                         text_processor.max_seq_len,
                                         mask_ratios=[0.5], to_cuda=to_cuda))
-    eval_datasets.append(DatasetNonContextual(text_processor.eval75, text_processor.w2id, text_processor.id2w,
+    eval_datasets.append(DatasetNonContextual(text_processor.eval75,
                                         text_processor.max_seq_len,
                                         mask_ratios=[0.75], to_cuda=to_cuda))
 
