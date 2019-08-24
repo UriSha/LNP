@@ -4,8 +4,7 @@ import random
 from torch.utils.data import Dataset
 
 class DatasetNonContextual(Dataset):
-    def __init__(self, text_as_list, w2id, id2w, max_seq_len, mask_ratios, transform=None,
-                 to_cuda=True):
+    def __init__(self, text_as_list, w2id, id2w, max_seq_len, mask_ratios, transform=None, to_cuda=True):
         self.data = text_as_list
         self.transform = transform
         self.mask_ratios = mask_ratios
