@@ -165,6 +165,7 @@ class CNP(nn.Module):
                 # latent_target = torch.cat((latent_target, context), dim=0)
                 # latent_mask = torch.cat((target_mask, context_mask), dim=1)
                 posterior_mu, posterior_var, posterior = self.latent_encoder(latent_target)
+
                 z = posterior
 
             # For Generation
