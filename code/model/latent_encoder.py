@@ -32,6 +32,8 @@ class LatentEncoder(torch.nn.Module):
     def forward(self, src, src_mask=None):
         latent_representations = self.encoder(src=src, src_key_padding_mask=src_mask)
 
+        if src_mask is None:
+            src_mask = torch.zeros(src.shape[:2]).bool().transpose(0, 1)
         latent_aggregated_representation = self.aggregator(x=latent_representations.transpose(0, 1), x_mask=src_mask)
 
         # get mu and sigma
@@ -44,4 +46,3 @@ class LatentEncoder(torch.nn.Module):
         z = eps.mul(std).add_(mu)
 
         return mu, log_sigma, z
-

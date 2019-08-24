@@ -15,7 +15,10 @@ class AverageAggregator(nn.Module):
 
         # x = x.permute([0, 2, 1])  # transpose
         x = x.transpose(1, 2)
-        x = torch.matmul(x, weights)  # batch matrix multiplication
+        try:
+            x = torch.matmul(x, weights)  # batch matrix multiplication
+        except RuntimeError:
+            x=7
         x = x.transpose(1, 2)
         # x = x.permute([0, 2, 1])  # transpose
 

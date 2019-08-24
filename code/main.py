@@ -70,7 +70,7 @@ def main():
                       opt="ADAM",
                       learning_rate=0.001,
                       momentum=0.9,
-                      epoch_count=10,
+                      epoch_count=500,
                       acc_topk=topk,
                       print_interval=1,
                       word_weights = text_processor.word_weights,
