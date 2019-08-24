@@ -96,11 +96,11 @@ class CNP(nn.Module):
             if self.aggregator is not None:
                 self.aggregator = self.aggregator.cuda()
 
-            # if self.latent_encoder is not None:
-            #     self.latent_encoder = self.latent_encoder.cuda()
+            if self.latent_encoder is not None:
+                self.latent_encoder = self.latent_encoder.cuda()
 
-            if self.latent_aggregator is not None:
-                self.latent_aggregator = self.latent_aggregator.cuda()
+            # if self.latent_aggregator is not None:
+            #     self.latent_aggregator = self.latent_aggregator.cuda()
 
             self.decoder = self.decoder.cuda()
             self.pos_embeddings = self.pos_embeddings.cuda()
