@@ -138,21 +138,21 @@ class CNP(nn.Module):
 
                 for batch in range(context_mask.shape[0]):
                     for index in range(context_mask.shape[1]):
-                        if context_mask[batch.cuda()][index.cuda()] == 1:
+                        if context_mask[batch][index] == 1:
                             break
-                        position_in_sent = context_pos[batch.cuda()][index.cuda()]
-                        value = context_ids[batch.cuda()][index.cuda()]
-                        full_sentence[batch.cuda()][position_in_sent.cuda()] = value.cuda()
+                        position_in_sent = context_pos[batch][index]
+                        value = context_ids[batch][index]
+                        full_sentence[batch][position_in_sent] = value
 
                 for batch in range(target_mask.shape[0]):
                     for index in range(target_mask.shape[1]):
-                        if target_mask[batch.cuda()][index.cuda()] == 1:
+                        if target_mask[batch][index] == 1:
                             break
-                        position_in_sent = target[batch.cuda()][index.cuda()]
-                        value = target_ys[batch.cuda()][index.cuda()]
-                        full_sentence[batch.cuda()][position_in_sent.cuda()] = value
+                        position_in_sent = target[batch][index]
+                        value = target_ys[batch][index]
+                        full_sentence[batch][position_in_sent] = value
 
-                sentence_positions = [i for i in range(full_sentence.shape[1])].cuda()
+                sentence_positions = [i for i in range(full_sentence.shape[1])]
                 batch_positions = [sentence_positions for _ in range(full_sentence.shape[0])]
                 batch_positions = torch.LongTensor(batch_positions).cuda()
 
