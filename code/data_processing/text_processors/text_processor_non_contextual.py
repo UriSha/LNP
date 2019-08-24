@@ -1,7 +1,6 @@
 import re
-from collections import defaultdict
 import torch
-
+from collections import defaultdict
 from .abstract_text_processor import AbstractTextProcessor
 
 
@@ -10,6 +9,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
                  sents_limit=None):
         super(TextProcessorNonContextual, self).__init__(text_file_path, test_size, rare_word_threshold,
                                                          sents_limit, use_weight_loss, embed_file_path=embed_file_path)
+
 
     def normalize_word(self, w):
         w = w.replace("`", "")
@@ -23,6 +23,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
                         return lst[:2]
         return lst
 
+
     def initiate_vocab(self, sents):
         max_len = 0
         new_sents = []
@@ -31,7 +32,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
         temp_w2id, temp_id2w, embed_dict = self._read_embeddings(self.embed_file_path)
 
         for sent in sents:
-            new_sent = []
+            new_sent = ["CLS"]  # every sentence starts with CLS token
             for w in sent:
                 w_list = self.normalize_word(w)
                 if not isinstance(w_list, list):
@@ -44,6 +45,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
                     new_sent.append(word)
                     w2cnt[word] += 1
 
+            new_sent.append("SEP")  # every sentence ends with SEP token
             new_sents.append(new_sent)
             max_len = max(max_len, len(new_sent))
 
@@ -126,25 +128,11 @@ class TextProcessorNonContextual(AbstractTextProcessor):
             'With rare_word_threshold = {rare_word_threshold}, the ratio of rare words (that were removed) is: {ratio}'.format(
                 rare_word_threshold=self.rare_word_threshold, ratio=rare_words_count / len(w2cnt)))
 
-        
-        # for idx, (old_word_id, word) in enumerate(temp_id2w.items()):
-        #     embed_vector = embed_dict[old_word_id]
-
-        #     embed_list.append(embed_vector)
-        #     new_w2id[word] = idx
-        #     new_id2w[idx] = word
-
-        # with open('/Users/omerkoren/Final_Project/TICNP/data/embeddings/APRC_embeddings.txt', 'w+') as f:
-        #     f.write('999994 300\n')
-        #     for idx, embed_vector in enumerate(embed_list):
-        #         word = new_id2w[idx]
-        #         f.write('{word} {vec}\n'.format(word=word, vec=' '.join(embed_vector)))
-
-
         self.embeddings_file_lines = None
         self.embed_matrix = torch.stack(embed_list)
 
         return new_sents, new_w2id, new_id2w, max_len, word_weights
+
 
     def _line_to_embedding(self, line_num):
         if line_num == -1:
@@ -154,6 +142,7 @@ class TextProcessorNonContextual(AbstractTextProcessor):
         all_tokens = line.split(" ")
         # vector = list(map(float, all_tokens[1:]))
         return torch.tensor(list(map(float, (all_tokens[1:]))))
+
 
     def _read_embeddings(self, file_path):
         """Assumes that the first line of the file is

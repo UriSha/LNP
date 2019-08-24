@@ -1,5 +1,3 @@
-import math
-
 from sklearn.model_selection import train_test_split
 
 
@@ -13,12 +11,12 @@ class AbstractTextProcessor:
         self.embed_file_path = embed_file_path
         self.tokenizer = tokenizer
         self.orig_sents, self.w2id, self.id2w, self.max_seq_len, self.word_weights = self.initiate_vocab(sents)
-        # self.sents = self.remove_rare_words(sents)
 
         self.sents = [[self.w2id[word] for word in sent] for sent in self.orig_sents]
         self.train_sents, self.eval_sents = train_test_split(self.sents, test_size=test_size)
         leftover, self.eval25 = train_test_split(self.eval_sents, test_size=(1/3))
         self.eval50, self.eval75 = train_test_split(leftover, test_size=0.5)
+
 
     def read_data(self, path, sents_limit):
         with open(path, "r") as f:
@@ -35,11 +33,6 @@ class AbstractTextProcessor:
 
         return [sent.rstrip("\n").split(" ") for sent in text]
 
-    # def remove_rare_words(self, sents):
-    #     sentences = []
-    #     for sent in sents:
-    #         sentences.append([self.w2id.get(w, self.w2id['<UNK>']) for w in sent])
-    #     return sentences
 
     def initiate_vocab(self, sents):
-        raise Exception()
+        raise NotImplementedError()

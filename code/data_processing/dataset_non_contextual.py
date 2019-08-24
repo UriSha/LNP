@@ -5,9 +5,8 @@ from torch.utils.data import Dataset
 
 
 class DatasetNonContextual(Dataset):
-    def __init__(self, sents, max_seq_len, mask_ratios, transform=None, random_every_time=False, to_cuda=True):
+    def __init__(self, sents, max_seq_len, mask_ratios, random_every_time=False, to_cuda=True):
         self.sents = sents
-        self.transform = transform
         self.mask_ratios = mask_ratios
         self.max_seq_len = max_seq_len
         self.max_masked_size = int(math.ceil(max_seq_len * max(mask_ratios)))
@@ -46,7 +45,7 @@ class DatasetNonContextual(Dataset):
         num_of_masks = int(len(sent) * mask_ratio)
         num_of_masks = max(1, num_of_masks)
 
-        indices_to_mask = sorted(random.sample(range(len(sent)), num_of_masks))
+        indices_to_mask = sorted(random.sample(range(1, len(sent)-1), num_of_masks))  # skip CLS and SEP
 
         j = 0
         k = 0
