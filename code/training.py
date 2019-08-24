@@ -7,14 +7,15 @@ import torch.nn as nn
 from nltk.translate.bleu_score import corpus_bleu
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
+from blue import corpus_bleu_with_joint_refrences
 
 
 class Trainer():
-    def __init__(self, model, training_dataset, evaluation_dataset, batch_size, opt, learning_rate, momentum,
+    def __init__(self, model, training_dataset, evaluation_datasets, tags, batch_size, opt, learning_rate, momentum,
                  epoch_count, acc_topk, print_interval, word_weights, use_weight_loss, to_cuda, log_dir):
         self.model = model
         self.training_dataset = training_dataset
-        self.evaluation_dataset = evaluation_dataset
+        self.evaluation_datasets = evaluation_datasets
         self.opt = opt
         self.learning_rate = learning_rate
         self.momentum = momentum
@@ -23,10 +24,13 @@ class Trainer():
         self.acc_topk = acc_topk
         self.to_cuda = to_cuda
         self.last_print_train = time.time()
-        self.last_print_eval = time.time()
+        self.last_print_evals = []
+        for _ in evaluation_datasets:
+            self.last_print_evals.append(time.time())
         self.print_interval = print_interval
         self.use_weight_loss = use_weight_loss
         self.word_weights = word_weights
+        self.tags = tags
 
         self.log_file = open(os.path.join(log_dir, "log.txt"), "w")
         if self.to_cuda:
@@ -79,10 +83,7 @@ class Trainer():
         return kl_div
 
     def evaluate(self, eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc, predicted_eval_sentences,
-                 ground_truth_eval_sentences, eval_samples_for_blue_calculation):
-
-        # p_for_sampling_bleu = min(1, 10000 / len(eval_loader))
-        # print("p is {}".format(p_for_sampling_bleu))
+                 ground_truth_eval_sentences, eval_samples_for_blue_calculation, eval_idx):
 
         for context_ids_batch, context_pos_batch, context_mask_batch, target_xs_batch, target_xs_mask_batch, target_ys_batch in eval_loader:
             context_ids = self.batch2var(context_ids_batch, False)
@@ -100,7 +101,7 @@ class Trainer():
             # train loss
             epoch_eval_loss.append(loss.item())
             epoch_eval_acc.append(self.compute_accuracy_topk(outputs_fixed, target_ys_fixed))
-            self.print_results(context_pos[0], context_ids[0], target_xs[0], target_ys[0], outputs[0], True)
+            self.print_results(context_pos[0], context_ids[0], target_xs[0], target_ys[0], outputs[0], eval_idx)
 
             if predicted_eval_sentences is not None and ground_truth_eval_sentences is not None and eval_samples_for_blue_calculation is not None:
                 self.populate_predicted_and_ground_truth(predicted_eval_sentences, ground_truth_eval_sentences,
@@ -132,15 +133,18 @@ class Trainer():
         return (max_indices == target_ys).sum() / (len(target_ys) - mask_size)
 
     def compute_accuracy_topk(self, outputs, target_ys):
-        topk = min(self.acc_topk, outputs.shape[1])
-        _, max_indices = outputs.topk(k=topk, dim=1)
-        mask = torch.ones(len(target_ys))
-        mask = mask.long() * -1
-        if self.to_cuda:
-            mask = mask.cuda()
-        mask_size = (target_ys == mask).sum().item()
-        # new_targets = target_ys + ((target_ys == mask).long()*-1)
-        return (max_indices == target_ys.unsqueeze(dim=1)).sum().item() / (len(target_ys) - mask_size)
+        topks = [min(topk, outputs.shape[1]) for topk in self.acc_topk]
+        results = []
+        for topk in topks:  
+            _, max_indices = outputs.topk(k=topk, dim=1)
+            mask = torch.ones(len(target_ys))
+            mask = mask.long() * -1
+            if self.to_cuda:
+                mask = mask.cuda()
+            mask_size = (target_ys == mask).sum().item()
+            # new_targets = target_ys + ((target_ys == mask).long()*-1)
+            results.append((max_indices == target_ys.unsqueeze(dim=1)).sum().item() / (len(target_ys) - mask_size))
+        return results
 
     def populate_predicted_and_ground_truth(self, predicted_sentences, ground_truth_sentences, context_pos, context_ids,
                                             target_pos, target_ids, predictions,
@@ -189,11 +193,19 @@ class Trainer():
             if eval_samples_for_blue_calculation is not None:
                 eval_samples_for_blue_calculation.append(orig)
 
-    def print_results(self, context_pos, context_ids, target_pos, target_ids, predictions, is_eval=False):
-        if is_eval:
-            if time.time() - self.last_print_eval < self.print_interval:
+    def print_acc(self, accuracies):
+        accs = []
+        for i in range(len(self.acc_topk)):
+            accs.append(f"Top-{self.acc_topk[i]}: {accuracies[i]:.3f}")
+        acc_str = ", ".join(accs)
+        res = f"Accuracy: [{acc_str}]"
+        return res
+
+    def print_results(self, context_pos, context_ids, target_pos, target_ids, predictions, eval_idx=-1):
+        if eval_idx >= 0:
+            if time.time() - self.last_print_evals[eval_idx] < self.print_interval:
                 return
-            self.last_print_eval = time.time()
+            self.last_print_evals[eval_idx] = time.time()
         else:
             if time.time() - self.last_print_train < self.print_interval:
                 return
@@ -226,8 +238,8 @@ class Trainer():
             else:
                 orig += self.model.id2w[int(id.item())] + " "
                 pred += self.model.id2w[int(id.item())] + " "
-        if is_eval:
-            self.log("Eval Sample:")
+        if eval_idx >= 0:
+            self.log(f"Eval({self.tags[eval_idx]}) Sample:")
         else:
             self.log("Train Sample:")
         self.log("orig: {}".format(orig))
@@ -248,12 +260,17 @@ class Trainer():
         else:
             optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
         train_loader = DataLoader(dataset=self.training_dataset, batch_size=self.batch_size, shuffle=True)
-        if self.evaluation_dataset:
-            eval_loader = DataLoader(dataset=self.evaluation_dataset, batch_size=self.batch_size, shuffle=False)
+        if self.evaluation_datasets:
+            eval_loaders = []
+            for eval_dataset in self.evaluation_datasets:
+                eval_loaders.append(DataLoader(dataset=eval_dataset, batch_size=self.batch_size, shuffle=False))
         else:
-            eval_loader = None
+            eval_loaders = None
         train_loss_per_epoch = []
-        eval_loss_per_epoch = []
+        if self.evaluation_datasets:
+            eval_losses_per_epoch = [[] for _ in range(len(self.evaluation_datasets))]
+        else:
+            eval_losses_per_epoch = []
 
         for epoch in range(1, self.epoch_count + 1):
             # train
@@ -265,59 +282,76 @@ class Trainer():
 
             predicted_train_sentences = None
             ground_truth_train_sentences = None
-            predicted_eval_sentences = None
-            ground_truth_eval_sentences = None
-            eval_samples_for_blue_calculation = None
+            predicted_eval_sentences = [None for _ in range(len(self.evaluation_datasets))]
+            ground_truth_eval_sentences = [None for _ in range(len(self.evaluation_datasets))]
+            eval_sentences_for_blue_calculation = [None for _ in range(len(self.evaluation_datasets))]
 
             if calculate_blue:
-                #        predicted_train_sentences = []
-                #        ground_truth_train_sentences = []
-                predicted_eval_sentences = []
-                ground_truth_eval_sentences = []
-                eval_samples_for_blue_calculation = []
+        #        predicted_train_sentences = []
+        #        ground_truth_train_sentences = []
+                predicted_eval_sentences = [[] for _ in range(len(self.evaluation_datasets))]
+                ground_truth_eval_sentences = [[] for _ in range(len(self.evaluation_datasets))]
+                eval_sentences_for_blue_calculation = []
 
             self.train(train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc,
                        predicted_train_sentences, ground_truth_train_sentences)
 
             # evaluate
-            if eval_loader:
+            if eval_loaders:
                 self.model.eval_model()
-                epoch_eval_loss = []
-                epoch_eval_acc = []
-                self.evaluate(eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc, predicted_eval_sentences,
-                              ground_truth_eval_sentences, eval_samples_for_blue_calculation)
+                epoch_eval_losses = []
+                epoch_eval_accs = []
+                for i, eval_loader in enumerate(eval_loaders):
+                    epoch_eval_loss = []
+                    epoch_eval_acc = []
+                    self.evaluate(eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc, predicted_eval_sentences[i],
+                              ground_truth_eval_sentences[i], eval_sentences_for_blue_calculation, i)
+                    epoch_eval_losses.append(epoch_eval_loss)
+                    epoch_eval_accs.append(epoch_eval_acc)
 
             cur_train_bleu = None
+
             if calculate_blue:
                 #     cur_train_bleu = corpus_bleu(ground_truth_train_sentences, predicted_train_sentences)
                 cur_train_bleu = -1
 
             # compute epoch loss
             cur_train_loss = sum(epoch_train_loss) / len(epoch_train_loss)
-            cur_train_acc = sum(epoch_train_acc) / len(epoch_train_acc)
+            cur_train_acc = []
+            for i in range(len(self.acc_topk)):
+                train_accs = [train_acc[i] for train_acc in epoch_train_acc]
+                cur_train_acc.append(sum(train_accs) / len(train_accs))
             train_loss_per_epoch.append(cur_train_loss)
-            if eval_loader:
+            if eval_loaders:
                 cur_eval_bleu = None
                 if calculate_blue:
-                    cur_eval_bleu_without_big_ref = corpus_bleu(ground_truth_eval_sentences, predicted_eval_sentences)
+                    num_of_eval_sents = min(len(eval_sentences_for_blue_calculation), 10000)
+                    random.shuffle(eval_sentences_for_blue_calculation)
 
-                    num_of_eval_sents = min(len(eval_samples_for_blue_calculation), 10000)
-                    random.shuffle(eval_samples_for_blue_calculation)
-                    eval_samples_for_blue_calculation = eval_samples_for_blue_calculation[:num_of_eval_sents]
+                    cur_eval_bleu_without_big_ref = []
+                    cur_eval_bleu_with_big_ref = []
+                    for i, eval_loader in enumerate(eval_loaders):
 
-                    print()
-                    print(
-                        "=============== Adding {} eval sentences to every reference for blue calculation ==================".format(
-                            len(eval_samples_for_blue_calculation)))
-                    print()
-                    for gt_sent in ground_truth_eval_sentences:
-                        gt_sent.extend(eval_samples_for_blue_calculation)
+                        eval_sentences_for_blue_calculation = eval_sentences_for_blue_calculation[:num_of_eval_sents]
 
-                    cur_eval_bleu_with_big_ref = corpus_bleu(ground_truth_eval_sentences, predicted_eval_sentences)
+                        cur_eval_bleu_without_big_ref.append(corpus_bleu(ground_truth_eval_sentences[i], predicted_eval_sentences[i]))
 
-                cur_eval_loss = sum(epoch_eval_loss) / len(epoch_eval_loss)
-                cur_eval_acc = sum(epoch_eval_acc) / len(epoch_eval_acc)
-                eval_loss_per_epoch.append(cur_eval_loss)
+
+                        self.log(
+                            "Calculating blue score for (%.2f) with total of %d references" % (self.tags[i],len(eval_sentences_for_blue_calculation) + len(ground_truth_eval_sentences[i])))
+                        cur_eval_bleu_with_big_ref.append(corpus_bleu_with_joint_refrences(eval_sentences_for_blue_calculation, ground_truth_eval_sentences[i], predicted_eval_sentences[i]))
+
+                    self.log("")
+                cur_eval_losses = []
+                cur_eval_accs = []
+                for i in range(len(eval_loaders)):
+                    cur_eval_losses.append(sum(epoch_eval_losses[i]) / len(epoch_eval_losses[i]))
+                    cur_eval_acc = []
+                    for j in range(len(self.acc_topk)):
+                        eval_accs = [eval_acc[j] for eval_acc in epoch_eval_accs[i]]
+                        cur_eval_acc.append(sum(eval_accs) / len(eval_accs))
+                    cur_eval_accs.append(cur_eval_acc)
+                    eval_losses_per_epoch[i].append(cur_eval_losses[i])
             else:
                 cur_eval_bleu = 0
                 cur_eval_loss = 0
@@ -326,15 +360,19 @@ class Trainer():
                 cur_eval_bleu_without_big_ref = 0
 
             if epoch % 1 == 0 or epoch == 1:
-                if calculate_blue:
-                    self.log(
-                        'Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f, Train Bleu score: %.4f, Eval Loss: %.4f, Eval Accuracy: %.4f, Eval Bleu score (big ref): %.4f, Eval Bleu score (only gt as ref): %.4f' %
-                        (epoch, self.epoch_count, cur_train_loss, cur_train_acc, cur_train_bleu, cur_eval_loss,
-                         cur_eval_acc, cur_eval_bleu_with_big_ref, cur_eval_bleu_without_big_ref))
-                else:
-                    self.log(
-                        'Epoch [%d/%d] Train Loss: %.4f, Train Accuracy: %.4f, Eval Loss: %.4f, Eval Accuracy: %.4f' %
-                        (epoch, self.epoch_count, cur_train_loss, cur_train_acc, cur_eval_loss, cur_eval_acc))
+                self.log('Epoch [%d/%d] Train Loss: %.4f, Train %s' %
+                         (epoch, self.epoch_count, cur_train_loss, self.print_acc(cur_train_acc)))
+                if eval_loaders:
+                    if calculate_blue:
+                        for i in range(len(eval_loaders)):
+                            self.log(
+                                'Epoch [%d/%d] Eval Loss (%.2f): %.4f, Eval %s, Eval Bleu score (big ref): %.4f, Eval Bleu score (only gold as ref): %.4f' %
+                                (epoch, self.epoch_count, self.tags[i], cur_eval_losses[i],
+                                 self.print_acc(cur_eval_accs[i]), cur_eval_bleu_with_big_ref[i][1], cur_eval_bleu_without_big_ref[i]))
+                    else:
+                        for i in range(len(eval_loaders)): 
+                            self.log('Epoch [%d/%d] Eval Loss (%.2f): %.4f, Eval %s' %
+                                (epoch, self.epoch_count, self.tags[i], cur_eval_losses[i], self.print_acc(cur_eval_accs[i])))
                     # self.log()
 
-        return train_loss_per_epoch, eval_loss_per_epoch
+        return train_loss_per_epoch, eval_losses_per_epoch

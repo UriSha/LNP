@@ -49,10 +49,11 @@ input_arguments = [
     InputArgument("to_cuda", "c", "use cuda (default: True)", True, str2bool, nargs="?", const=True),
     InputArgument("sent_count", "sc", "sent count (default: no limit)", 0, int),
     InputArgument("batch_size", "bs", "batch_size (default: 50)", 50, int),
-    InputArgument("mask_ratio", "mr", "max_ratio (default: 0.25)", .25, float),
-    InputArgument("topk", "topk", "topk (default: 1)", 1, int),
+    InputArgument("topk", "topk", "topk (default: [1, 5, 10])", [1, 5, 10], int, nargs="+"),
+    InputArgument("train_mask_ratios", "mr", "train_mask_ratios (default: [0.25, 0.5])", [0.25, 0.5], float, nargs="+"),
     InputArgument("momentum", "moment", "momentum (default: 0.9)", .9, float),
-    InputArgument("test_size", "ts", "test_size (default: 0.1)", .1, float),
+    InputArgument("test_size", "ts", "test_size (default: -1)", -1.0, float),
+    InputArgument("abs_test_size", "ats", "test_size (default: -1)", -1, int),
     InputArgument("rare_threshold", "rt", "rare word threshold (default: 10)", 10, float),
     InputArgument("hidden_repr", "hr", "hidden_repr (default: 1000)", 1000, int),
     InputArgument("enc_layers", "encl", "enc_layers (default: [512, 768])", [512, 768], int, nargs="+"),
@@ -105,50 +106,54 @@ def main():
         exec(f"print(input_argument.name + ': ' + str(inp_value), file=config_f)")
     print()
 
-    print("Init text processor")
+    if abs(args.test_size - -1.0) < 0.01 and args.abs_test_size == -1:
+        raise Exception("At least one of test size parameters must be set")
+    if abs(args.test_size - -1.0) >= 0.01 and args.abs_test_size != -1:
+        raise Exception("Only one of test size parameters should be set")
+
+    test_size = args.abs_test_size
+    if args.abs_test_size == -1:
+        test_size = args.test_size
+
+    print("Init Text Processor")
     text_processor = TextProcessorNonContextual("data/APRC/{}".format(args.data_file),
                                                 "data/embeddings/wiki-news-300d-1M.vec",
-                                                test_size=args.test_size,
-                                                mask_ratio=args.mask_ratio,
+                                                test_size=test_size,
                                                 sents_limit=args.sent_count,
                                                 rare_word_threshold=args.rare_threshold,
                                                 use_weight_loss=args.use_weight_loss)
 
-    # if args.dataset_random_every_time:
-    #     train_dataset = DatasetRandom(text_as_list=text_processor.train_sents,
-    #                                   tokenizer=text_processor.tokenizer,
-    #                                   w2id=text_processor.w2id,
-    #                                   max_seq_len=text_processor.max_seq_len,
-    #                                   max_masked_size=text_processor.max_masked_size,
-    #                                   mask_ratio=args.mask_ratio,
-    #                                   to_cuda=args.to_cuda)
 
-    # else:
-    #     train_dataset = DatasetConsistent(text_as_list=text_processor.train_sents,
-    #                                       tokenizer=text_processor.tokenizer,
-    #                                       w2id=text_processor.w2id,
-    #                                       max_seq_len=text_processor.max_seq_len,
-    #                                       max_masked_size=text_processor.max_masked_size,
-    #                                       mask_ratio=args.mask_ratio,
-    #                                       to_cuda=args.to_cuda)
-
-    print("Init train Dataset")
+    print("Init Train Dataset")
     train_dataset = DatasetNonContextual(text_as_list=text_processor.train_sents,
                                          w2id=text_processor.w2id,
                                          id2w=text_processor.id2w,
                                          max_seq_len=text_processor.max_seq_len,
-                                         max_masked_size=text_processor.max_masked_size,
-                                         mask_ratio=args.mask_ratio,
+                                         mask_ratios=args.train_mask_ratios,
                                          to_cuda=args.to_cuda)
 
-    print("Init test Dataset")
-    eval_dataset = DatasetNonContextual(text_as_list=text_processor.eval_sents,
+    print("Init Test Datasets")
+    eval_datasets = []
+    eval_datasets.append(DatasetNonContextual(text_as_list=text_processor.eval25,
                                         w2id=text_processor.w2id,
                                         id2w=text_processor.id2w,
                                         max_seq_len=text_processor.max_seq_len,
-                                        max_masked_size=text_processor.max_masked_size,
-                                        mask_ratio=args.mask_ratio,
-                                        to_cuda=args.to_cuda)
+                                        mask_ratios=[.25],
+                                        to_cuda=args.to_cuda))
+    
+    eval_datasets.append(DatasetNonContextual(text_as_list=text_processor.eval50,
+                                        w2id=text_processor.w2id,
+                                        id2w=text_processor.id2w,
+                                        max_seq_len=text_processor.max_seq_len,
+                                        mask_ratios=[0.5],
+                                        to_cuda=args.to_cuda))
+
+    eval_datasets.append(DatasetNonContextual(text_as_list=text_processor.eval75,
+                                        w2id=text_processor.w2id,
+                                        id2w=text_processor.id2w,
+                                        max_seq_len=text_processor.max_seq_len,
+                                        mask_ratios=[0.75],
+                                        to_cuda=args.to_cuda))
 
     print("Vocab size: ", len(text_processor.id2w))
     print("Vocab size: ", len(text_processor.id2w), file=config_f)
@@ -158,7 +163,6 @@ def main():
                 hidden_repr=args.hidden_repr,
                 enc_hidden_layers=args.enc_layers,
                 dec_hidden_layers=args.dec_layers,
-                max_target_size=text_processor.max_masked_size,
                 w2id=text_processor.w2id,
                 id2w=text_processor.id2w,
                 emb_weight=text_processor.embed_matrix,
@@ -179,9 +183,13 @@ def main():
     config_f.close()
     print("Init Trainer")
 
+    # assume every eval_ds has only one mask ration
+    tags = [eval_ds.mask_ratios[0] for eval_ds in eval_datasets]
+
     trainer = Trainer(model=model,
                       training_dataset=train_dataset,
-                      evaluation_dataset=eval_dataset,
+                      evaluation_datasets=eval_datasets,
+                      tags=tags,
                       batch_size=args.batch_size,
                       opt=args.opt,
                       learning_rate=args.learning_rate,
@@ -194,8 +202,8 @@ def main():
                       to_cuda=args.to_cuda,
                       log_dir=log_dir)
     print("Start training")
-    train_loss_per_epoch, eval_loss_per_epoch = trainer.run()
-    plotter = Plotter(train_loss_per_epoch, eval_loss_per_epoch, log_dir)
+    train_loss_per_epoch, eval_losses_per_epoch = trainer.run()
+    plotter = Plotter(train_loss_per_epoch, eval_losses_per_epoch, tags, log_dir)
     plotter.plot()
 
 

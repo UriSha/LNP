@@ -6,9 +6,9 @@ from .abstract_text_processor import AbstractTextProcessor
 
 
 class TextProcessorNonContextual(AbstractTextProcessor):
-    def __init__(self, text_file_path, embed_file_path, test_size=0.1, mask_ratio=.25, rare_word_threshold=10, use_weight_loss=True,
+    def __init__(self, text_file_path, embed_file_path, test_size=0.1, rare_word_threshold=10, use_weight_loss=True,
                  sents_limit=None):
-        super(TextProcessorNonContextual, self).__init__(text_file_path, test_size, mask_ratio, rare_word_threshold,
+        super(TextProcessorNonContextual, self).__init__(text_file_path, test_size, rare_word_threshold,
                                                          sents_limit, use_weight_loss, embed_file_path=embed_file_path)
 
     def normalize_word(self, w):
