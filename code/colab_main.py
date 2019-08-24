@@ -51,6 +51,7 @@ input_arguments = [
     InputArgument("batch_size", "bs", "batch_size (default: 50)", 50, int),
     InputArgument("mask_ratio", "mr", "max_ratio (default: 0.25)", .25, float),
     InputArgument("topk", "topk", "topk (default: [1, 5, 10])", [1, 5, 10], int, nargs="+"),
+    InputArgument("train_mask_ratios", "mr", "train_mask_ratios (default: [0.25, 0.5])", [0.25, 0.5], float, nargs="+"),
     InputArgument("momentum", "moment", "momentum (default: 0.9)", .9, float),
     InputArgument("test_size", "ts", "test_size (default: -1)", -1.0, float),
     InputArgument("abs_test_size", "ats", "test_size (default: -1)", -1, int),
@@ -129,7 +130,7 @@ def main():
                                          w2id=text_processor.w2id,
                                          id2w=text_processor.id2w,
                                          max_seq_len=text_processor.max_seq_len,
-                                         mask_ratio=args.mask_ratio,
+                                         mask_ratios=args.train_mask_ratios,
                                          to_cuda=args.to_cuda)
 
     print("Init Test Datasets")
@@ -138,21 +139,21 @@ def main():
                                         w2id=text_processor.w2id,
                                         id2w=text_processor.id2w,
                                         max_seq_len=text_processor.max_seq_len,
-                                        mask_ratio=0.25,
+                                        mask_ratios=[.25],
                                         to_cuda=args.to_cuda))
     
     eval_datasets.append(DatasetNonContextual(text_as_list=text_processor.eval50,
                                         w2id=text_processor.w2id,
                                         id2w=text_processor.id2w,
                                         max_seq_len=text_processor.max_seq_len,
-                                        mask_ratio=0.5,
+                                        mask_ratios=[0.5],
                                         to_cuda=args.to_cuda))
 
     eval_datasets.append(DatasetNonContextual(text_as_list=text_processor.eval75,
                                         w2id=text_processor.w2id,
                                         id2w=text_processor.id2w,
                                         max_seq_len=text_processor.max_seq_len,
-                                        mask_ratio=0.75,
+                                        mask_ratios=[0.75],
                                         to_cuda=args.to_cuda))
 
     print("Vocab size: ", len(text_processor.id2w))
