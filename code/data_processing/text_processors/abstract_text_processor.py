@@ -15,7 +15,7 @@ class AbstractTextProcessor:
         self.sents, self.w2id, self.id2w, self.max_seq_len, self.word_weights = self.initiate_vocab(sents)
         # self.sents = self.remove_rare_words(sents)
         self.train_sents, self.eval_sents = train_test_split(self.sents, test_size=test_size)
-        leftover, self.eval25 = train_test_split(self.eval_sents, test_size=0.33)
+        leftover, self.eval25 = train_test_split(self.eval_sents, test_size=(1/3))
         self.eval50, self.eval75 = train_test_split(leftover, test_size=0.5)
 
     def read_data(self, path, sents_limit):
