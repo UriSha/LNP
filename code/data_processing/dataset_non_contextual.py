@@ -3,9 +3,10 @@ import torch
 import random
 from torch.utils.data import Dataset
 
+
 class DatasetNonContextual(Dataset):
-    def __init__(self, text_as_list, w2id, id2w, max_seq_len, mask_ratios, transform=None, to_cuda=True):
-        self.data = text_as_list
+    def __init__(self, sents, w2id, id2w, max_seq_len, mask_ratios, transform=None, to_cuda=True):
+        self.sents = sents
         self.transform = transform
         self.mask_ratios = mask_ratios
         self.w2id = w2id
@@ -13,7 +14,6 @@ class DatasetNonContextual(Dataset):
         self.max_seq_len = max_seq_len
         self.max_masked_size = int(math.ceil(max_seq_len * max(mask_ratios)))
         self.to_cuda = to_cuda
-        self.MASK_SYMBOL = '<MASK>'
         self.mem = {}
         self.current_mask_ratio_index = 0
 
@@ -22,7 +22,7 @@ class DatasetNonContextual(Dataset):
         if index in self.mem:
             return self.mem[index]
 
-        sent = self.data[index].copy()
+        sent = self.sents[index]
 
         # print("sent: ", sent)
         sent, masked_indices, target_xs, target_ys, target_xs_mask = self.mask_sent(sent)
@@ -48,7 +48,7 @@ class DatasetNonContextual(Dataset):
 
 
     def __len__(self):
-        return len(self.data)
+        return len(self.sents)
 
 
     def pad_embedded_sentence(self, embedded_sent):
