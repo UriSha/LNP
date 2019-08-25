@@ -38,13 +38,11 @@ class Trainer():
             if self.word_weights is not None:
                 self.word_weights = self.word_weights.cuda()
 
-    
     def log(self, *args, **kwargs):
         time_prefix = f"[{time.strftime('%H:%M:%S', time.localtime())}]"
         print(time_prefix, *args, **kwargs)
         print(time_prefix, *args, **kwargs, file=self.log_file)
         self.log_file.flush()
-
 
     def train(self, train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc,
               predicted_train_sentences, ground_truth_train_sentences):
@@ -73,7 +71,6 @@ class Trainer():
                 self.populate_predicted_and_ground_truth(predicted_train_sentences, ground_truth_train_sentences,
                                                          context_xs_batch, context_ys_batch, target_xs, target_ys,
                                                          outputs)
-
 
     def evaluate(self, eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc, predicted_eval_sentences,
                  ground_truth_eval_sentences, eval_samples_for_blue_calculation, eval_idx):
@@ -128,7 +125,7 @@ class Trainer():
     def compute_accuracy_topk(self, outputs, target_ys):
         topks = [min(topk, outputs.shape[1]) for topk in self.acc_topk]
         results = []
-        for topk in topks:  
+        for topk in topks:
             _, max_indices = outputs.topk(k=topk, dim=1)
             mask = torch.ones(len(target_ys))
             mask = mask.long() * -1
@@ -179,6 +176,11 @@ class Trainer():
                 else:
                     orig.append(self.model.id2w[int(id.item())])
                     pred.append(self.model.id2w[int(id.item())])
+
+            # get rid of SEP and CLS for bleu score
+            orig = orig[1:-1]
+            pred = pred[1:-1]
+
             orig_as_reference_for_blue = [orig]
             ground_truth_sentences.append(orig_as_reference_for_blue)
             predicted_sentences.append(pred)
@@ -271,7 +273,7 @@ class Trainer():
             epoch_train_loss = []
             epoch_train_acc = []
 
-            calculate_blue = epoch == self.epoch_count # or epoch % 100 == 0
+            calculate_blue = epoch == self.epoch_count  # or epoch % 100 == 0
 
             predicted_train_sentences = None
             ground_truth_train_sentences = None
@@ -280,8 +282,8 @@ class Trainer():
             eval_sentences_for_blue_calculation = [None for _ in range(len(self.evaluation_datasets))]
 
             if calculate_blue:
-        #        predicted_train_sentences = []
-        #        ground_truth_train_sentences = []
+                #        predicted_train_sentences = []
+                #        ground_truth_train_sentences = []
                 predicted_eval_sentences = [[] for _ in range(len(self.evaluation_datasets))]
                 ground_truth_eval_sentences = [[] for _ in range(len(self.evaluation_datasets))]
                 eval_sentences_for_blue_calculation = []
@@ -297,15 +299,16 @@ class Trainer():
                 for i, eval_loader in enumerate(eval_loaders):
                     epoch_eval_loss = []
                     epoch_eval_acc = []
-                    self.evaluate(eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc, predicted_eval_sentences[i],
-                              ground_truth_eval_sentences[i], eval_sentences_for_blue_calculation, i)
+                    self.evaluate(eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc,
+                                  predicted_eval_sentences[i],
+                                  ground_truth_eval_sentences[i], eval_sentences_for_blue_calculation, i)
                     epoch_eval_losses.append(epoch_eval_loss)
                     epoch_eval_accs.append(epoch_eval_acc)
 
             cur_train_bleu = None
 
             if calculate_blue:
-          #     cur_train_bleu = corpus_bleu(ground_truth_train_sentences, predicted_train_sentences)
+                #     cur_train_bleu = corpus_bleu(ground_truth_train_sentences, predicted_train_sentences)
                 cur_train_bleu = -1
 
             # compute epoch loss
@@ -324,7 +327,6 @@ class Trainer():
                     cur_eval_bleu_without_big_ref = []
                     cur_eval_bleu_with_big_ref = []
                     for i, eval_loader in enumerate(eval_loaders):
-
                         eval_sentences_for_blue_calculation = eval_sentences_for_blue_calculation[:num_of_eval_sents]
 
                         cur_eval_bleu_without_big_ref.append(corpus_bleu(ground_truth_eval_sentences[i], predicted_eval_sentences[i]))
@@ -363,7 +365,7 @@ class Trainer():
                                 (epoch, self.epoch_count, self.tags[i], cur_eval_losses[i],
                                  self.print_acc(cur_eval_accs[i]), cur_eval_bleu_with_big_ref[i][1], cur_eval_bleu_without_big_ref[i]))
                     else:
-                        for i in range(len(eval_loaders)): 
+                        for i in range(len(eval_loaders)):
                             self.log('Epoch [%d/%d] Eval Loss (%.2f): %.4f, Eval %s' %
                                 (epoch, self.epoch_count, self.tags[i], cur_eval_losses[i], self.print_acc(cur_eval_accs[i])))
                     # self.log()
