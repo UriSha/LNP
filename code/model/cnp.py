@@ -156,19 +156,19 @@ class CNP(nn.Module):
                 sentence_positions = [i for i in range(full_sentence.shape[1])]
                 batch_positions = [sentence_positions for _ in range(full_sentence.shape[0])]
 
-                # batch_positions = torch.LongTensor(batch_positions).cuda()
-                batch_positions = torch.LongTensor(batch_positions)
+                batch_positions = torch.LongTensor(batch_positions).cuda()
+                # batch_positions = torch.LongTensor(batch_positions)
 
-                # sent_pos_embeddings = self.pos_embeddings(batch_positions).cuda()
-                sent_pos_embeddings = self.pos_embeddings(batch_positions)
+                sent_pos_embeddings = self.pos_embeddings(batch_positions).cuda()
+                # sent_pos_embeddings = self.pos_embeddings(batch_positions)
 
-                # target_word_embeddings = self.embedding(full_sentence).cuda()
-                target_word_embeddings = self.embedding(full_sentence)
+                target_word_embeddings = self.embedding(full_sentence).cuda()
+                # target_word_embeddings = self.embedding(full_sentence)
 
                 latent_target = sent_pos_embeddings + target_word_embeddings # position emb + word emb
 
-                # latent_target = latent_target.transpose(0, 1).cuda()
-                latent_target = latent_target.transpose(0, 1)
+                latent_target = latent_target.transpose(0, 1).cuda()
+                # latent_target = latent_target.transpose(0, 1)
 
 
                 # latent_target = torch.cat((latent_target, context), dim=0)
