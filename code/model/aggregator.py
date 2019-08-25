@@ -9,16 +9,17 @@ class AverageAggregator(nn.Module):
         super(AverageAggregator, self).__init__()
 
     def forward(self, x, x_mask):
+        if x_mask is None:
+            res = x.mean(dim=1)
+            res = torch.unsqueeze(res, dim=1)
+            return res
         weights = x_mask.float()
         weights = F.softmax(weights.masked_fill(x_mask, float('-inf')), dim=1)
         weights = torch.unsqueeze(weights, dim=2)
 
         # x = x.permute([0, 2, 1])  # transpose
         x = x.transpose(1, 2)
-        try:
-            x = torch.matmul(x, weights)  # batch matrix multiplication
-        except RuntimeError:
-            x=7
+        x = torch.matmul(x, weights)  # batch matrix multiplication
         x = x.transpose(1, 2)
         # x = x.permute([0, 2, 1])  # transpose
 
