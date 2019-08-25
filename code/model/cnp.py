@@ -195,7 +195,7 @@ class CNP(nn.Module):
             else:
                 x = representations + target_pos_embeddings
 
-            latent_representations = torch.repeat_interleave(z, self.max_target_size, dim=1)
+            latent_representations = torch.repeat_interleave(z, target_pos_embeddings.shape[1], dim=1)
             x = torch.cat((x, latent_representations), dim=2)
         else:
             encodings = self.encoder(context, context_mask)
