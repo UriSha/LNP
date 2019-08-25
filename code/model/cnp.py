@@ -134,8 +134,8 @@ class CNP(nn.Module):
 
             # For training
             if target_ys is not None:
-                # full_sentence = torch.zeros(context_mask.shape).long().cuda()
-                full_sentence = torch.zeros(context_mask.shape).long()
+                full_sentence = torch.zeros(context_mask.shape).long().cuda()
+                # full_sentence = torch.zeros(context_mask.shape).long()
 
                 for batch in range(context_mask.shape[0]):
                     for index in range(context_mask.shape[1]):
