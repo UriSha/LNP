@@ -48,13 +48,15 @@ class Trainer():
 
     def train(self, train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc,
               predicted_train_sentences, ground_truth_train_sentences):
-        for context_xs_batch, context_ys_batch, context_mask_batch, target_xs_batch, target_ys_batch, target_mask_batch in train_loader:
+        for context_xs_batch, context_ys_batch, context_mask_batch, target_xs_batch, target_ys_batch, target_mask_batch, full_sent_xs_batch, full_sent_ys_batch in train_loader:
             context_xs = self.batch2var(context_xs_batch, False)
             context_ys = self.batch2var(context_ys_batch, False)
             context_mask = self.batch2var(context_mask_batch, False)
             target_xs = self.batch2var(target_xs_batch, False)
             target_ys = self.batch2var(target_ys_batch, False)
             target_mask = self.batch2var(target_mask_batch, False)
+            full_sent_xs = self.batch2var(full_sent_xs_batch, False)
+            full_sent_ys = self.batch2var(full_sent_ys_batch, False)
 
             # feedforward - backprop
             optimizer.zero_grad()
@@ -78,13 +80,15 @@ class Trainer():
     def evaluate(self, eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc, predicted_eval_sentences,
                  ground_truth_eval_sentences, eval_samples_for_blue_calculation, eval_idx):
 
-        for context_xs_batch, context_ys_batch, context_mask_batch, target_xs_batch, target_ys_batch, target_mask_batch in eval_loader:
+        for context_xs_batch, context_ys_batch, context_mask_batch, target_xs_batch, target_ys_batch, target_mask_batch, full_sent_xs_batch, full_sent_ys_batch in eval_loader:
             context_xs = self.batch2var(context_xs_batch, False)
             context_ys = self.batch2var(context_ys_batch, False)
             context_mask = self.batch2var(context_mask_batch, False)
             target_xs = self.batch2var(target_xs_batch, False)
             target_ys = self.batch2var(target_ys_batch, False)
             target_mask = self.batch2var(target_mask_batch, False)
+            full_sent_xs = self.batch2var(full_sent_xs_batch, False)
+            full_sent_ys = self.batch2var(full_sent_ys_batch, False)
 
             # feedforward
             outputs = self.model(context_ys, context_xs, context_mask, target_xs, target_mask)
