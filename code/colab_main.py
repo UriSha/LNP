@@ -152,11 +152,8 @@ def main():
                 hidden_repr=args.hidden_repr,
                 enc_hidden_layers=args.enc_layers,
                 dec_hidden_layers=args.dec_layers,
-                w2id=text_processor.w2id,
-                id2w=text_processor.id2w,
                 emb_weight=text_processor.embed_matrix,
                 max_seq_len=text_processor.max_seq_len,
-                padding_idx=text_processor.pad_index,
                 use_weight_matrix=args.use_weight_matrix,
                 dropout=args.dropout,
                 nheads=args.number_of_heads,
@@ -190,7 +187,8 @@ def main():
                       use_weight_loss=args.use_weight_loss,
                       bleu_sents=text_processor.bleu_sents,
                       to_cuda=args.to_cuda,
-                      logger=logger)
+                      logger=logger,
+                      id2w=text_processor.id2w)
     logger.log("Start training")
     train_loss_per_epoch, eval_losses_per_epoch = trainer.run()
     plotter = Plotter(train_loss_per_epoch, eval_losses_per_epoch, tags, logger)

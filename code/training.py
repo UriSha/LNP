@@ -11,7 +11,7 @@ from blue import corpus_bleu_with_joint_refrences
 
 class Trainer():
     def __init__(self, model, training_dataset, evaluation_datasets, tags, batch_size, opt, learning_rate, momentum,
-                 epoch_count, acc_topk, print_interval, word_weights, use_weight_loss, bleu_sents, to_cuda, logger):
+                 epoch_count, acc_topk, print_interval, word_weights, use_weight_loss, bleu_sents, to_cuda, logger, id2w):
         self.model = model
         self.training_dataset = training_dataset
         self.evaluation_datasets = evaluation_datasets
@@ -31,6 +31,7 @@ class Trainer():
         self.word_weights = word_weights
         self.tags = tags
         self.bleu_sents = bleu_sents
+        self.id2w = id2w
 
         self.logger = logger
         if self.to_cuda:
@@ -50,7 +51,7 @@ class Trainer():
 
             # feedforward - backprop
             optimizer.zero_grad()
-            outputs = self.model(context_ys, context_xs, context_mask, target_xs, target_mask)
+            outputs = self.model(context_xs, context_ys, context_mask, target_xs, target_mask)
             outputs_fixed, target_ys_fixed = self.fix_dimensions(outputs, target_ys)
             loss = loss_function(outputs_fixed, target_ys_fixed)
             loss.backward()
@@ -79,7 +80,7 @@ class Trainer():
             target_mask = self.batch2var(target_mask_batch, False)
 
             # feedforward
-            outputs = self.model(context_ys, context_xs, context_mask, target_xs, target_mask)
+            outputs = self.model(context_xs, context_ys, context_mask, target_xs, target_mask)
             outputs_fixed, target_ys_fixed = self.fix_dimensions(outputs, target_ys)
             loss = loss_function(outputs_fixed, target_ys_fixed)
 
@@ -165,11 +166,11 @@ class Trainer():
                     j += 1
                 pos += 1
                 if pred_id is not None:
-                    orig.append(self.model.id2w[int(id.item())])
-                    pred.append(self.model.id2w[int(pred_id.item() + 1)])
+                    orig.append(self.id2w[int(id.item())])
+                    pred.append(self.id2w[int(pred_id.item() + 1)])
                 else:
-                    orig.append(self.model.id2w[int(id.item())])
-                    pred.append(self.model.id2w[int(id.item())])
+                    orig.append(self.id2w[int(id.item())])
+                    pred.append(self.id2w[int(id.item())])
             orig_as_reference_for_blue = [orig]
             ground_truth_sentences.append(orig_as_reference_for_blue)
             predicted_sentences.append(pred)
@@ -216,11 +217,11 @@ class Trainer():
                 j += 1
             pos += 1
             if pred_id is not None:
-                orig += "*" + self.model.id2w[int(id.item())] + "* "
-                pred += "*" + self.model.id2w[int(pred_id.item() + 1)] + "* "
+                orig += "*" + self.id2w[int(id.item())] + "* "
+                pred += "*" + self.id2w[int(pred_id.item() + 1)] + "* "
             else:
-                orig += self.model.id2w[int(id.item())] + " "
-                pred += self.model.id2w[int(id.item())] + " "
+                orig += self.id2w[int(id.item())] + " "
+                pred += self.id2w[int(id.item())] + " "
         if eval_idx >= 0:
             self.logger.log(f"Eval({self.tags[eval_idx]}) Sample:")
         else:

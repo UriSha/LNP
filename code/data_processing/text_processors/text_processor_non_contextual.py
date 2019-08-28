@@ -165,9 +165,8 @@ class TextProcessorNonContextual(AbstractTextProcessor):
         self.vec_size = int(header.split(" ")[1])
         emb_matrix = {}
         w2id = {}
-        self.pad_index = 0
-        w2id["<PAD>"] = self.pad_index
-        emb_matrix[self.pad_index] = -1
+        w2id["<PAD>"] = 0
+        emb_matrix[0] = -1
         words_count = 1
 
         self.embeddings_file_lines = embeddings_file_lines[1:]

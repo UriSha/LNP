@@ -60,11 +60,8 @@ def main():
                 hidden_repr=300,
                 enc_hidden_layers=[512, 768],
                 dec_hidden_layers=[768, 1024, 512],
-                w2id = text_processor.w2id,
-                id2w = text_processor.id2w,
                 emb_weight = text_processor.embed_matrix,
                 max_seq_len = text_processor.max_seq_len,
-                padding_idx = text_processor.pad_index,
                 use_weight_matrix = use_weight_matrix,
                 dropout=dropout,
                 attn=attn,
@@ -90,7 +87,8 @@ def main():
                       use_weight_loss=use_weight_loss,
                       bleu_sents=text_processor.bleu_sents,
                       to_cuda=to_cuda,
-                      logger=logger)
+                      logger=logger,
+                      id2w=text_processor.id2w)
     train_loss, eval_losses = trainer.run()
     plotter = Plotter(train_loss, eval_losses, tags, logger)
     plotter.plot()
