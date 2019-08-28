@@ -24,7 +24,7 @@ class DatasetNonContextual(Dataset):
         sent = self.sents[index]
         context_xs, context_ys, context_mask, target_xs, target_ys, target_mask, full_sent_xs, full_sent_ys = self.mask_sent(sent)
         if not self.random_every_time:
-            self.mem[index] = context_xs, context_ys, context_mask, target_xs, target_ys, target_mask
+            self.mem[index] = context_xs, context_ys, context_mask, target_xs, target_ys, target_mask, full_sent_xs, full_sent_ys
         return context_xs, context_ys, context_mask, target_xs, target_ys, target_mask, full_sent_xs, full_sent_ys
 
 
