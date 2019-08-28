@@ -49,8 +49,7 @@ class Trainer():
 
             calculate_blue = epoch == self.epoch_count # or epoch % 100 == 0
 
-            predicted_train_sentences = None
-            ground_truth_train_sentences = None
+
             predicted_test_sentences = [None for _ in range(len(self.test_loaders))]
             ground_truth_test_sentences = [None for _ in range(len(self.test_loaders))]
 
@@ -61,7 +60,7 @@ class Trainer():
 
             # Train
             self.model.train_model()
-            cur_train_loss, cur_train_accuracy = self.run_epoch(self.train_loader, predicted_train_sentences, ground_truth_train_sentences)
+            cur_train_loss, cur_train_accuracy = self.run_epoch(self.train_loader, None, None)
             train_loss_per_epoch.append(cur_train_loss)
 
             # Test
@@ -69,7 +68,7 @@ class Trainer():
             cur_test_losses = [None] * len(self.test_loaders)
             cur_test_accuracies = [None] * len(self.test_loaders)
             for i, test_loader in enumerate(self.test_loaders):
-                cur_test_loss, cur_test_accuracy = self.run_epoch(test_loader, predicted_test_sentences, ground_truth_test_sentences, i)
+                cur_test_loss, cur_test_accuracy = self.run_epoch(test_loader, predicted_test_sentences[i], ground_truth_test_sentences[i], i)
                 test_losses_per_epoch[i].append(cur_test_loss)
                 cur_test_losses[i] = cur_test_loss
                 cur_test_accuracies[i] = cur_test_accuracy
