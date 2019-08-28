@@ -60,7 +60,7 @@ class Trainer():
 
             # feedforward - backprop
             optimizer.zero_grad()
-            outputs = self.model(context_ys, context_xs, context_mask, target_xs, target_mask)
+            outputs = self.model(context_ys, context_xs, context_mask, target_xs, target_mask, full_sent_xs, full_sent_ys)
             outputs_fixed, target_ys_fixed = self.fix_dimensions(outputs, target_ys)
             loss = loss_function(outputs_fixed, target_ys_fixed)
             loss.backward()
@@ -91,7 +91,7 @@ class Trainer():
             full_sent_ys = self.batch2var(full_sent_ys_batch, False)
 
             # feedforward
-            outputs = self.model(context_ys, context_xs, context_mask, target_xs, target_mask)
+            outputs = self.model(context_ys, context_xs, context_mask, target_xs, target_mask, full_sent_xs, full_sent_ys)
             outputs_fixed, target_ys_fixed = self.fix_dimensions(outputs, target_ys)
             loss = loss_function(outputs_fixed, target_ys_fixed)
 

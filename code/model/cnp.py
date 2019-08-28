@@ -81,7 +81,7 @@ class CNP(nn.Module):
             self.decoder = self.decoder.cuda()
             self.pos_embeddings = self.pos_embeddings.cuda()
 
-    def forward(self, context_ids, context_pos, context_mask, target, target_mask):
+    def forward(self, context_ids, context_pos, context_mask, target, target_mask, full_sent_xs, full_sent_ys):
         sent_embeddings = self.embedding(context_ids)
         if self.use_pos_embedding:
             pos_embeddings = self.pos_embeddings(context_pos)
