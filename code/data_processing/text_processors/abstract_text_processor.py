@@ -22,11 +22,10 @@ class AbstractTextProcessor:
         self.eval_sents = shuffled_sents[-test_size:]
         self.bleu_sents = random.sample(self.eval_sents, k=min(10000, len(self.eval_sents)))
 
-        eval_size = len(self.eval_sents) // 3
+        eval_size = len(self.eval_sents) // 2
 
         self.eval25 = self.eval_sents[:eval_size]
         self.eval50 = self.eval_sents[eval_size:]
-        self.eval75 = self.eval_sents[2*eval_size:]
 
     def read_data(self, path, sents_limit):
         with open(path, "r") as f:

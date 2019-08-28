@@ -53,9 +53,6 @@ def main():
     eval_datasets.append(DatasetNonContextual(text_processor.eval50,
                                         text_processor.max_seq_len,
                                         mask_ratios=[0.5], to_cuda=to_cuda))
-    eval_datasets.append(DatasetNonContextual(text_processor.eval75,
-                                        text_processor.max_seq_len,
-                                        mask_ratios=[0.75], to_cuda=to_cuda))
 
     tags = [eval_ds.mask_ratios[0] for eval_ds in eval_datasets]
     print("Vocab size: ", len(text_processor.id2w))

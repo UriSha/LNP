@@ -144,11 +144,6 @@ def main():
                                         mask_ratios=[0.5],
                                         to_cuda=args.to_cuda))
 
-    eval_datasets.append(DatasetNonContextual(sents=text_processor.eval75,
-                                        max_seq_len=text_processor.max_seq_len,
-                                        mask_ratios=[0.75],
-                                        to_cuda=args.to_cuda))
-
     logger.log("Vocab size: ", len(text_processor.id2w))
     logger.log("Vocab size: ", len(text_processor.id2w), file=config_f)
 
