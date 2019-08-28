@@ -1,15 +1,13 @@
-import argparse
 import os
 import time
-
-# from data_processing.dataset_consistent import DatasetConsistent
-# from data_processing.dataset_random import DatasetRandom
-# from data_processing.text_processors.text_processor import TextProcessor
-from data_processing.dataset_non_contextual import DatasetNonContextual
-from data_processing.text_processors.text_processor_non_contextual import TextProcessorNonContextual
+import random
+import argparse
 from model.cnp import CNP
+from logger import Logger
 from plotter import Plotter
 from training import Trainer
+from data_processing.dataset_non_contextual import DatasetNonContextual
+from data_processing.text_processors.text_processor_non_contextual import TextProcessorNonContextual
 
 
 def str2bool(v):
@@ -73,7 +71,8 @@ input_arguments = [
                   const=True),
     InputArgument("number_of_heads", "nheads", "number of heads for attention (default: 2)", 2, int),
     InputArgument("normalize_weights", "nw", "Whether to normalize weight matrix (default: True)", True, str2bool,
-                  nargs="?", const=True)
+                  nargs="?", const=True),
+    InputArgument("random_seed", "rs", "random_seed (default: randomly selected)", 0, int)
 ]
 
 
@@ -87,24 +86,20 @@ def parse_arguments():
 
 
 def main():
-    print("Starting CNP")
-
-    files_timestamp = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
-    cur_dir = os.path.dirname(os.path.realpath(__file__))
-    log_dir = os.path.join(cur_dir, "..", "logs", files_timestamp)
-    os.makedirs(log_dir)
+    logger = Logger()
+    logger.log("Starting CNP")
 
     args = parse_arguments()
 
-    print()
-    print("Argument Values:")
+    logger.log()
+    logger.log("Argument Values:")
 
-    config_f = open(os.path.join(log_dir, "config.txt"), "w")
+    config_f = open(os.path.join(logger.log_dir, "config.txt"), "w")
     for input_argument in input_arguments:
         exec(f"inp_value=args.{input_argument.name}")
-        exec(f"print(input_argument.name + ': ' + str(inp_value))")
+        exec(f"logger.log(input_argument.name + ': ' + str(inp_value))")
         exec(f"print(input_argument.name + ': ' + str(inp_value), file=config_f)")
-    print()
+    logger.log()
 
     if abs(args.test_size - -1.0) < 0.01 and args.abs_test_size == -1:
         raise Exception("At least one of test size parameters must be set")
@@ -114,8 +109,14 @@ def main():
     test_size = args.abs_test_size
     if args.abs_test_size == -1:
         test_size = args.test_size
+    
+    random_seed = args.random_seed
+    if not random_seed:
+        random_seed = random.randint(1, 2_000_000_000)
+    random.seed(a=random_seed)
+    logger.log(f"Using seed={random_seed}")
 
-    print("Init Text Processor")
+    logger.log("Init Text Processor")
     text_processor = TextProcessorNonContextual("data/APRC/{}".format(args.data_file),
                                                 "data/embeddings/wiki-news-300d-1M.vec",
                                                 test_size=test_size,
@@ -124,14 +125,14 @@ def main():
                                                 use_weight_loss=args.use_weight_loss)
 
 
-    print("Init Train Dataset")
+    logger.log("Init Train Dataset")
     train_dataset = DatasetNonContextual(sents=text_processor.train_sents,
                                          max_seq_len=text_processor.max_seq_len,
                                          mask_ratios=args.train_mask_ratios,
                                          random_every_time=args.dataset_random_every_time,
                                          to_cuda=args.to_cuda)
 
-    print("Init Test Datasets")
+    logger.log("Init Test Datasets")
     eval_datasets = []
     eval_datasets.append(DatasetNonContextual(sents=text_processor.eval25,
                                         max_seq_len=text_processor.max_seq_len,
@@ -143,15 +144,10 @@ def main():
                                         mask_ratios=[0.5],
                                         to_cuda=args.to_cuda))
 
-    eval_datasets.append(DatasetNonContextual(sents=text_processor.eval75,
-                                        max_seq_len=text_processor.max_seq_len,
-                                        mask_ratios=[0.75],
-                                        to_cuda=args.to_cuda))
-
-    print("Vocab size: ", len(text_processor.id2w))
+    logger.log("Vocab size: ", len(text_processor.id2w))
     print("Vocab size: ", len(text_processor.id2w), file=config_f)
 
-    print("Init model")
+    logger.log("Init model")
     model = CNP(embedding_size=text_processor.vec_size,
                 hidden_repr=args.hidden_repr,
                 enc_hidden_layers=args.enc_layers,
@@ -170,11 +166,11 @@ def main():
                 normalize_weights=args.normalize_weights,
                 to_cuda=args.to_cuda)
 
-    print("Model has {} parameters".format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
+    logger.log("Model has {} parameters".format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
     print("Model has {} parameters".format(sum(p.numel() for p in model.parameters() if p.requires_grad)),
           file=config_f)
     config_f.close()
-    print("Init Trainer")
+    logger.log("Init Trainer")
 
     # assume every eval_ds has only one mask ration
     tags = [eval_ds.mask_ratios[0] for eval_ds in eval_datasets]
@@ -192,11 +188,12 @@ def main():
                       print_interval=args.print_interval,
                       word_weights=text_processor.word_weights,
                       use_weight_loss=args.use_weight_loss,
+                      bleu_sents=text_processor.bleu_sents,
                       to_cuda=args.to_cuda,
-                      log_dir=log_dir)
-    print("Start training")
+                      logger=logger)
+    logger.log("Start training")
     train_loss_per_epoch, eval_losses_per_epoch = trainer.run()
-    plotter = Plotter(train_loss_per_epoch, eval_losses_per_epoch, tags, log_dir)
+    plotter = Plotter(train_loss_per_epoch, eval_losses_per_epoch, tags, logger)
     plotter.plot()
 
 
