@@ -130,7 +130,7 @@ class CNP(nn.Module):
                 pe[pos, i] = \
                     math.sin(pos / (10000 ** ((2 * i) / embed_size)))
                 pe[pos, i + 1] = \
-                    math.cos(pos / (10000 ** ((2 * (i + 1)) / embed_size)))
+                    math.cos(pos / (10000 ** (2 * i) / embed_size))
 
         return pe
 
