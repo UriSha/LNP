@@ -18,13 +18,13 @@ class AbstractTextProcessor:
         if type(test_size) == float:
             test_size = int(len(self.sents) * test_size)
         self.train_sents = shuffled_sents[:-test_size]
-        self.eval_sents = shuffled_sents[-test_size:]
-        self.bleu_sents = random.sample(self.eval_sents, k=min(10000, len(self.eval_sents)))
+        self.test_sents = shuffled_sents[-test_size:]
+        self.bleu_sents = random.sample(self.test_sents, k=min(10000, len(self.test_sents)))
 
-        eval_size = len(self.eval_sents) // 2
+        test_size = len(self.test_sents) // 2
 
-        self.eval25 = self.eval_sents[:eval_size]
-        self.eval50 = self.eval_sents[eval_size:]
+        self.test25 = self.test_sents[:test_size]
+        self.test50 = self.test_sents[test_size:]
 
     def read_data(self, path, sents_limit):
         with open(path, "r") as f:

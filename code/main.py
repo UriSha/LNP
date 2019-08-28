@@ -46,10 +46,10 @@ def main():
                                          random_every_time=random_every_time,
                                          to_cuda=to_cuda)
     eval_datasets = []
-    eval_datasets.append(DatasetNonContextual(text_processor.eval25,
+    eval_datasets.append(DatasetNonContextual(text_processor.test25,
                                         text_processor.max_seq_len,
                                         mask_ratios=[0.25], to_cuda=to_cuda))
-    eval_datasets.append(DatasetNonContextual(text_processor.eval50,
+    eval_datasets.append(DatasetNonContextual(text_processor.test50,
                                         text_processor.max_seq_len,
                                         mask_ratios=[0.5], to_cuda=to_cuda))
 
@@ -72,8 +72,8 @@ def main():
     print("Model has {} parameters".format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
     # print(list(model.decoder.parameters()))
     trainer = Trainer(model=model,
-                      training_dataset=train_dataset,
-                      evaluation_datasets=eval_datasets,
+                      train_dataset=train_dataset,
+                      test_datasets=eval_datasets,
                       tags=tags,
                       batch_size=70,
                       opt="ADAM",
@@ -86,8 +86,8 @@ def main():
                       to_cuda=to_cuda,
                       logger=logger,
                       id2w=text_processor.id2w)
-    train_loss, eval_losses = trainer.run()
-    plotter = Plotter(train_loss, eval_losses, tags, logger)
+    train_loss, test_losses = trainer.run()
+    plotter = Plotter(train_loss, test_losses, tags, logger)
     plotter.plot()
 
 

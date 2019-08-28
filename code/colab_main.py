@@ -130,13 +130,13 @@ def main():
                                          to_cuda=args.to_cuda)
 
     logger.log("Init Test Datasets")
-    eval_datasets = []
-    eval_datasets.append(DatasetNonContextual(sents=text_processor.eval25,
+    test_datasets = []
+    test_datasets.append(DatasetNonContextual(sents=text_processor.test25,
                                         max_seq_len=text_processor.max_seq_len,
                                         mask_ratios=[.25],
                                         to_cuda=args.to_cuda))
     
-    eval_datasets.append(DatasetNonContextual(sents=text_processor.eval50,
+    test_datasets.append(DatasetNonContextual(sents=text_processor.test50,
                                         max_seq_len=text_processor.max_seq_len,
                                         mask_ratios=[0.5],
                                         to_cuda=args.to_cuda))
@@ -166,12 +166,12 @@ def main():
     config_f.close()
     logger.log("Init Trainer")
 
-    # assume every eval_ds has only one mask ration
-    tags = [eval_ds.mask_ratios[0] for eval_ds in eval_datasets]
+    # assume every test_ds has only one mask ration
+    tags = [test_ds.mask_ratios[0] for test_ds in test_datasets]
 
     trainer = Trainer(model=model,
-                      training_dataset=train_dataset,
-                      evaluation_datasets=eval_datasets,
+                      train_dataset=train_dataset,
+                      test_datasets=test_datasets,
                       tags=tags,
                       batch_size=args.batch_size,
                       opt=args.opt,
@@ -185,8 +185,8 @@ def main():
                       logger=logger,
                       id2w=text_processor.id2w)
     logger.log("Start training")
-    train_loss_per_epoch, eval_losses_per_epoch = trainer.run()
-    plotter = Plotter(train_loss_per_epoch, eval_losses_per_epoch, tags, logger)
+    train_loss_per_epoch, test_losses_per_epoch = trainer.run()
+    plotter = Plotter(train_loss_per_epoch, test_losses_per_epoch, tags, logger)
     plotter.plot()
 
 

@@ -2,9 +2,9 @@ import os
 
 
 class Plotter():
-    def __init__(self, train_loss_per_epoch, eval_losses_per_epoch, tags, logger, grid=True, save=True):
+    def __init__(self, train_loss_per_epoch, test_losses_per_epoch, tags, logger, grid=True, save=True):
         self.train_loss_per_epoch = train_loss_per_epoch
-        self.eval_losses_per_epoch = eval_losses_per_epoch
+        self.test_losses_per_epoch = test_losses_per_epoch
         self.tags = tags
         self.grid = grid
         self.save = save
@@ -17,16 +17,16 @@ class Plotter():
                 for l in self.train_loss_per_epoch:
                     print(f"{l}", file=f)
             
-            for i in range(len(self.eval_losses_per_epoch)):
-                with open(os.path.join(self.log_dir, f"eval_results({self.tags[i]}).txt"), "w") as f:
-                    for l in self.eval_losses_per_epoch[i]:
+            for i in range(len(self.test_losses_per_epoch)):
+                with open(os.path.join(self.log_dir, f"test_results({self.tags[i]}).txt"), "w") as f:
+                    for l in self.test_losses_per_epoch[i]:
                         print(f"{l}", file=f)
 
         try:
             import matplotlib.pyplot as plt
             plt.plot(range(len(self.train_loss_per_epoch)), self.train_loss_per_epoch, label="Training")
-            for i in range(len(self.eval_losses_per_epoch)):
-                plt.plot(range(len(self.eval_losses_per_epoch[i])), self.eval_losses_per_epoch[i], label=f"Evaluation({self.tags[i]})")
+            for i in range(len(self.test_losses_per_epoch)):
+                plt.plot(range(len(self.test_losses_per_epoch[i])), self.test_losses_per_epoch[i], label=f"Test({self.tags[i]})")
             plt.xlabel("epoch")
             plt.ylabel("loss")
             plt.title("NLL Loss Per Epoch")

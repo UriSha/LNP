@@ -102,7 +102,7 @@ class CNP(nn.Module):
         return predictions
 
 
-    def eval_model(self):
+    def test_model(self):
         self.eval()
         self.encoder.eval()
         self.decoder.eval()
