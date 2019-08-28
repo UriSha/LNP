@@ -22,10 +22,10 @@ class DatasetNonContextual(Dataset):
             return self.mem[index]
 
         sent = self.sents[index]
-        context_xs, context_ys, context_mask, target_xs, target_ys, target_mask = self.mask_sent(sent)
+        context_x, context_y, context_mask, target_x, target_y, target_mask, sent_x, sent_y = self.mask_sent(sent)
         if not self.random_every_time:
-            self.mem[index] = context_xs, context_ys, context_mask, target_xs, target_ys, target_mask
-        return context_xs, context_ys, context_mask, target_xs, target_ys, target_mask
+            self.mem[index] = context_x, context_y, context_mask, target_x, target_y, target_mask, sent_x, sent_y
+        return context_x, context_y, context_mask, target_x, target_y, target_mask, sent_x, sent_y
 
 
     def __len__(self):
@@ -33,11 +33,11 @@ class DatasetNonContextual(Dataset):
 
 
     def mask_sent(self, sent):
-        context_xs = [self.max_seq_len] * self.max_seq_len
-        context_ys = [0] * self.max_seq_len
+        context_x = [self.max_seq_len] * self.max_seq_len
+        context_y = [0] * self.max_seq_len
         context_mask = [1] * self.max_seq_len
-        target_xs = [self.max_seq_len] * self.max_masked_size
-        target_ys = [0] * self.max_masked_size
+        target_x = [self.max_seq_len] * self.max_masked_size
+        target_y = [0] * self.max_masked_size
         target_mask = [1] * self.max_masked_size
 
         mask_ratio = self.mask_ratios[self.current_mask_ratio_index]
@@ -52,29 +52,31 @@ class DatasetNonContextual(Dataset):
         k = 0
         for i in range(len(sent)):
             if j < len(indices_to_mask) and i == indices_to_mask[j]:
-                target_xs[j] = indices_to_mask[j]
-                target_ys[j] = sent[indices_to_mask[j]]
+                target_x[j] = indices_to_mask[j]
+                target_y[j] = sent[indices_to_mask[j]]
                 target_mask[j] = 0
                 j += 1
             else:
-                context_xs[k] = i
-                context_ys[k] = sent[i]
+                context_x[k] = i
+                context_y[k] = sent[i]
                 context_mask[k] = 0
                 k += 1
 
-        context_xs = torch.LongTensor(context_xs)
-        context_ys = torch.LongTensor(context_ys)
+        context_x = torch.LongTensor(context_x)
+        context_y = torch.LongTensor(context_y)
         context_mask = torch.ByteTensor(context_mask)
-        target_xs = torch.LongTensor(target_xs)
-        target_ys = torch.LongTensor(target_ys)
+        target_x = torch.LongTensor(target_x)
+        target_y = torch.LongTensor(target_y)
         target_mask = torch.ByteTensor(target_mask)
+        sent_x = torch.LongTensor([i if i < len(sent) else self.max_seq_len for i in range(self.max_seq_len)])
+        sent_y = torch.LongTensor([sent[i] if i < len(sent) else 0 for i in range(self.max_seq_len)])
         
-
         if self.to_cuda:
-            context_xs = context_xs.cuda()
-            context_ys = context_ys.cuda()
-            target_xs = target_xs.cuda()
-            target_ys = target_ys.cuda()
+            context_x = context_x.cuda()
+            context_y = context_y.cuda()
+            target_x = target_x.cuda()
+            target_y = target_y.cuda()
+            sent_x = sent_x.cuda()
+            sent_y = sent_y.cuda()
 
-
-        return context_xs, context_ys, context_mask, target_xs, target_ys, target_mask
+        return context_x, context_y, context_mask, target_x, target_y, target_mask, sent_x, sent_y

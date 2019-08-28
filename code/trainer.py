@@ -5,7 +5,7 @@ from sampler import Sampler
 from nltk.translate.bleu_score import corpus_bleu
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
-from blue import corpus_bleu_with_joint_refrences
+from bleu import corpus_bleu_with_joint_refrences
 
 
 class Trainer():
@@ -14,10 +14,6 @@ class Trainer():
         self.model = model
         self.epoch_count = epoch_count
         self.acc_topk = acc_topk
-        self.last_print_train = time.time()
-        self.last_print_tests = []
-        for _ in test_datasets:
-            self.last_print_tests.append(time.time())
         self.tags = tags
         self.bleu_sents = bleu_sents
         self.to_cuda = to_cuda
@@ -103,13 +99,15 @@ class Trainer():
         losses = []
         accuracies = []
 
-        for context_xs_batch, context_ys_batch, context_mask_batch, target_xs_batch, target_ys_batch, target_mask_batch in loader:
+        for context_xs_batch, context_ys_batch, context_mask_batch, target_xs_batch, target_ys_batch, target_mask_batch, sent_xs_batch, sent_ys_batch in loader:
             context_xs = self.__batch2var(context_xs_batch)
             context_ys = self.__batch2var(context_ys_batch)
             context_mask = self.__batch2var(context_mask_batch)
             target_xs = self.__batch2var(target_xs_batch)
             target_ys = self.__batch2var(target_ys_batch)
             target_mask = self.__batch2var(target_mask_batch)
+            sent_xs = self.__batch2var(sent_xs_batch)
+            sent_ys = self.__batch2var(sent_ys_batch)
 
             # feedforward - backprop
             if is_train:
@@ -125,7 +123,7 @@ class Trainer():
 
             losses.append(loss.item())
             accuracies.append(self.__compute_accuracy(outputs_adjusted, target_ys_adjusted))
-            sampler.sample(context_xs[0], context_ys[0], target_xs[0], target_ys[0], outputs[0])
+            sampler.sample(sent_ys[0], target_xs[0], outputs[0])
 
             if return_sentences:
                 predicted_sentences, ground_truth_sentences = self.__populate_predicted_and_ground_truth(context_xs, context_ys, target_xs, target_ys, outputs)
