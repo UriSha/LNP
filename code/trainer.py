@@ -73,7 +73,7 @@ class Trainer():
             cur_test_losses = [None] * len(self.test_loaders)
             cur_test_accuracies = [None] * len(self.test_loaders)
             for i, test_loader in enumerate(self.test_loaders):
-                cur_test_loss, cur_test_accuracy = self.run_epoch(test_loader, self.test_samplers[i], predicted_test_sentences[i], ground_truth_test_sentences[i], i)
+                cur_test_loss, cur_test_accuracy = self.run_epoch(test_loader, self.test_samplers[i], predicted_test_sentences[i], ground_truth_test_sentences[i], False)
                 test_losses_per_epoch[i].append(cur_test_loss)
                 cur_test_losses[i] = cur_test_loss
                 cur_test_accuracies[i] = cur_test_accuracy
@@ -114,9 +114,8 @@ class Trainer():
         return train_loss_per_epoch, test_losses_per_epoch
 
 
-    def run_epoch(self, loader, sampler, predicted_sentences, ground_truth_sentences, idx=-1):
+    def run_epoch(self, loader, sampler, predicted_sentences, ground_truth_sentences, is_train=True):
 
-        is_train = True if idx == -1 else False
         losses = []
         accuracies = []
 
