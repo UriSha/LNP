@@ -237,8 +237,8 @@ class Trainer():
             self.log(f"Eval({self.tags[eval_idx]}) Sample:")
         else:
             self.log("Train Sample:")
-        self.log("orig: {}".format(orig))
-        self.log("pred: {}".format(pred))
+        self.log("orig: {}".format(orig[1:-1]))
+        self.log("pred: {}".format(pred[1:-1]))
         self.log()
 
     def run(self):
