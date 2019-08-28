@@ -141,13 +141,12 @@ class Trainer():
 
             
             losses.append(loss.item())
-            accuracies.append(self.__compute_accuracy_topk(outputs_adjusted, target_ys_adjusted))
+            accuracies.append(self.__compute_accuracy(outputs_adjusted, target_ys_adjusted))
             sampler.sample(context_xs[0], context_ys[0], target_xs[0], target_ys[0], outputs[0])
 
             if predicted_sentences is not None and ground_truth_sentences is not None:
                 self.__populate_predicted_and_ground_truth(predicted_sentences, ground_truth_sentences,
-                                                         context_xs_batch, context_ys_batch, target_xs, target_ys,
-                                                         outputs)
+                                                         context_xs, context_ys, target_xs, target_ys, outputs)
         
         epoch_loss = sum(losses) / len(losses)
         epoch_accuracy = []
@@ -172,7 +171,7 @@ class Trainer():
         return outputs, target_ys - 1
 
 
-    def __compute_accuracy_topk(self, outputs, target_ys):
+    def __compute_accuracy(self, outputs, target_ys):
         topks = [min(topk, outputs.shape[1]) for topk in self.acc_topk]
         results = []
         for topk in topks:  
@@ -196,14 +195,10 @@ class Trainer():
         return res
 
 
-    def __populate_predicted_and_ground_truth(self, predicted_sentences, ground_truth_sentences, context_pos, context_ids,
-                                            target_pos, target_ids, predictions):
+    def __populate_predicted_and_ground_truth(self, predicted_sentences, ground_truth_sentences, context_xs, context_ys,
+                                            target_xs, target_ys, predictions):
 
-        for cur_context_pos, cur_context_ids, cur_target_pos, cur_target_ids, cur_predictions in zip(context_pos,
-                                                                                                     context_ids,
-                                                                                                     target_pos,
-                                                                                                     target_ids,
-                                                                                                     predictions):
+        for context_x, context_y, target_x, target_y, prediction in zip(context_xs, context_ys, target_xs, target_ys, predictions):
 
             orig = []
             pred = []
@@ -212,21 +207,21 @@ class Trainer():
             j = 0
             pos = 0
 
-            while pos < len(cur_context_pos):
+            while pos < len(context_x):
                 pred_id = None
-                id = cur_context_ids[i]
-                if cur_context_pos[i] == pos:
+                id = context_y[i]
+                if context_x[i] == pos:
                     if id == 0:
                         break
                     i += 1
                 else:
-                    if j >= len(cur_target_pos):
+                    if j >= len(target_x):
                         self.logger.log("error")
                         return
-                    id = cur_target_ids[j]
+                    id = target_y[j]
                     if id == 0:
                         break
-                    pred_id = torch.max(cur_predictions[j], dim=0)[1]
+                    pred_id = torch.max(prediction[j], dim=0)[1]
                     j += 1
                 pos += 1
                 if pred_id is not None:
