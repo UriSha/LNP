@@ -94,11 +94,11 @@ def main():
     logger.log()
     logger.log("Argument Values:")
 
-    config_f = open(os.path.join(log_dir, "config.txt"), "w")
+    config_f = open(os.path.join(logger.log_dir, "config.txt"), "w")
     for input_argument in input_arguments:
         exec(f"inp_value=args.{input_argument.name}")
         exec(f"logger.log(input_argument.name + ': ' + str(inp_value))")
-        exec(f"logger.log(input_argument.name + ': ' + str(inp_value), file=config_f)")
+        exec(f"print(input_argument.name + ': ' + str(inp_value), file=config_f)")
     logger.log()
 
     if abs(args.test_size - -1.0) < 0.01 and args.abs_test_size == -1:
