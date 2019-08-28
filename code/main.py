@@ -21,7 +21,7 @@ def main():
     normalize_weights = True
 
     dropout = 0
-    epoch_count = 100
+    epoch_count = 10
     random_every_time = True
     
     files_timestamp = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
@@ -89,6 +89,7 @@ def main():
                       print_interval=1,
                       word_weights = text_processor.word_weights,
                       use_weight_loss=use_weight_loss,
+                      bleu_sents=text_processor.bleu_sents,
                       to_cuda=to_cuda,
                       log_dir=log_dir)
     train_loss, eval_losses = trainer.run()

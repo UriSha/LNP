@@ -192,6 +192,7 @@ def main():
                       print_interval=args.print_interval,
                       word_weights=text_processor.word_weights,
                       use_weight_loss=args.use_weight_loss,
+                      bleu_sents=text_processor.bleu_sents,
                       to_cuda=args.to_cuda,
                       log_dir=log_dir)
     print("Start training")

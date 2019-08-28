@@ -13,7 +13,7 @@ from blue import corpus_bleu_with_joint_refrences
 
 class Trainer():
     def __init__(self, model, training_dataset, evaluation_datasets, tags, batch_size, opt, learning_rate, momentum,
-                 epoch_count, acc_topk, print_interval, word_weights, use_weight_loss, to_cuda, log_dir):
+                 epoch_count, acc_topk, print_interval, word_weights, use_weight_loss, bleu_sents, to_cuda, log_dir):
         self.model = model
         self.training_dataset = training_dataset
         self.evaluation_datasets = evaluation_datasets
@@ -32,6 +32,7 @@ class Trainer():
         self.use_weight_loss = use_weight_loss
         self.word_weights = word_weights
         self.tags = tags
+        self.bleu_sents = bleu_sents
 
         self.log_file = open(os.path.join(log_dir, "log.txt"), "w")
         if self.to_cuda:
@@ -76,7 +77,7 @@ class Trainer():
 
 
     def evaluate(self, eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc, predicted_eval_sentences,
-                 ground_truth_eval_sentences, eval_samples_for_blue_calculation, eval_idx):
+                 ground_truth_eval_sentences, eval_idx):
 
         for context_xs_batch, context_ys_batch, context_mask_batch, target_xs_batch, target_ys_batch, target_mask_batch in eval_loader:
             context_xs = self.batch2var(context_xs_batch, False)
@@ -96,10 +97,10 @@ class Trainer():
             epoch_eval_acc.append(self.compute_accuracy_topk(outputs_fixed, target_ys_fixed))
             self.print_results(context_xs[0], context_ys[0], target_xs[0], target_ys[0], outputs[0], eval_idx)
 
-            if predicted_eval_sentences is not None and ground_truth_eval_sentences is not None and eval_samples_for_blue_calculation is not None:
+            if predicted_eval_sentences is not None and ground_truth_eval_sentences is not None:
                 self.populate_predicted_and_ground_truth(predicted_eval_sentences, ground_truth_eval_sentences,
                                                          context_xs_batch, context_ys_batch, target_xs, target_ys,
-                                                         outputs, eval_samples_for_blue_calculation)
+                                                         outputs)
 
     def batch2var(self, batch_param, requires_grad):
         # p = torch.stack(batch_param, dim=1).float()
@@ -140,8 +141,7 @@ class Trainer():
         return results
 
     def populate_predicted_and_ground_truth(self, predicted_sentences, ground_truth_sentences, context_pos, context_ids,
-                                            target_pos, target_ids, predictions,
-                                            eval_samples_for_blue_calculation=None):
+                                            target_pos, target_ids, predictions):
 
         for cur_context_pos, cur_context_ids, cur_target_pos, cur_target_ids, cur_predictions in zip(context_pos,
                                                                                                      context_ids,
@@ -183,8 +183,6 @@ class Trainer():
             ground_truth_sentences.append(orig_as_reference_for_blue)
             predicted_sentences.append(pred)
 
-            if eval_samples_for_blue_calculation is not None:
-                eval_samples_for_blue_calculation.append(orig)
 
     def print_acc(self, accuracies):
         accs = []
@@ -193,6 +191,7 @@ class Trainer():
         acc_str = ", ".join(accs)
         res = f"Accuracy: [{acc_str}]"
         return res
+
 
     def print_results(self, context_pos, context_ids, target_pos, target_ids, predictions, eval_idx=-1):
         if eval_idx >= 0:
@@ -239,6 +238,7 @@ class Trainer():
         self.log("pred: {}".format(pred))
         self.log()
 
+
     def run(self):
         if self.use_weight_loss:
             loss_function = nn.CrossEntropyLoss(weight=self.word_weights, ignore_index=-1)  # padded outputs are ignored
@@ -277,14 +277,12 @@ class Trainer():
             ground_truth_train_sentences = None
             predicted_eval_sentences = [None for _ in range(len(self.evaluation_datasets))]
             ground_truth_eval_sentences = [None for _ in range(len(self.evaluation_datasets))]
-            eval_sentences_for_blue_calculation = [None for _ in range(len(self.evaluation_datasets))]
 
             if calculate_blue:
         #        predicted_train_sentences = []
         #        ground_truth_train_sentences = []
                 predicted_eval_sentences = [[] for _ in range(len(self.evaluation_datasets))]
                 ground_truth_eval_sentences = [[] for _ in range(len(self.evaluation_datasets))]
-                eval_sentences_for_blue_calculation = []
 
             self.train(train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc,
                        predicted_train_sentences, ground_truth_train_sentences)
@@ -298,7 +296,7 @@ class Trainer():
                     epoch_eval_loss = []
                     epoch_eval_acc = []
                     self.evaluate(eval_loader, loss_function, epoch_eval_loss, epoch_eval_acc, predicted_eval_sentences[i],
-                              ground_truth_eval_sentences[i], eval_sentences_for_blue_calculation, i)
+                              ground_truth_eval_sentences[i], i)
                     epoch_eval_losses.append(epoch_eval_loss)
                     epoch_eval_accs.append(epoch_eval_acc)
 
@@ -318,21 +316,18 @@ class Trainer():
             if eval_loaders:
                 cur_eval_bleu = None
                 if calculate_blue:
-                    num_of_eval_sents = min(len(eval_sentences_for_blue_calculation), 10000)
-                    random.shuffle(eval_sentences_for_blue_calculation)
 
                     cur_eval_bleu_without_big_ref = []
                     cur_eval_bleu_with_big_ref = []
                     for i, eval_loader in enumerate(eval_loaders):
 
-                        eval_sentences_for_blue_calculation = eval_sentences_for_blue_calculation[:num_of_eval_sents]
 
                         cur_eval_bleu_without_big_ref.append(corpus_bleu(ground_truth_eval_sentences[i], predicted_eval_sentences[i]))
 
 
                         self.log(
-                            "Calculating blue score for (%.2f) with total of %d references" % (self.tags[i],len(eval_sentences_for_blue_calculation) + len(ground_truth_eval_sentences[i])))
-                        cur_eval_bleu_with_big_ref.append(corpus_bleu_with_joint_refrences(eval_sentences_for_blue_calculation, ground_truth_eval_sentences[i], predicted_eval_sentences[i]))
+                            "Calculating blue score for (%.2f) with total of %d references" % (self.tags[i],len(self.bleu_sents) + len(ground_truth_eval_sentences[i])))
+                        cur_eval_bleu_with_big_ref.append(corpus_bleu_with_joint_refrences(self.bleu_sents, ground_truth_eval_sentences[i], predicted_eval_sentences[i]))
 
                     self.log("")
                 cur_eval_losses = []

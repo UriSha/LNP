@@ -1,5 +1,5 @@
 import math
-
+import random
 from sklearn.model_selection import train_test_split
 
 
@@ -17,6 +17,7 @@ class AbstractTextProcessor:
 
         self.sents = [[self.w2id[word] for word in sent] for sent in self.orig_sents]
         self.train_sents, self.eval_sents = train_test_split(self.sents, test_size=test_size)
+        self.bleu_sents = random.sample(self.eval_sents, k=min(10000, len(self.eval_sents)))
         leftover, self.eval25 = train_test_split(self.eval_sents, test_size=(1/3))
         self.eval50, self.eval75 = train_test_split(leftover, test_size=0.5)
 
