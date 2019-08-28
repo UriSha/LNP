@@ -1,10 +1,12 @@
 import os
 import time
+import random
 from data_processing.dataset_non_contextual import DatasetNonContextual
 from data_processing.text_processors.text_processor_non_contextual import TextProcessorNonContextual
 from model.cnp import CNP
 from training import Trainer
 from plotter import Plotter
+from logger import Logger
 
 
 def main():
@@ -21,13 +23,13 @@ def main():
     normalize_weights = True
 
     dropout = 0
-    epoch_count = 100
+    epoch_count = 10
     random_every_time = True
     
-    files_timestamp = time.strftime('%Y_%m_%d_%H_%M_%S', time.localtime())
+    logger = Logger()
     cur_dir = os.path.dirname(os.path.realpath(__file__))
-    log_dir = os.path.join(cur_dir, "..", "logs", files_timestamp)
-    os.makedirs(log_dir)
+
+    random.seed(a=5)
 
     # text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_new1.txt"),
     #                                             os.path.join(cur_dir, "../data/embeddings/wiki-news-300d-1M.vec"), test_size=test_size, mask_ratio=mask_ratio,
@@ -35,7 +37,7 @@ def main():
     # text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_small_mock.txt"),
     #                                             os.path.join(cur_dir, "../data/embeddings/wiki-news-300d-1M.vec"), test_size=test_size, mask_ratio=mask_ratio,
     #                                             sents_limit=10000, rare_word_threshold=1, use_weight_loss=True)
-    text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_small_mock.txt"),
+    text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_small_mock1.txt"),
                                                 os.path.join(cur_dir, "../data/embeddings/small_fasttext.txt"), test_size=test_size,
                                                 sents_limit=10000, rare_word_threshold=0, use_weight_loss=use_weight_loss)
                                                 
@@ -51,9 +53,6 @@ def main():
     eval_datasets.append(DatasetNonContextual(text_processor.eval50,
                                         text_processor.max_seq_len,
                                         mask_ratios=[0.5], to_cuda=to_cuda))
-    eval_datasets.append(DatasetNonContextual(text_processor.eval75,
-                                        text_processor.max_seq_len,
-                                        mask_ratios=[0.75], to_cuda=to_cuda))
 
     tags = [eval_ds.mask_ratios[0] for eval_ds in eval_datasets]
     print("Vocab size: ", len(text_processor.id2w))
@@ -89,10 +88,11 @@ def main():
                       print_interval=1,
                       word_weights = text_processor.word_weights,
                       use_weight_loss=use_weight_loss,
+                      bleu_sents=text_processor.bleu_sents,
                       to_cuda=to_cuda,
-                      log_dir=log_dir)
+                      logger=logger)
     train_loss, eval_losses = trainer.run()
-    plotter = Plotter(train_loss, eval_losses, tags, log_dir)
+    plotter = Plotter(train_loss, eval_losses, tags, logger)
     plotter.plot()
 
 

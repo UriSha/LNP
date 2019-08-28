@@ -2,13 +2,13 @@ import os
 
 
 class Plotter():
-    def __init__(self, train_loss_per_epoch, eval_losses_per_epoch, tags, log_dir, grid=True, save=True):
+    def __init__(self, train_loss_per_epoch, eval_losses_per_epoch, tags, logger, grid=True, save=True):
         self.train_loss_per_epoch = train_loss_per_epoch
         self.eval_losses_per_epoch = eval_losses_per_epoch
         self.tags = tags
         self.grid = grid
         self.save = save
-        self.log_dir = log_dir
+        self.log_dir = logger.log_dir
 
 
     def plot(self):
