@@ -5,7 +5,7 @@ import argparse
 from model.cnp import CNP
 from logger import Logger
 from plotter import Plotter
-from training import Trainer
+from trainer import Trainer
 from data_processing.dataset_non_contextual import DatasetNonContextual
 from data_processing.text_processors.text_processor_non_contextual import TextProcessorNonContextual
 

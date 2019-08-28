@@ -4,7 +4,7 @@ import random
 from data_processing.dataset_non_contextual import DatasetNonContextual
 from data_processing.text_processors.text_processor_non_contextual import TextProcessorNonContextual
 from model.cnp import CNP
-from training import Trainer
+from trainer import Trainer
 from plotter import Plotter
 from logger import Logger
 

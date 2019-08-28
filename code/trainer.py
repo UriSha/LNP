@@ -1,6 +1,7 @@
 import time
 import torch
 import torch.nn as nn
+from sampler import Sampler
 from nltk.translate.bleu_score import corpus_bleu
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
@@ -13,16 +14,20 @@ class Trainer():
         self.model = model
         self.epoch_count = epoch_count
         self.acc_topk = acc_topk
-        self.to_cuda = to_cuda
         self.last_print_train = time.time()
         self.last_print_tests = []
         for _ in test_datasets:
             self.last_print_tests.append(time.time())
-        self.print_interval = print_interval
         self.tags = tags
         self.bleu_sents = bleu_sents
-        self.id2w = id2w
+        self.to_cuda = to_cuda
         self.logger = logger
+        self.id2w = id2w
+
+        self.train_sampler = Sampler("Train", print_interval, id2w, logger)
+        self.test_samplers = []
+        for tag in tags:
+            self.test_samplers.append(Sampler(f"Test({tag:.2f})", print_interval, id2w, logger))
 
         self.loss_function = nn.CrossEntropyLoss(ignore_index=-1)
 
@@ -60,7 +65,7 @@ class Trainer():
 
             # Train
             self.model.train_model()
-            cur_train_loss, cur_train_accuracy = self.run_epoch(self.train_loader, None, None)
+            cur_train_loss, cur_train_accuracy = self.run_epoch(self.train_loader, self.train_sampler, None, None)
             train_loss_per_epoch.append(cur_train_loss)
 
             # Test
@@ -68,7 +73,7 @@ class Trainer():
             cur_test_losses = [None] * len(self.test_loaders)
             cur_test_accuracies = [None] * len(self.test_loaders)
             for i, test_loader in enumerate(self.test_loaders):
-                cur_test_loss, cur_test_accuracy = self.run_epoch(test_loader, predicted_test_sentences[i], ground_truth_test_sentences[i], i)
+                cur_test_loss, cur_test_accuracy = self.run_epoch(test_loader, self.test_samplers[i], predicted_test_sentences[i], ground_truth_test_sentences[i], i)
                 test_losses_per_epoch[i].append(cur_test_loss)
                 cur_test_losses[i] = cur_test_loss
                 cur_test_accuracies[i] = cur_test_accuracy
@@ -109,7 +114,7 @@ class Trainer():
         return train_loss_per_epoch, test_losses_per_epoch
 
 
-    def run_epoch(self, loader, predicted_sentences, ground_truth_sentences, idx=-1):
+    def run_epoch(self, loader, sampler, predicted_sentences, ground_truth_sentences, idx=-1):
 
         is_train = True if idx == -1 else False
         losses = []
@@ -138,7 +143,7 @@ class Trainer():
             
             losses.append(loss.item())
             accuracies.append(self.__compute_accuracy_topk(outputs_adjusted, target_ys_adjusted))
-            self.__sample_results(context_xs[0], context_ys[0], target_xs[0], target_ys[0], outputs[0], idx)
+            sampler.sample(context_xs[0], context_ys[0], target_xs[0], target_ys[0], outputs[0])
 
             if predicted_sentences is not None and ground_truth_sentences is not None:
                 self.__populate_predicted_and_ground_truth(predicted_sentences, ground_truth_sentences,
@@ -190,52 +195,6 @@ class Trainer():
         acc_str = ", ".join(accs)
         res = f"Accuracy: [{acc_str}]"
         return res
-
-
-    def __sample_results(self, context_x, context_y, target_x, target_y, predictions, idx):
-        if idx >= 0:
-            if time.time() - self.last_print_tests[idx] < self.print_interval:
-                return
-            self.last_print_tests[idx] = time.time()
-        else:
-            if time.time() - self.last_print_train < self.print_interval:
-                return
-            self.last_print_train = time.time()
-        i = 0
-        j = 0
-        pos = 0
-        orig = ""
-        pred = ""
-        while pos < len(context_x):
-            pred_id = None
-            id = context_y[i]
-            if context_x[i] == pos:
-                if id == 0:
-                    break
-                i += 1
-            else:
-                if j >= len(target_x):
-                    self.logger.log("error")
-                    return
-                id = target_y[j]
-                if id == 0:
-                    break
-                pred_id = torch.max(predictions[j], dim=0)[1]
-                j += 1
-            pos += 1
-            if pred_id is not None:
-                orig += "*" + self.id2w[int(id.item())] + "* "
-                pred += "*" + self.id2w[int(pred_id.item() + 1)] + "* "
-            else:
-                orig += self.id2w[int(id.item())] + " "
-                pred += self.id2w[int(id.item())] + " "
-        if idx >= 0:
-            self.logger.log(f"Test({self.tags[idx]}) Sample:")
-        else:
-            self.logger.log("Train Sample:")
-        self.logger.log("orig: {}".format(orig))
-        self.logger.log("pred: {}".format(pred))
-        self.logger.log()
 
 
     def __populate_predicted_and_ground_truth(self, predicted_sentences, ground_truth_sentences, context_pos, context_ids,
