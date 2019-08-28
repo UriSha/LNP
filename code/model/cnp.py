@@ -128,9 +128,9 @@ class CNP(nn.Module):
         for pos in range(max_seq_len):
             for i in range(0, embed_size, 2):
                 pe[pos, i] = \
-                    math.sin(pos / (10000 ** ((2 * i) / embed_size)))
+                    math.sin(pos / (10000 ** (i / embed_size)))
                 pe[pos, i + 1] = \
-                    math.cos(pos / (10000 ** (2 * i) / embed_size))
+                    math.cos(pos / (10000 ** (i / embed_size)))
 
         return pe
 
