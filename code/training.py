@@ -1,19 +1,17 @@
 import os
 import random
 import time
-
 import torch
 import torch.nn as nn
 from nltk.translate.bleu_score import corpus_bleu
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
-
 from blue import corpus_bleu_with_joint_refrences
 
 
 class Trainer():
     def __init__(self, model, training_dataset, evaluation_datasets, tags, batch_size, opt, learning_rate, momentum,
-                 epoch_count, acc_topk, print_interval, word_weights, use_weight_loss, bleu_sents, to_cuda, log_dir):
+                 epoch_count, acc_topk, print_interval, word_weights, use_weight_loss, bleu_sents, to_cuda, logger):
         self.model = model
         self.training_dataset = training_dataset
         self.evaluation_datasets = evaluation_datasets
@@ -34,17 +32,10 @@ class Trainer():
         self.tags = tags
         self.bleu_sents = bleu_sents
 
-        self.log_file = open(os.path.join(log_dir, "log.txt"), "w")
+        self.logger = logger
         if self.to_cuda:
             if self.word_weights is not None:
                 self.word_weights = self.word_weights.cuda()
-
-    
-    def log(self, *args, **kwargs):
-        time_prefix = f"[{time.strftime('%H:%M:%S', time.localtime())}]"
-        print(time_prefix, *args, **kwargs)
-        print(time_prefix, *args, **kwargs, file=self.log_file)
-        self.log_file.flush()
 
 
     def train(self, train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc,
@@ -165,7 +156,7 @@ class Trainer():
                     i += 1
                 else:
                     if j >= len(cur_target_pos):
-                        self.log("error")
+                        self.logger.log("error")
                         return
                     id = cur_target_ids[j]
                     if id == 0:
@@ -216,7 +207,7 @@ class Trainer():
                 i += 1
             else:
                 if j >= len(target_pos):
-                    self.log("error")
+                    self.logger.log("error")
                     return
                 id = target_ids[j]
                 if id == 0:
@@ -231,12 +222,12 @@ class Trainer():
                 orig += self.model.id2w[int(id.item())] + " "
                 pred += self.model.id2w[int(id.item())] + " "
         if eval_idx >= 0:
-            self.log(f"Eval({self.tags[eval_idx]}) Sample:")
+            self.logger.log(f"Eval({self.tags[eval_idx]}) Sample:")
         else:
-            self.log("Train Sample:")
-        self.log("orig: {}".format(orig))
-        self.log("pred: {}".format(pred))
-        self.log()
+            self.logger.log("Train Sample:")
+        self.logger.log("orig: {}".format(orig))
+        self.logger.log("pred: {}".format(pred))
+        self.logger.log()
 
 
     def run(self):
@@ -325,11 +316,11 @@ class Trainer():
                         cur_eval_bleu_without_big_ref.append(corpus_bleu(ground_truth_eval_sentences[i], predicted_eval_sentences[i]))
 
 
-                        self.log(
+                        self.logger.log(
                             "Calculating blue score for (%.2f) with total of %d references" % (self.tags[i],len(self.bleu_sents) + len(ground_truth_eval_sentences[i])))
                         cur_eval_bleu_with_big_ref.append(corpus_bleu_with_joint_refrences(self.bleu_sents, ground_truth_eval_sentences[i], predicted_eval_sentences[i]))
 
-                    self.log("")
+                    self.logger.log("")
                 cur_eval_losses = []
                 cur_eval_accs = []
                 for i in range(len(eval_loaders)):
@@ -348,19 +339,19 @@ class Trainer():
                 cur_eval_bleu_without_big_ref = 0
 
             if epoch % 1 == 0 or epoch == 1:
-                self.log('Epoch [%d/%d] Train Loss: %.4f, Train %s' %
+                self.logger.log('Epoch [%d/%d] Train Loss: %.4f, Train %s' %
                          (epoch, self.epoch_count, cur_train_loss, self.print_acc(cur_train_acc)))
                 if eval_loaders:
                     if calculate_blue:
                         for i in range(len(eval_loaders)):
-                            self.log(
+                            self.logger.log(
                                 'Epoch [%d/%d] Eval Loss (%.2f): %.4f, Eval %s, Eval Bleu score (big ref): %.4f, Eval Bleu score (only gold as ref): %.4f' %
                                 (epoch, self.epoch_count, self.tags[i], cur_eval_losses[i],
                                  self.print_acc(cur_eval_accs[i]), cur_eval_bleu_with_big_ref[i][1], cur_eval_bleu_without_big_ref[i]))
                     else:
                         for i in range(len(eval_loaders)): 
-                            self.log('Epoch [%d/%d] Eval Loss (%.2f): %.4f, Eval %s' %
+                            self.logger.log('Epoch [%d/%d] Eval Loss (%.2f): %.4f, Eval %s' %
                                 (epoch, self.epoch_count, self.tags[i], cur_eval_losses[i], self.print_acc(cur_eval_accs[i])))
-                    # self.log()
+                    # self.logger.log()
 
         return train_loss_per_epoch, eval_losses_per_epoch

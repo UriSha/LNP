@@ -1,6 +1,5 @@
 import math
 import random
-from sklearn.model_selection import train_test_split
 
 
 class AbstractTextProcessor:
@@ -16,10 +15,18 @@ class AbstractTextProcessor:
         # self.sents = self.remove_rare_words(sents)
 
         self.sents = [[self.w2id[word] for word in sent] for sent in self.orig_sents]
-        self.train_sents, self.eval_sents = train_test_split(self.sents, test_size=test_size)
+        shuffled_sents = random.sample(self.sents, k=len(self.sents))
+        if type(test_size) == float:
+            test_size = int(len(self.sents) * test_size)
+        self.train_sents = shuffled_sents[:-test_size]
+        self.eval_sents = shuffled_sents[-test_size:]
         self.bleu_sents = random.sample(self.eval_sents, k=min(10000, len(self.eval_sents)))
-        leftover, self.eval25 = train_test_split(self.eval_sents, test_size=(1/3))
-        self.eval50, self.eval75 = train_test_split(leftover, test_size=0.5)
+
+        eval_size = len(self.eval_sents) // 3
+
+        self.eval25 = self.eval_sents[:eval_size]
+        self.eval50 = self.eval_sents[eval_size:]
+        self.eval75 = self.eval_sents[2*eval_size:]
 
     def read_data(self, path, sents_limit):
         with open(path, "r") as f:
