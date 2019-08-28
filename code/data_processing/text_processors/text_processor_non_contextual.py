@@ -6,10 +6,9 @@ from .abstract_text_processor import AbstractTextProcessor
 
 
 class TextProcessorNonContextual(AbstractTextProcessor):
-    def __init__(self, text_file_path, embed_file_path, test_size=0.1, rare_word_threshold=10, use_weight_loss=True,
-                 sents_limit=None):
+    def __init__(self, text_file_path, embed_file_path, test_size=0.1, rare_word_threshold=10, sents_limit=None):
         super(TextProcessorNonContextual, self).__init__(text_file_path, test_size, rare_word_threshold,
-                                                         sents_limit, use_weight_loss, embed_file_path=embed_file_path)
+                                                         sents_limit, embed_file_path=embed_file_path)
 
     def normalize_word(self, w):
         w = w.replace("`", "")
@@ -66,7 +65,6 @@ class TextProcessorNonContextual(AbstractTextProcessor):
         new_w2id["<PAD>"] = 0
         new_id2w = {}
         new_id2w[0] = "<PAD>"
-        id_freq = defaultdict(int)
         for sent in new_sents:
             for i in range(len(sent)):
                 word = sent[i]
@@ -83,68 +81,15 @@ class TextProcessorNonContextual(AbstractTextProcessor):
                     embed_list.append(self._line_to_embedding(embed_dict[old_word_id]))
                     new_w2id[word] = new_word_id
                     new_id2w[new_word_id] = word
-                id_freq[new_w2id[word]] += 1
 
-        # rearrange dicts by frequency
-        sorted_id2w = {}
-        sorted_id2w[0] = "<PAD>"
-        sorted_w2id = {}
-        sorted_w2id["<PAD>"] = 0
-        sorted_embed_list = [torch.zeros(self.vec_size)]
-        sorted_weights = []
-        s = [(k, id_freq[k]) for k in sorted(id_freq, key=id_freq.get, reverse=True)]
-        n_samples = sum(id_freq.values())
-        n_classes = len(id_freq)
-        for i, (k, v) in enumerate(s):
-            word_id = i+1
-            word = new_id2w[k]
-            sorted_id2w[word_id] = word
-            sorted_w2id[word] = word_id
-            sorted_embed_list.append(embed_list[k])
-            if self.use_weight_loss:
-                # weight = n_samples / (n_classes * v)
-                # weight = v / n_samples
-                weight = 1 / v
-            else:
-                weight = 1
-            sorted_weights.append(torch.tensor(weight).float())
 
-        # embed_list = sorted_embed_list
-        # new_id2w = sorted_id2w
-        # new_w2id = sorted_w2id
-        # word_weights = torch.stack(sorted_weights)
-        weights = []
-        for i in range(1, len(id_freq)+1):
-            freq = id_freq[i]
-            weight = n_samples / (n_classes * freq)
-            # weight = 1
-            weights.append(torch.tensor(weight).float())
-        word_weights = torch.stack(weights)
-        # word_weights = None
-
-        print(
-            'With rare_word_threshold = {rare_word_threshold}, the ratio of rare words (that were removed) is: {ratio}'.format(
+        print('With rare_word_threshold = {rare_word_threshold}, the ratio of rare words (that were removed) is: {ratio}'.format(
                 rare_word_threshold=self.rare_word_threshold, ratio=rare_words_count / len(w2cnt)))
-
-        
-        # for idx, (old_word_id, word) in enumerate(temp_id2w.items()):
-        #     embed_vector = embed_dict[old_word_id]
-
-        #     embed_list.append(embed_vector)
-        #     new_w2id[word] = idx
-        #     new_id2w[idx] = word
-
-        # with open('/Users/omerkoren/Final_Project/TICNP/data/embeddings/APRC_embeddings.txt', 'w+') as f:
-        #     f.write('999994 300\n')
-        #     for idx, embed_vector in enumerate(embed_list):
-        #         word = new_id2w[idx]
-        #         f.write('{word} {vec}\n'.format(word=word, vec=' '.join(embed_vector)))
-
 
         self.embeddings_file_lines = None
         self.embed_matrix = torch.stack(embed_list)
 
-        return new_sents, new_w2id, new_id2w, max_len, word_weights
+        return new_sents, new_w2id, new_id2w, max_len
 
     def _line_to_embedding(self, line_num):
         if line_num == -1:

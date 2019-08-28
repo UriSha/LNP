@@ -11,7 +11,7 @@ from blue import corpus_bleu_with_joint_refrences
 
 class Trainer():
     def __init__(self, model, training_dataset, evaluation_datasets, tags, batch_size, opt, learning_rate, momentum,
-                 epoch_count, acc_topk, print_interval, word_weights, use_weight_loss, bleu_sents, to_cuda, logger, id2w):
+                 epoch_count, acc_topk, print_interval, bleu_sents, to_cuda, logger, id2w):
         self.model = model
         self.training_dataset = training_dataset
         self.evaluation_datasets = evaluation_datasets
@@ -27,16 +27,11 @@ class Trainer():
         for _ in evaluation_datasets:
             self.last_print_evals.append(time.time())
         self.print_interval = print_interval
-        self.use_weight_loss = use_weight_loss
-        self.word_weights = word_weights
         self.tags = tags
         self.bleu_sents = bleu_sents
         self.id2w = id2w
 
         self.logger = logger
-        if self.to_cuda:
-            if self.word_weights is not None:
-                self.word_weights = self.word_weights.cuda()
 
 
     def train(self, train_loader, loss_function, optimizer, epoch_train_loss, epoch_train_acc,
@@ -232,10 +227,7 @@ class Trainer():
 
 
     def run(self):
-        if self.use_weight_loss:
-            loss_function = nn.CrossEntropyLoss(weight=self.word_weights, ignore_index=-1)  # padded outputs are ignored
-        else:
-            loss_function = nn.CrossEntropyLoss(ignore_index=-1)
+        loss_function = nn.CrossEntropyLoss(ignore_index=-1)
         if self.opt == "SGD":
             nestov = False
             if self.momentum > 0:

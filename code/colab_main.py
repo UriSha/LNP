@@ -61,8 +61,6 @@ input_arguments = [
     InputArgument("print_interval", "pi", "print interval (default: 60sec)", 60, int),
     InputArgument("use_weight_matrix", "uwm", "Whether to multiply last layer by weight matrix (default: True)", True,
                   str2bool, nargs="?", const=True),
-    InputArgument("use_weight_loss", "uwl", "Whether to use weights for unbalanced data (default: False)", False,
-                  str2bool, nargs="?", const=True),
     InputArgument("use_pos_embedding", "upe", "Whether to use embeddings for positions (default: True)", True, str2bool,
                   nargs="?", const=True),
     InputArgument("concat_embeddings", "ce", "Whether to concat sentence and position embeddings (default: False)",
@@ -121,8 +119,7 @@ def main():
                                                 "data/embeddings/wiki-news-300d-1M.vec",
                                                 test_size=test_size,
                                                 sents_limit=args.sent_count,
-                                                rare_word_threshold=args.rare_threshold,
-                                                use_weight_loss=args.use_weight_loss)
+                                                rare_word_threshold=args.rare_threshold)
 
 
     logger.log("Init Train Dataset")
@@ -183,8 +180,6 @@ def main():
                       epoch_count=args.epochs,
                       acc_topk=args.topk,
                       print_interval=args.print_interval,
-                      word_weights=text_processor.word_weights,
-                      use_weight_loss=args.use_weight_loss,
                       bleu_sents=text_processor.bleu_sents,
                       to_cuda=args.to_cuda,
                       logger=logger,

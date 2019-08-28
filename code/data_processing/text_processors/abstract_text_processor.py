@@ -3,15 +3,14 @@ import random
 
 
 class AbstractTextProcessor:
-    def __init__(self, text_file_path, test_size, rare_word_threshold, sents_limit, use_weight_loss=True, embed_file_path=None,
+    def __init__(self, text_file_path, test_size, rare_word_threshold, sents_limit, embed_file_path=None,
                  tokenizer=None):
         sents = self.read_data(text_file_path, sents_limit)
-        self.use_weight_loss = use_weight_loss
         self.sents_limit = sents_limit
         self.rare_word_threshold = rare_word_threshold
         self.embed_file_path = embed_file_path
         self.tokenizer = tokenizer
-        self.orig_sents, self.w2id, self.id2w, self.max_seq_len, self.word_weights = self.initiate_vocab(sents)
+        self.orig_sents, self.w2id, self.id2w, self.max_seq_len = self.initiate_vocab(sents)
         # self.sents = self.remove_rare_words(sents)
 
         self.sents = [[self.w2id[word] for word in sent] for sent in self.orig_sents]

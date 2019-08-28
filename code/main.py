@@ -16,7 +16,6 @@ def main():
     test_size = 0.5
     topk = [1, 5, 10]
     nheads = 2
-    use_weight_loss = False
     use_weight_matrix = True
     use_pos_embedding = True
     concat_embeddings = False
@@ -39,7 +38,7 @@ def main():
     #                                             sents_limit=10000, rare_word_threshold=1, use_weight_loss=True)
     text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_small_mock1.txt"),
                                                 os.path.join(cur_dir, "../data/embeddings/small_fasttext.txt"), test_size=test_size,
-                                                sents_limit=10000, rare_word_threshold=0, use_weight_loss=use_weight_loss)
+                                                sents_limit=10000, rare_word_threshold=0)
                                                 
     train_dataset = DatasetNonContextual(text_processor.train_sents,
                                          text_processor.max_seq_len,
@@ -83,8 +82,6 @@ def main():
                       epoch_count=epoch_count,
                       acc_topk=topk,
                       print_interval=1,
-                      word_weights = text_processor.word_weights,
-                      use_weight_loss=use_weight_loss,
                       bleu_sents=text_processor.bleu_sents,
                       to_cuda=to_cuda,
                       logger=logger,
