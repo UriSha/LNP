@@ -145,7 +145,7 @@ def main():
                                         to_cuda=args.to_cuda))
 
     logger.log("Vocab size: ", len(text_processor.id2w))
-    logger.log("Vocab size: ", len(text_processor.id2w), file=config_f)
+    print("Vocab size: ", len(text_processor.id2w), file=config_f)
 
     logger.log("Init model")
     model = CNP(embedding_size=text_processor.vec_size,
@@ -167,7 +167,7 @@ def main():
                 to_cuda=args.to_cuda)
 
     logger.log("Model has {} parameters".format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
-    logger.log("Model has {} parameters".format(sum(p.numel() for p in model.parameters() if p.requires_grad)),
+    print("Model has {} parameters".format(sum(p.numel() for p in model.parameters() if p.requires_grad)),
           file=config_f)
     config_f.close()
     logger.log("Init Trainer")
