@@ -50,22 +50,14 @@ class Trainer():
         train_loss_per_epoch = []
         test_losses_per_epoch = [[] for _ in range(len(self.test_loaders))]
 
+        predicted_sentences_i = [[] for _ in range(len(self.test_loaders))]
+        ground_truth_sentences_i = [[] for _ in range(len(self.test_loaders))]
+
         for epoch in range(1, self.epoch_count + 1):
-
-            calculate_blue = epoch == self.epoch_count # or epoch % 100 == 0
-
-
-            predicted_test_sentences = [None for _ in range(len(self.test_loaders))]
-            ground_truth_test_sentences = [None for _ in range(len(self.test_loaders))]
-
-            if calculate_blue:
-                predicted_test_sentences = [[] for _ in range(len(self.test_loaders))]
-                ground_truth_test_sentences = [[] for _ in range(len(self.test_loaders))]
-
 
             # Train
             self.model.train_model()
-            cur_train_loss, cur_train_accuracy = self.run_epoch(self.train_loader, self.train_sampler, None, None)
+            cur_train_loss, cur_train_accuracy, _, _ = self.run_epoch(self.train_loader, self.train_sampler, True, False)
             train_loss_per_epoch.append(cur_train_loss)
 
             # Test
@@ -73,33 +65,25 @@ class Trainer():
             cur_test_losses = [None] * len(self.test_loaders)
             cur_test_accuracies = [None] * len(self.test_loaders)
             for i, test_loader in enumerate(self.test_loaders):
-                cur_test_loss, cur_test_accuracy = self.run_epoch(test_loader, self.test_samplers[i], predicted_test_sentences[i], ground_truth_test_sentences[i], False)
+                cur_test_loss, cur_test_accuracy, predicted_sentences, ground_truth_sentences = self.run_epoch(test_loader, self.test_samplers[i], False, epoch == self.epoch_count)
                 test_losses_per_epoch[i].append(cur_test_loss)
                 cur_test_losses[i] = cur_test_loss
                 cur_test_accuracies[i] = cur_test_accuracy
+                if epoch == self.epoch_count:
+                    predicted_sentences_i[i] = predicted_sentences
+                    ground_truth_sentences_i[i] = ground_truth_sentences
             
-
-            cur_train_bleu = None
-            if calculate_blue:
-                # cur_train_bleu = corpus_bleu(ground_truth_train_sentences, predicted_train_sentences)
-                cur_train_bleu = -1
-
-            cur_eval_bleu = None
-            if calculate_blue:
-
+            
+            if epoch == self.epoch_count:
                 cur_eval_bleu_without_big_ref = []
                 cur_eval_bleu_with_big_ref = []
                 for i, test_loader in enumerate(self.test_loaders):
+                    cur_eval_bleu_without_big_ref.append(corpus_bleu(ground_truth_sentences_i[i], predicted_sentences_i[i]))
 
+                    self.logger.log("Calculating blue score for (%.2f) with total of %d references" % (self.tags[i], len(self.bleu_sents) + len(ground_truth_sentences_i[i])))
+                    cur_eval_bleu_with_big_ref.append(corpus_bleu_with_joint_refrences(self.bleu_sents, ground_truth_sentences_i[i], predicted_sentences_i[i]))
 
-                    cur_eval_bleu_without_big_ref.append(corpus_bleu(ground_truth_test_sentences[i], predicted_test_sentences[i]))
-
-
-                    self.logger.log(
-                        "Calculating blue score for (%.2f) with total of %d references" % (self.tags[i],len(self.bleu_sents) + len(ground_truth_test_sentences[i])))
-                    cur_eval_bleu_with_big_ref.append(corpus_bleu_with_joint_refrences(self.bleu_sents, ground_truth_test_sentences[i], predicted_test_sentences[i]))
-
-                self.logger.log("")
+                self.logger.log()
 
 
             if epoch % 1 == 0 or epoch == 1:
@@ -107,14 +91,14 @@ class Trainer():
 
                 for i in range(len(self.test_loaders)):
                     msg = f"Epoch [{epoch}/{self.epoch_count}] Test Loss({self.tags[i]:.2f}): {cur_test_losses[i]:.4f}, Test {self.__print_accuracy(cur_test_accuracies[i])}"
-                    if calculate_blue:
+                    if epoch == self.epoch_count:
                         msg += f", Test Bleu score (big ref): {cur_eval_bleu_with_big_ref[i][1]:.4f}, Test Bleu Score (only gold as ref): {cur_eval_bleu_without_big_ref[i]:.4f}"
                     self.logger.log(msg)
 
         return train_loss_per_epoch, test_losses_per_epoch
 
 
-    def run_epoch(self, loader, sampler, predicted_sentences, ground_truth_sentences, is_train=True):
+    def run_epoch(self, loader, sampler, is_train, return_sentences):
 
         losses = []
         accuracies = []
@@ -139,21 +123,22 @@ class Trainer():
                 loss.backward()
                 self.optimizer.step()
 
-            
             losses.append(loss.item())
             accuracies.append(self.__compute_accuracy(outputs_adjusted, target_ys_adjusted))
             sampler.sample(context_xs[0], context_ys[0], target_xs[0], target_ys[0], outputs[0])
 
-            if predicted_sentences is not None and ground_truth_sentences is not None:
-                self.__populate_predicted_and_ground_truth(predicted_sentences, ground_truth_sentences,
-                                                         context_xs, context_ys, target_xs, target_ys, outputs)
+            if return_sentences:
+                predicted_sentences, ground_truth_sentences = self.__populate_predicted_and_ground_truth(context_xs, context_ys, target_xs, target_ys, outputs)
+            else:
+                predicted_sentences, ground_truth_sentences = None, None
         
         epoch_loss = sum(losses) / len(losses)
         epoch_accuracy = []
         for i in range(len(self.acc_topk)):
             accuracy_i = [accuracy[i] for accuracy in accuracies]
             epoch_accuracy.append(sum(accuracy_i) / len(accuracy_i))
-        return epoch_loss, epoch_accuracy
+        
+        return epoch_loss, epoch_accuracy, predicted_sentences, ground_truth_sentences
 
 
     def __batch2var(self, batch_param, requires_grad=False):
@@ -195,9 +180,10 @@ class Trainer():
         return res
 
 
-    def __populate_predicted_and_ground_truth(self, predicted_sentences, ground_truth_sentences, context_xs, context_ys,
-                                            target_xs, target_ys, predictions):
+    def __populate_predicted_and_ground_truth(self, context_xs, context_ys, target_xs, target_ys, predictions):
 
+        predicted_sentences = []
+        ground_truth_sentences = []
         for context_x, context_y, target_x, target_y, prediction in zip(context_xs, context_ys, target_xs, target_ys, predictions):
 
             orig = []
@@ -230,6 +216,8 @@ class Trainer():
                 else:
                     orig.append(self.id2w[int(id.item())])
                     pred.append(self.id2w[int(id.item())])
-            orig_as_reference_for_blue = [orig]
-            ground_truth_sentences.append(orig_as_reference_for_blue)
+
+            ground_truth_sentences.append([orig])
             predicted_sentences.append(pred)
+        
+        return predicted_sentences, ground_truth_sentences
