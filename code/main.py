@@ -1,5 +1,4 @@
 import os
-import time
 import random
 from data_processing.dataset_non_contextual import DatasetNonContextual
 from data_processing.text_processors.text_processor_non_contextual import TextProcessorNonContextual
@@ -22,7 +21,7 @@ def main():
     normalize_weights = True
 
     dropout = 0
-    epoch_count = 10
+    epoch_count = 100
     random_every_time = True
     
     logger = Logger()

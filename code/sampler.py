@@ -16,7 +16,7 @@ class Sampler():
             return
 
         self.last_print = time.time()
-        
+
 
         masked_positions = {}
         for i, pos_tensor in enumerate(target_x):
@@ -34,13 +34,14 @@ class Sampler():
 
             if i in masked_positions:
                 pred_id = torch.max(predictions[masked_positions[i]], dim=0)[1].item()
+                pred_id += 1  # account for padding shift
                 pred.append(f"*{self.id2w[pred_id]}*")
                 orig.append(f"*{self.id2w[word_id]}*")
             else:
                 word = self.id2w[word_id]
                 pred.append(word)
                 orig.append(word)
-                
+
 
         orig_str = " ".join(orig)
         pred_str = " ".join(pred)

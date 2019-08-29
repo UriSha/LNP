@@ -1,11 +1,10 @@
-import time
 import torch
 import torch.nn as nn
-from sampler import Sampler
 from nltk.translate.bleu_score import corpus_bleu
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
-from bleu import corpus_bleu_with_joint_refrences
+from sampler import Sampler
+from bleu import corpus_bleu_with_joint_refrences, populate_predicted_and_ground_truth
 
 
 class Trainer():
@@ -58,27 +57,26 @@ class Trainer():
 
             # Test
             self.model.test_model()
+            calculate_bleu = epoch == self.epoch_count
             cur_test_losses = [None] * len(self.test_loaders)
             cur_test_accuracies = [None] * len(self.test_loaders)
             for i, test_loader in enumerate(self.test_loaders):
-                cur_test_loss, cur_test_accuracy, predicted_sentences, ground_truth_sentences = self.run_epoch(test_loader, self.test_samplers[i], False, epoch == self.epoch_count)
+                cur_test_loss, cur_test_accuracy, predicted_sentences, ground_truth_sentences = self.run_epoch(test_loader, self.test_samplers[i], False, calculate_bleu)
                 test_losses_per_epoch[i].append(cur_test_loss)
                 cur_test_losses[i] = cur_test_loss
                 cur_test_accuracies[i] = cur_test_accuracy
-                if epoch == self.epoch_count:
+                if calculate_bleu:
                     predicted_sentences_i[i] = predicted_sentences
                     ground_truth_sentences_i[i] = ground_truth_sentences
             
             
-            if epoch == self.epoch_count:
+            if calculate_bleu:
                 cur_eval_bleu_without_big_ref = []
                 cur_eval_bleu_with_big_ref = []
                 for i, test_loader in enumerate(self.test_loaders):
                     cur_eval_bleu_without_big_ref.append(corpus_bleu(ground_truth_sentences_i[i], predicted_sentences_i[i]))
-
                     self.logger.log("Calculating blue score for (%.2f) with total of %d references" % (self.tags[i], len(self.bleu_sents) + len(ground_truth_sentences_i[i])))
                     cur_eval_bleu_with_big_ref.append(corpus_bleu_with_joint_refrences(self.bleu_sents, ground_truth_sentences_i[i], predicted_sentences_i[i]))
-
                 self.logger.log()
 
 
@@ -87,7 +85,7 @@ class Trainer():
 
                 for i in range(len(self.test_loaders)):
                     msg = f"Epoch [{epoch}/{self.epoch_count}] Test Loss({self.tags[i]:.2f}): {cur_test_losses[i]:.4f}, Test {self.__print_accuracy(cur_test_accuracies[i])}"
-                    if epoch == self.epoch_count:
+                    if calculate_bleu:
                         msg += f", Test Bleu score (big ref): {cur_eval_bleu_with_big_ref[i][1]:.4f}, Test Bleu Score (only gold as ref): {cur_eval_bleu_without_big_ref[i]:.4f}"
                     self.logger.log(msg)
 
@@ -126,16 +124,16 @@ class Trainer():
             sampler.sample(sent_ys[0], target_xs[0], outputs[0])
 
             if return_sentences:
-                predicted_sentences, ground_truth_sentences = self.__populate_predicted_and_ground_truth(context_xs, context_ys, target_xs, target_ys, outputs)
+                predicted_sentences, ground_truth_sentences = populate_predicted_and_ground_truth(sent_ys, target_xs, outputs, self.id2w)
             else:
                 predicted_sentences, ground_truth_sentences = None, None
-        
+
         epoch_loss = sum(losses) / len(losses)
         epoch_accuracy = []
         for i in range(len(self.acc_topk)):
             accuracy_i = [accuracy[i] for accuracy in accuracies]
             epoch_accuracy.append(sum(accuracy_i) / len(accuracy_i))
-        
+
         return epoch_loss, epoch_accuracy, predicted_sentences, ground_truth_sentences
 
 
@@ -151,20 +149,20 @@ class Trainer():
         outputs = outputs.reshape(a * b, c)
         a, b = target_ys.shape
         target_ys = target_ys.reshape(a * b)
-        return outputs, target_ys - 1
+        target_ys = target_ys - 1  # subtract one to account for pad shifting
+        return outputs, target_ys
 
 
     def __compute_accuracy(self, outputs, target_ys):
         topks = [min(topk, outputs.shape[1]) for topk in self.acc_topk]
         results = []
-        for topk in topks:  
+        for topk in topks:
             _, max_indices = outputs.topk(k=topk, dim=1)
             mask = torch.ones(len(target_ys))
             mask = mask.long() * -1
             if self.to_cuda:
                 mask = mask.cuda()
             mask_size = (target_ys == mask).sum().item()
-            # new_targets = target_ys + ((target_ys == mask).long()*-1)
             results.append((max_indices == target_ys.unsqueeze(dim=1)).sum().item() / (len(target_ys) - mask_size))
         return results
 
@@ -176,46 +174,3 @@ class Trainer():
         acc_str = ", ".join(accs)
         res = f"Accuracy: [{acc_str}]"
         return res
-
-
-    def __populate_predicted_and_ground_truth(self, context_xs, context_ys, target_xs, target_ys, predictions):
-
-        predicted_sentences = []
-        ground_truth_sentences = []
-        for context_x, context_y, target_x, target_y, prediction in zip(context_xs, context_ys, target_xs, target_ys, predictions):
-
-            orig = []
-            pred = []
-
-            i = 0
-            j = 0
-            pos = 0
-
-            while pos < len(context_x):
-                pred_id = None
-                id = context_y[i]
-                if context_x[i] == pos:
-                    if id == 0:
-                        break
-                    i += 1
-                else:
-                    if j >= len(target_x):
-                        self.logger.log("error")
-                        return
-                    id = target_y[j]
-                    if id == 0:
-                        break
-                    pred_id = torch.max(prediction[j], dim=0)[1]
-                    j += 1
-                pos += 1
-                if pred_id is not None:
-                    orig.append(self.id2w[int(id.item())])
-                    pred.append(self.id2w[int(pred_id.item() + 1)])
-                else:
-                    orig.append(self.id2w[int(id.item())])
-                    pred.append(self.id2w[int(id.item())])
-
-            ground_truth_sentences.append([orig])
-            predicted_sentences.append(pred)
-        
-        return predicted_sentences, ground_truth_sentences

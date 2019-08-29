@@ -1,5 +1,4 @@
 import os
-import time
 import random
 import argparse
 from model.cnp import CNP
@@ -107,7 +106,7 @@ def main():
     test_size = args.abs_test_size
     if args.abs_test_size == -1:
         test_size = args.test_size
-    
+
     random_seed = args.random_seed
     if not random_seed:
         random_seed = random.randint(1, 2_000_000_000)
@@ -132,14 +131,14 @@ def main():
     logger.log("Init Test Datasets")
     test_datasets = []
     test_datasets.append(DatasetNonContextual(sents=text_processor.test25,
-                                        max_seq_len=text_processor.max_seq_len,
-                                        mask_ratios=[.25],
-                                        to_cuda=args.to_cuda))
-    
+                                              max_seq_len=text_processor.max_seq_len,
+                                              mask_ratios=[.25],
+                                              to_cuda=args.to_cuda))
+
     test_datasets.append(DatasetNonContextual(sents=text_processor.test50,
-                                        max_seq_len=text_processor.max_seq_len,
-                                        mask_ratios=[0.5],
-                                        to_cuda=args.to_cuda))
+                                              max_seq_len=text_processor.max_seq_len,
+                                              mask_ratios=[0.5],
+                                              to_cuda=args.to_cuda))
 
     logger.log("Vocab size: ", len(text_processor.id2w))
     print("Vocab size: ", len(text_processor.id2w), file=config_f)

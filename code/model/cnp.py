@@ -1,18 +1,17 @@
 import math
 import torch
 import torch.nn as nn
+from sklearn.preprocessing import normalize
 from model.encoder import Encoder
 from model.decoder import Decoder
-from model.aggregator import AttentionAggregator, AverageAggregator
+from model.aggregator import AttentionAggregator
 from model.transformer import TransformerEncoder, TransformerEncoderLayer
-from model.self_attention_encoder import SelfAttentionEncoderLayer
 from model.cross_attention_aggregator import CrossAttentionAggregator
-from sklearn.preprocessing import normalize
 
 
 class CNP(nn.Module):
-    def __init__(self, embedding_size, hidden_repr, enc_hidden_layers, dec_hidden_layers, emb_weight, 
-                       max_seq_len, use_weight_matrix, nheads=2, use_pos_embedding=True, dropout=0.1, 
+    def __init__(self, embedding_size, hidden_repr, enc_hidden_layers, dec_hidden_layers, emb_weight,
+                       max_seq_len, use_weight_matrix, nheads=2, use_pos_embedding=True, dropout=0.1,
                        attn=False, concat_embeddings=False, normalize_weights=True, to_cuda=False):
         super(CNP, self).__init__()
 
@@ -123,6 +122,6 @@ class CNP(nn.Module):
                 pe[pos, i] = \
                     math.sin(pos / (10000 ** ((2 * i) / embed_size)))
                 pe[pos, i + 1] = \
-                    math.cos(pos / (10000 ** ((2 * (i + 1)) / embed_size)))
+                    math.cos(pos / (10000 ** ((2 * i) / embed_size)))
 
         return pe

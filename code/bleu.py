@@ -12,8 +12,8 @@ from __future__ import division
 
 import fractions
 import math
+import torch
 from collections import Counter
-
 from nltk.util import ngrams
 
 try:
@@ -331,6 +331,7 @@ class SmoothingFunction:
         p_n = self.method5(p_n, references, hypothesis, hyp_len)
         return p_n
 
+
 def corpus_bleu_with_joint_refrences(joint_refs, list_of_references, hypotheses, weights=(0.25, 0.25, 0.25, 0.25),
                                      smoothing_function=None):
 
@@ -393,50 +394,36 @@ def corpus_bleu_with_joint_refrences(joint_refs, list_of_references, hypotheses,
     return bleu, bp * bleup
 
 
+def populate_predicted_and_ground_truth(sent_ys, target_xs, predictions, id2w):
 
+    predicted_sentences = []
+    ground_truth_sentences = []
+    for sent_y, target_x, prediction in zip(sent_ys, target_xs, predictions):
+        masked_positions = {}
+        for i, pos_tensor in enumerate(target_x):
+            pos = pos_tensor.item()
+            if pos >= len(sent_y):
+                break
+            masked_positions[pos] = i
 
-#
-#
-#
-# if __name__ == "__main__":
-#     hyp1 = ['It', 'is', 'a', 'guide', 'to', 'action', 'which']
-#
-#     ref1a = ['It', 'is', 'a', 'guide', 'to', 'action','1']
-#     ref1b = [ 'is', 'a', 'guide', 'to', 'action','1']
-#
-#     ref1c = ['1','2','a', 'guide', 'to', 'action']
-#
-#     hyp2 = ['he', 'read', 'the', 'book', 'because', 'he', 'was']
-#     ref2a = ['interested', 'in', 'world', 'history','because', 'he', 'read', 'the', 'book']
-#
-#     list_of_references = [[ref1a, ref1b, ref1c], [ref2a]]
-#     hypotheses = [hyp1, hyp2]
-#     print("corpus_bleu: ", corpus_bleu(list_of_references, hypotheses))
-#     print("sent_bleu a: ", sentence_bleu([ref1a, ref1b, ref1c], hyp1))
-#     print("sent_bleu b: ", sentence_bleu([ref2a], hyp2))
-#
-#     joint_ref_a = ['he', 'read', 'the', 'book', 'because']
-#     joint_ref_b = ['always', 'obeys', 'the', 'commands', 'of']
-#
-#     joint_refs = [joint_ref_a, joint_ref_b]
-#     print("my corpus_bleu: ", corpus_bleu_with_joint_refrences(joint_refs, list_of_references, hypotheses))
-#
-#     naive_big_list_of_refs = list([list(l) for l in list_of_references])
-#     for l in naive_big_list_of_refs:
-#         l.extend(joint_refs)
-#
-#
-#     print("old corpus_bleu: ", corpus_bleu(naive_big_list_of_refs, hypotheses))
-#
+        orig = []
+        pred = []
+        for i, word_id_tensor in enumerate(sent_y):
+            word_id = word_id_tensor.item()
+            if word_id == 0:
+                break
 
+            if i in masked_positions:
+                pred_id = torch.max(prediction[masked_positions[i]], dim=0)[1].item()
+                pred_id += 1  # account for padding shift
+                pred.append(id2w[pred_id])
+                orig.append(id2w[word_id])
+            else:
+                word = id2w[word_id]
+                pred.append(word)
+                orig.append(word)
 
+        ground_truth_sentences.append([orig])
+        predicted_sentences.append(pred)
 
-
-
-
-    #
-    #
-    # sent = "i love this book it is really good".split(" ")
-    # ref = [[["i love this book it is really 2".split(" "), "i love this book it is really 2".split(" ")]]]
-    # bleu_score = sentence_bleu(ref, sent)
-    # print(bleu_score)
+    return predicted_sentences, ground_truth_sentences
