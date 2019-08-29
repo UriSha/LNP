@@ -96,7 +96,9 @@ class Trainer():
 
         losses = []
         accuracies = []
-
+        predicted_sentences = None
+        ground_truth_sentences = None
+        
         if return_sentences:
             predicted_sentences = []
             ground_truth_sentences = []
