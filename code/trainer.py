@@ -14,7 +14,9 @@ class Trainer():
         self.epoch_count = epoch_count
         self.acc_topk = acc_topk
         self.tags = tags
-        self.bleu_sents = bleu_sents
+        self.blue_sents_as_words = []
+        for id_sent in bleu_sents:
+            self.blue_sents_as_words.append([id2w[w_id] for w_id in id_sent])
         self.to_cuda = to_cuda
         self.logger = logger
         self.id2w = id2w
@@ -68,15 +70,16 @@ class Trainer():
                 if calculate_bleu:
                     predicted_sentences_i[i] = predicted_sentences
                     ground_truth_sentences_i[i] = ground_truth_sentences
-            
-            
+
+
             if calculate_bleu:
                 cur_eval_bleu_without_big_ref = []
                 cur_eval_bleu_with_big_ref = []
                 for i, test_loader in enumerate(self.test_loaders):
                     cur_eval_bleu_without_big_ref.append(corpus_bleu(ground_truth_sentences_i[i], predicted_sentences_i[i]))
-                    self.logger.log("Calculating blue score for (%.2f) with total of %d references" % (self.tags[i], len(self.bleu_sents) + len(ground_truth_sentences_i[i])))
-                    cur_eval_bleu_with_big_ref.append(corpus_bleu_with_joint_refrences(self.bleu_sents, ground_truth_sentences_i[i], predicted_sentences_i[i]))
+                    self.logger.log("Calculating blue score for (%.2f) with total of %d references" % (self.tags[i], len(self.blue_sents_as_words) + len(ground_truth_sentences_i[i])))
+
+                    cur_eval_bleu_with_big_ref.append(corpus_bleu_with_joint_refrences(self.blue_sents_as_words, ground_truth_sentences_i[i], predicted_sentences_i[i]))
                 self.logger.log()
 
 
@@ -98,7 +101,7 @@ class Trainer():
         accuracies = []
         predicted_sentences = None
         ground_truth_sentences = None
-        
+
         if return_sentences:
             predicted_sentences = []
             ground_truth_sentences = []
@@ -116,7 +119,7 @@ class Trainer():
             # feedforward - backprop
             if is_train:
                 self.optimizer.zero_grad()
-            
+
             outputs = self.model(context_xs, context_ys, context_mask, target_xs, target_mask)
             outputs_adjusted, target_ys_adjusted = self.__adjust_dimensions(outputs, target_ys)
             loss = self.loss_function(outputs_adjusted, target_ys_adjusted)
