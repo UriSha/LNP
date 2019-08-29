@@ -97,6 +97,10 @@ class Trainer():
         losses = []
         accuracies = []
 
+        if return_sentences:
+            predicted_sentences = []
+            ground_truth_sentences = []
+
         for context_xs_batch, context_ys_batch, context_mask_batch, target_xs_batch, target_ys_batch, target_mask_batch, sent_xs_batch, sent_ys_batch in loader:
             context_xs = self.__batch2var(context_xs_batch)
             context_ys = self.__batch2var(context_ys_batch)
@@ -124,9 +128,9 @@ class Trainer():
             sampler.sample(sent_ys[0], target_xs[0], outputs[0])
 
             if return_sentences:
-                predicted_sentences, ground_truth_sentences = populate_predicted_and_ground_truth(sent_ys, target_xs, outputs, self.id2w)
-            else:
-                predicted_sentences, ground_truth_sentences = None, None
+                batch_predicted_sentences, batch_ground_truth_sentences = populate_predicted_and_ground_truth(sent_ys, target_xs, outputs, self.id2w)
+                predicted_sentences.extend(batch_predicted_sentences)
+                ground_truth_sentences.extend(batch_ground_truth_sentences)
 
         epoch_loss = sum(losses) / len(losses)
         epoch_accuracy = []
