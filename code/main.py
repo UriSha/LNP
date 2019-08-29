@@ -1,7 +1,7 @@
 import os
 import random
-from data_processing.dataset_non_contextual import DatasetNonContextual
-from data_processing.text_processors.text_processor_non_contextual import TextProcessorNonContextual
+from data_processing.dataset import DatasetNonContextual
+from data_processing.text_processor import TextProcessor
 from model.cnp import CNP
 from trainer import Trainer
 from plotter import Plotter
@@ -21,24 +21,27 @@ def main():
     normalize_weights = True
 
     dropout = 0
-    epoch_count = 100
+    epoch_count = 20
     random_every_time = True
-    
+
     logger = Logger()
     cur_dir = os.path.dirname(os.path.realpath(__file__))
 
     random.seed(a=5)
 
-    # text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_new1.txt"),
+    # text_processor = TextProcessor(os.path.join(cur_dir, "../data/APRC/APRC_new1.txt"),
     #                                             os.path.join(cur_dir, "../data/embeddings/wiki-news-300d-1M.vec"), test_size=test_size, mask_ratio=mask_ratio,
     #                                             sents_limit=10000, rare_word_threshold=1, use_weight_loss=True)
-    # text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_small_mock.txt"),
+    # text_processor = TextProcessor(os.path.join(cur_dir, "../data/APRC/APRC_small_mock.txt"),
     #                                             os.path.join(cur_dir, "../data/embeddings/wiki-news-300d-1M.vec"), test_size=test_size, mask_ratio=mask_ratio,
     #                                             sents_limit=10000, rare_word_threshold=1, use_weight_loss=True)
-    text_processor = TextProcessorNonContextual(os.path.join(cur_dir, "../data/APRC/APRC_small_mock1.txt"),
-                                                os.path.join(cur_dir, "../data/embeddings/small_fasttext.txt"), test_size=test_size,
-                                                sents_limit=10000, rare_word_threshold=0)
-                                                
+    text_processor = TextProcessor(os.path.join(cur_dir, "../data/APRC/APRC_small_mock1.txt"),
+                                   os.path.join(cur_dir, "../data/embeddings/small_fasttext.txt"),
+                                   test_size=test_size,
+                                   sents_limit=10000,
+                                   rare_word_threshold=0,
+                                   logger=logger)
+
     train_dataset = DatasetNonContextual(text_processor.train_sents,
                                          text_processor.max_seq_len,
                                          mask_ratios=train_mask_rations,
@@ -54,11 +57,10 @@ def main():
 
     tags = [eval_ds.mask_ratios[0] for eval_ds in eval_datasets]
     print("Vocab size: ", len(text_processor.id2w))
-    model = CNP(embedding_size=text_processor.vec_size,
-                hidden_repr=300,
+    model = CNP(hidden_repr=300,
                 enc_hidden_layers=[512, 768],
                 dec_hidden_layers=[768, 1024, 512],
-                emb_weight = text_processor.embed_matrix,
+                emb_weight = text_processor.embedding_matrix,
                 max_seq_len = text_processor.max_seq_len,
                 use_weight_matrix = use_weight_matrix,
                 dropout=dropout,

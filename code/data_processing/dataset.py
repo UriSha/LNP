@@ -5,9 +5,8 @@ from torch.utils.data import Dataset
 
 
 class DatasetNonContextual(Dataset):
-    def __init__(self, sents, max_seq_len, mask_ratios, transform=None, random_every_time=False, to_cuda=True):
+    def __init__(self, sents, max_seq_len, mask_ratios, random_every_time=False, to_cuda=True):
         self.sents = sents
-        self.transform = transform
         self.mask_ratios = mask_ratios
         self.max_seq_len = max_seq_len
         self.max_masked_size = int(math.ceil(max_seq_len * max(mask_ratios)))
@@ -70,7 +69,7 @@ class DatasetNonContextual(Dataset):
         target_mask = torch.ByteTensor(target_mask)
         sent_x = torch.LongTensor([i if i < len(sent) else self.max_seq_len for i in range(self.max_seq_len)])
         sent_y = torch.LongTensor([sent[i] if i < len(sent) else 0 for i in range(self.max_seq_len)])
-        
+
         if self.to_cuda:
             context_x = context_x.cuda()
             context_y = context_y.cuda()

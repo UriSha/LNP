@@ -10,7 +10,7 @@ from model.cross_attention_aggregator import CrossAttentionAggregator
 
 
 class CNP(nn.Module):
-    def __init__(self, embedding_size, hidden_repr, enc_hidden_layers, dec_hidden_layers, emb_weight,
+    def __init__(self, hidden_repr, enc_hidden_layers, dec_hidden_layers, emb_weight,
                        max_seq_len, use_weight_matrix, nheads=2, use_pos_embedding=True, dropout=0.1,
                        attn=False, concat_embeddings=False, normalize_weights=True, to_cuda=False):
         super(CNP, self).__init__()
@@ -19,8 +19,9 @@ class CNP(nn.Module):
         self.max_seq_len = max_seq_len
         self.concat_embeddings = concat_embeddings
 
+        embedding_size = emb_weight.shape[1]
         pos_embedding_size = embedding_size if use_pos_embedding else 1
-        output_size = emb_weight.shape[1] if use_weight_matrix else emb_weight.shape[0] - 1
+        output_size = embedding_size if use_weight_matrix else emb_weight.shape[0] - 1
         input_size = embedding_size + pos_embedding_size if concat_embeddings else embedding_size
 
         if attn:

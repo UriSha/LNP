@@ -5,8 +5,8 @@ from model.cnp import CNP
 from logger import Logger
 from plotter import Plotter
 from trainer import Trainer
-from data_processing.dataset_non_contextual import DatasetNonContextual
-from data_processing.text_processors.text_processor_non_contextual import TextProcessorNonContextual
+from data_processing.dataset import DatasetNonContextual
+from data_processing.text_processor import TextProcessor
 
 
 def str2bool(v):
@@ -114,11 +114,12 @@ def main():
     logger.log(f"Using seed={random_seed}")
 
     logger.log("Init Text Processor")
-    text_processor = TextProcessorNonContextual("data/APRC/{}".format(args.data_file),
-                                                "data/embeddings/wiki-news-300d-1M.vec",
-                                                test_size=test_size,
-                                                sents_limit=args.sent_count,
-                                                rare_word_threshold=args.rare_threshold)
+    text_processor = TextProcessor("data/APRC/{}".format(args.data_file),
+                                   "data/embeddings/wiki-news-300d-1M.vec",
+                                   test_size=test_size,
+                                   sents_limit=args.sent_count,
+                                   rare_word_threshold=args.rare_threshold,
+                                   logger=logger)
 
 
     logger.log("Init Train Dataset")
@@ -144,11 +145,10 @@ def main():
     print("Vocab size: ", len(text_processor.id2w), file=config_f)
 
     logger.log("Init model")
-    model = CNP(embedding_size=text_processor.vec_size,
-                hidden_repr=args.hidden_repr,
+    model = CNP(hidden_repr=args.hidden_repr,
                 enc_hidden_layers=args.enc_layers,
                 dec_hidden_layers=args.dec_layers,
-                emb_weight=text_processor.embed_matrix,
+                emb_weight=text_processor.embedding_matrix,
                 max_seq_len=text_processor.max_seq_len,
                 use_weight_matrix=args.use_weight_matrix,
                 dropout=args.dropout,
