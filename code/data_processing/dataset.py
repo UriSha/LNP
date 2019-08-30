@@ -5,6 +5,7 @@ from torch.utils.data import Dataset
 
 
 class DatasetNonContextual(Dataset):
+    
     def __init__(self, sents, max_seq_len, mask_ratios, random_every_time=False, to_cuda=True):
         self.sents = sents
         self.mask_ratios = mask_ratios

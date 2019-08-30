@@ -3,11 +3,12 @@ import torch.nn as nn
 from nltk.translate.bleu_score import corpus_bleu
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
-from .sampler import Sampler
 from .bleu import corpus_bleu_with_joint_refrences, populate_predicted_and_ground_truth
+from .sampler import Sampler
 
 
 class Trainer():
+
     def __init__(self, model, train_dataset, test_datasets, tags, batch_size, opt, learning_rate, momentum,
                  epoch_count, acc_topk, print_interval, bleu_sents, to_cuda, logger, id2w):
         self.model = model

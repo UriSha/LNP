@@ -3,6 +3,7 @@ import torch.nn.functional as F
 
 
 class Decoder(nn.Module):
+    
     def __init__(self, input_size, hidden_layers, output_size, dropout, to_cuda=False):
         super(Decoder, self).__init__()
         self.fcs = nn.ModuleList()

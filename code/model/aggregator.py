@@ -4,6 +4,7 @@ import torch.nn.functional as F
 
 
 class AverageAggregator(nn.Module):
+
     def __init__(self):
         super(AverageAggregator, self).__init__()
 
@@ -22,6 +23,7 @@ class AverageAggregator(nn.Module):
 
 
 class AttentionAggregator(nn.Module):
+
     def __init__(self, hidden_repr, to_cuda=False):
         super(AttentionAggregator, self).__init__()
 
@@ -50,6 +52,7 @@ class AttentionAggregator(nn.Module):
 
 
 class CrossAttentionAggregator(nn.Module):
+    
     def __init__(self, embed_size, num_heads, dropout=0.1, to_cuda=False):
         super().__init__()
         self.multihead_attention = nn.MultiheadAttention(embed_dim=embed_size, num_heads=num_heads, dropout=dropout)

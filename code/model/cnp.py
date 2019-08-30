@@ -9,6 +9,7 @@ from .transformer import TransformerEncoder, TransformerEncoderLayer
 
 
 class CNP(nn.Module):
+
     def __init__(self, hidden_repr, enc_hidden_layers, dec_hidden_layers, emb_weight,
                        max_seq_len, use_weight_matrix, nheads=2, dropout=0.1,
                        normalize_weights=True, to_cuda=False):
