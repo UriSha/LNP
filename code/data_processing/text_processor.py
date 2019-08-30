@@ -21,7 +21,8 @@ class TextProcessor():
             test_size = int(len(self.sents) * test_size)
         self.train_sents = shuffled_sents[:-test_size]
         self.test_sents = shuffled_sents[-test_size:]
-        self.bleu_sents = random.sample(self.test_sents, k=min(10000, len(self.test_sents)))
+        sampled_bleu_sents = random.sample(self.test_sents, k=min(10000, len(self.test_sents)))
+        self.bleu_sents = [[self.id2w[word_id] for word_id in bleu_sent] for bleu_sent in sampled_bleu_sents]
 
         test_size = len(self.test_sents) // 2
 

@@ -14,9 +14,7 @@ class Trainer():
         self.epoch_count = epoch_count
         self.acc_topk = acc_topk
         self.tags = tags
-        self.blue_sents_as_words = []
-        for id_sent in bleu_sents:
-            self.blue_sents_as_words.append([id2w[w_id] for w_id in id_sent])
+        self.bleu_sents = bleu_sents
         self.to_cuda = to_cuda
         self.logger = logger
         self.id2w = id2w
@@ -77,9 +75,9 @@ class Trainer():
                 cur_eval_bleu_with_big_ref = []
                 for i, test_loader in enumerate(self.test_loaders):
                     cur_eval_bleu_without_big_ref.append(corpus_bleu(ground_truth_sentences_i[i], predicted_sentences_i[i]))
-                    self.logger.log("Calculating blue score for (%.2f) with total of %d references" % (self.tags[i], len(self.blue_sents_as_words) + len(ground_truth_sentences_i[i])))
+                    self.logger.log("Calculating blue score for (%.2f) with total of %d references" % (self.tags[i], len(self.bleu_sents) + len(ground_truth_sentences_i[i])))
 
-                    cur_eval_bleu_with_big_ref.append(corpus_bleu_with_joint_refrences(self.blue_sents_as_words, ground_truth_sentences_i[i], predicted_sentences_i[i]))
+                    cur_eval_bleu_with_big_ref.append(corpus_bleu_with_joint_refrences(self.bleu_sents, ground_truth_sentences_i[i], predicted_sentences_i[i]))
                 self.logger.log()
 
 
@@ -99,12 +97,8 @@ class Trainer():
 
         losses = []
         accuracies = []
-        predicted_sentences = None
-        ground_truth_sentences = None
-
-        if return_sentences:
-            predicted_sentences = []
-            ground_truth_sentences = []
+        predicted_sentences = []
+        ground_truth_sentences = []
 
         for context_xs_batch, context_ys_batch, context_mask_batch, target_xs_batch, target_ys_batch, target_mask_batch, sent_xs_batch, sent_ys_batch in loader:
             context_xs = self.__batch2var(context_xs_batch)
