@@ -1,11 +1,12 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .transformer import TransformerEncoder, TransformerEncoderLayer
 from .aggregator import AverageAggregator
+from .transformer import TransformerEncoder, TransformerEncoderLayer
 
 
 class Encoder(nn.Module):
+
     def __init__(self, input_size, hidden_layers, output_size, dropout, to_cuda=False):
         super(Encoder, self).__init__()
         self.fcs = nn.ModuleList()
