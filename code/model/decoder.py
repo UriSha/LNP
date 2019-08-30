@@ -21,6 +21,7 @@ class Decoder(nn.Module):
                 self.dps[i] = self.dps[i].cuda()
             self.output_fc = self.output_fc.cuda()
 
+
     def forward(self, x):
         for i in range(len(self.fcs)):
             x = self.fcs[i](x)

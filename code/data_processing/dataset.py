@@ -21,10 +21,10 @@ class DatasetNonContextual(Dataset):
             return self.mem[index]
 
         sent = self.sents[index]
-        context_x, context_y, context_mask, target_x, target_y, target_mask, sent_x, sent_y = self.mask_sent(sent)
+        context_x, context_y, context_mask, target_x, target_y, target_mask, sent_x, sent_y, sent_mask = self.mask_sent(sent)
         if not self.random_every_time:
-            self.mem[index] = context_x, context_y, context_mask, target_x, target_y, target_mask, sent_x, sent_y
-        return context_x, context_y, context_mask, target_x, target_y, target_mask, sent_x, sent_y
+            self.mem[index] = context_x, context_y, context_mask, target_x, target_y, target_mask, sent_x, sent_y, sent_mask
+        return context_x, context_y, context_mask, target_x, target_y, target_mask, sent_x, sent_y, sent_mask
 
 
     def __len__(self):
@@ -69,6 +69,7 @@ class DatasetNonContextual(Dataset):
         target_mask = torch.ByteTensor(target_mask)
         sent_x = torch.LongTensor([i if i < len(sent) else self.max_seq_len for i in range(self.max_seq_len)])
         sent_y = torch.LongTensor([sent[i] if i < len(sent) else 0 for i in range(self.max_seq_len)])
+        sent_mask = torch.ByteTensor([0 if i < len(sent) else 1 for i in range(self.max_seq_len)])
 
         if self.to_cuda:
             context_x = context_x.cuda()
@@ -77,5 +78,6 @@ class DatasetNonContextual(Dataset):
             target_y = target_y.cuda()
             sent_x = sent_x.cuda()
             sent_y = sent_y.cuda()
+            sent_mask = sent_mask.cuda()
 
-        return context_x, context_y, context_mask, target_x, target_y, target_mask, sent_x, sent_y
+        return context_x, context_y, context_mask, target_x, target_y, target_mask, sent_x, sent_y, sent_mask

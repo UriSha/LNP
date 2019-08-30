@@ -2,36 +2,29 @@ import math
 import torch
 import torch.nn as nn
 from sklearn.preprocessing import normalize
-from .encoder import Encoder
+from .encoder import Encoder, LatentEncoder
 from .decoder import Decoder
-from .aggregator import AttentionAggregator
+from .aggregator import AttentionAggregator, CrossAttentionAggregator
 from .transformer import TransformerEncoder, TransformerEncoderLayer
-from .cross_attention_aggregator import CrossAttentionAggregator
 
 
 class CNP(nn.Module):
     def __init__(self, hidden_repr, enc_hidden_layers, dec_hidden_layers, emb_weight,
-                       max_seq_len, use_weight_matrix, nheads=2, use_pos_embedding=True, dropout=0.1,
-                       attn=False, concat_embeddings=False, normalize_weights=True, to_cuda=False):
+                       max_seq_len, use_weight_matrix, nheads=2, dropout=0.1,
+                       normalize_weights=True, to_cuda=False):
         super(CNP, self).__init__()
 
-        self.attn = attn
         self.max_seq_len = max_seq_len
-        self.concat_embeddings = concat_embeddings
 
         embedding_size = emb_weight.shape[1]
-        pos_embedding_size = embedding_size if use_pos_embedding else 1
+        pos_embedding_size = embedding_size
         output_size = embedding_size if use_weight_matrix else emb_weight.shape[0] - 1
-        input_size = embedding_size + pos_embedding_size if concat_embeddings else embedding_size
+        input_size = embedding_size
 
-        if attn:
-            self.encoder = TransformerEncoder(TransformerEncoderLayer(input_size, nhead=nheads, dim_feedforward=enc_hidden_layers[0], dropout=dropout), num_layers=len(enc_hidden_layers))
-            self.aggregator = CrossAttentionAggregator(embedding_size, nheads, dropout, to_cuda)
-            self.decoder = Decoder(input_size, dec_hidden_layers, output_size, dropout, to_cuda)
-        else:
-            self.encoder = Encoder(input_size, enc_hidden_layers, hidden_repr, dropout, to_cuda)
-            self.aggregator = AttentionAggregator(hidden_repr, to_cuda)
-            self.decoder = Decoder(input_size, dec_hidden_layers, output_size, dropout, to_cuda)
+        self.encoder = TransformerEncoder(TransformerEncoderLayer(input_size, nheads, enc_hidden_layers[0], dropout), len(enc_hidden_layers))
+        self.latent_encoder = LatentEncoder(input_size, nheads, input_size, input_size, enc_hidden_layers[0], dropout, len(enc_hidden_layers), to_cuda)
+        self.aggregator = CrossAttentionAggregator(embedding_size, nheads, dropout, to_cuda)
+        self.decoder = Decoder(2 * input_size, dec_hidden_layers, output_size, dropout, to_cuda)
 
         self.word_embeddings = nn.Embedding.from_pretrained(emb_weight, padding_idx=0)
 
@@ -45,54 +38,56 @@ class CNP(nn.Module):
                 self.embedding_matrix = torch.FloatTensor(embedding_matrix)
             self.embedding_matrix.requires_grad = False
 
-        self.pos_embeddings = None
-        if use_pos_embedding:
-            pos_embedding_matrix = self.__create_pos_embeddings_matrix(max_seq_len, embedding_size)
-            self.pos_embeddings = nn.Embedding.from_pretrained(pos_embedding_matrix, padding_idx=max_seq_len)
-            self.pos_embeddings.requires_grad = False
+        pos_embedding_matrix = self.__create_pos_embeddings_matrix(max_seq_len, embedding_size)
+        self.pos_embeddings = nn.Embedding.from_pretrained(pos_embedding_matrix, padding_idx=max_seq_len)
+        self.pos_embeddings.requires_grad = False
 
         if to_cuda:
             self.word_embeddings = self.word_embeddings.cuda()
             self.encoder = self.encoder.cuda()
             self.aggregator = self.aggregator.cuda()
             self.decoder = self.decoder.cuda()
+            if self.latent_encoder is not None:
+                self.latent_encoder = self.latent_encoder.cuda()
             if self.embedding_matrix is not None:
                 self.embedding_matrix = self.embedding_matrix.cuda()
             if self.pos_embeddings is not None:
                 self.pos_embeddings = self.pos_embeddings.cuda()
 
 
-    def forward(self, context_xs, context_ys, context_mask, target_xs, target_mask):
+    def forward(self, context_xs, context_ys, context_mask, target_xs, target_mask, sents=None):
 
         context_word_embeddings = self.word_embeddings(context_ys)
-        context_pos_embeddings = self.pos_embeddings(context_xs) if self.pos_embeddings is not None else context_xs.unsqueeze(dim=2).float()
+        context_pos_embeddings = self.pos_embeddings(context_xs)
+        context = context_word_embeddings + context_pos_embeddings
+        target_pos_embeddings = self.pos_embeddings(target_xs)
 
-        if self.concat_embeddings:
-            context = torch.cat((context_word_embeddings, context_pos_embeddings), dim=2)
+
+
+        context = context.transpose(0, 1)
+        context_encodings = self.encoder(context, src_key_padding_mask=context_mask)
+        context_encodings = context_encodings.transpose(0, 1)
+        prior = self.latent_encoder(context, context_mask)
+        representations = self.aggregator(q=target_pos_embeddings, k=context_pos_embeddings, r=context_encodings, context_mask=context_mask, target_mask=target_mask)
+
+        # For Training
+        if sents:
+            sent_xs, sent_ys, sent_mask = sents[0], sents[1], sents[2]
+            sent_pos_embeddings = self.pos_embeddings(sent_xs)
+            sent_word_embeddings = self.word_embeddings(sent_ys)
+            latent_target = sent_pos_embeddings + sent_word_embeddings
+            latent_target = latent_target.transpose(0, 1)
+            posterior = self.latent_encoder(latent_target, sent_mask)
+            z = posterior
+
+        # For Generation
         else:
-            context = context_word_embeddings + context_pos_embeddings
+            z = prior
 
-        target_pos_embeddings = self.pos_embeddings(target_xs) if self.pos_embeddings is not None else target_xs.unsqueeze(dim=2).float()
+        latent_representations = torch.repeat_interleave(z, target_pos_embeddings.shape[1], dim=1)
 
-        if self.attn:
-            context = context.transpose(0, 1)
-            context_encodings = self.encoder(context, src_key_padding_mask=context_mask)
-            context_encodings = context_encodings.transpose(0, 1)
-            representations = self.aggregator(q=target_pos_embeddings, k=context_pos_embeddings, r=context_encodings, context_mask=context_mask, target_mask=target_mask)
-
-            if self.concat_embeddings:
-                target = torch.cat((representations, target_pos_embeddings), dim=2)
-            else:
-                target = representations + target_pos_embeddings
-        else:
-            context_encodings = self.encoder(context, context_mask)
-            representations = self.aggregator(context_encodings, context_mask)
-            
-            if self.concat_embeddings:
-                representations = torch.repeat_interleave(representations, target_pos_embeddings.shape[1], dim=1)
-                target = torch.cat((representations, target_pos_embeddings), dim=2)
-            else:
-                target = representations + target_pos_embeddings
+        target = representations + target_pos_embeddings
+        target = torch.cat((target, latent_representations), dim=2)
 
         predictions = self.decoder(target)
 

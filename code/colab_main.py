@@ -62,10 +62,6 @@ input_arguments = [
                   str2bool, nargs="?", const=True),
     InputArgument("use_pos_embedding", "upe", "Whether to use embeddings for positions (default: True)", True, str2bool,
                   nargs="?", const=True),
-    InputArgument("concat_embeddings", "ce", "Whether to concat sentence and position embeddings (default: False)",
-                  False, str2bool, nargs="?", const=True),
-    InputArgument("use_attention", "attn", "Whether to use attention (default: True)", True, str2bool, nargs="?",
-                  const=True),
     InputArgument("number_of_heads", "nheads", "number of heads for attention (default: 2)", 2, int),
     InputArgument("normalize_weights", "nw", "Whether to normalize weight matrix (default: True)", True, str2bool,
                   nargs="?", const=True),
@@ -153,9 +149,6 @@ def main():
                 use_weight_matrix=args.use_weight_matrix,
                 dropout=args.dropout,
                 nheads=args.number_of_heads,
-                use_pos_embedding=args.use_pos_embedding,
-                attn=args.use_attention,
-                concat_embeddings=args.concat_embeddings,
                 normalize_weights=args.normalize_weights,
                 to_cuda=args.to_cuda)
 

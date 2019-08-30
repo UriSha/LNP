@@ -10,14 +10,11 @@ from logger import Logger
 
 def main():
     to_cuda = False
-    attn = True
     train_mask_rations = [0.25, 0.5]
     test_size = 0.5
     topk = [1, 5, 10]
     nheads = 2
     use_weight_matrix = True
-    use_pos_embedding = True
-    concat_embeddings = False
     normalize_weights = True
 
     dropout = 0
@@ -64,10 +61,7 @@ def main():
                 max_seq_len = text_processor.max_seq_len,
                 use_weight_matrix = use_weight_matrix,
                 dropout=dropout,
-                attn=attn,
                 nheads=nheads,
-                use_pos_embedding=use_pos_embedding,
-                concat_embeddings=concat_embeddings,
                 normalize_weights=normalize_weights,
                 to_cuda=to_cuda)
     print("Model has {} parameters".format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
