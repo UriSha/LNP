@@ -3,7 +3,7 @@ import random
 from data_processing.dataset import DatasetNonContextual
 from data_processing.text_processor import TextProcessor
 from model.cnp import CNP
-from trainer import Trainer
+from training.trainer import Trainer
 from plotter import Plotter
 from logger import Logger
 

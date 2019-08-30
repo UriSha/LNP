@@ -4,7 +4,7 @@ import argparse
 from model.cnp import CNP
 from logger import Logger
 from plotter import Plotter
-from trainer import Trainer
+from training.trainer import Trainer
 from data_processing.dataset import DatasetNonContextual
 from data_processing.text_processor import TextProcessor
 

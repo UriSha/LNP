@@ -1,5 +1,5 @@
-from transformer import *
-from aggregator import AverageAggregator
+from .transformer import *
+from .aggregator import AverageAggregator
 
 class LatentEncoder(torch.nn.Module):
     """The Latent Encoder."""

@@ -2,11 +2,11 @@ import math
 import torch
 import torch.nn as nn
 from sklearn.preprocessing import normalize
-from model.encoder import Encoder
-from model.decoder import Decoder
-from model.aggregator import AttentionAggregator
-from model.transformer import TransformerEncoder, TransformerEncoderLayer
-from model.cross_attention_aggregator import CrossAttentionAggregator
+from .encoder import Encoder
+from .decoder import Decoder
+from .aggregator import AttentionAggregator
+from .transformer import TransformerEncoder, TransformerEncoderLayer
+from .cross_attention_aggregator import CrossAttentionAggregator
 
 
 class CNP(nn.Module):
