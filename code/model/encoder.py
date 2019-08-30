@@ -48,7 +48,7 @@ class LatentEncoder(torch.nn.Module):
             self.encoder = self.encoder.cuda()
             self.aggregator = self.aggregator.cuda()
             self.mu = self.mu.cuda()
-            self.log_sigma = self.log_sigma()
+            self.log_sigma = self.log_sigma.cuda()
 
 
     def forward(self, x, x_mask=None):
