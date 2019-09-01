@@ -20,7 +20,12 @@ class CNP(nn.Module):
 
         self.encoder = SelfAttentionEncoder(input_size, nheads, enc_hidden_layers[0], dropout, len(enc_hidden_layers), to_cuda)
         self.aggregator = CrossAttentionAggregator(embedding_size, nheads, dropout, to_cuda)
-        self.decoder = Decoder(2 * input_size, dec_hidden_layers, output_size, dropout, to_cuda)
+
+        decoder_input_size = input_size
+        if use_latent:
+            decoder_input_size = 2 * input_size
+
+        self.decoder = Decoder(decoder_input_size, dec_hidden_layers, output_size, dropout, to_cuda)
         if use_latent:
             self.latent_encoder = LatentEncoder(input_size, nheads, input_size, input_size, enc_hidden_layers[0], dropout, len(enc_hidden_layers), to_cuda)
         else:
