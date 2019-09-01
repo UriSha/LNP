@@ -60,13 +60,13 @@ def main():
     logger.log("Vocab size: ", len(text_processor.id2w))
 
     logger.log("Init model")
-    model = CNP(hidden_repr=args.hidden_repr,
-                enc_hidden_layers=args.enc_layers,
+    model = CNP(enc_hidden_layers=args.enc_layers,
                 dec_hidden_layers=args.dec_layers,
                 emb_weight=text_processor.embedding_matrix,
                 max_seq_len=text_processor.max_seq_len,
                 use_weight_matrix=args.use_weight_matrix,
                 dropout=args.dropout,
+                use_latent=args.use_latent,
                 nheads=args.number_of_heads,
                 normalize_weights=args.normalize_weights,
                 to_cuda=args.to_cuda)

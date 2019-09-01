@@ -16,6 +16,7 @@ def main():
     nheads = 2
     use_weight_matrix = True
     normalize_weights = True
+    use_latent = True
 
     dropout = 0
     epoch_count = 20
@@ -54,13 +55,13 @@ def main():
 
     tags = [eval_ds.mask_ratios[0] for eval_ds in eval_datasets]
     print("Vocab size: ", len(text_processor.id2w))
-    model = CNP(hidden_repr=300,
-                enc_hidden_layers=[512, 768],
+    model = CNP(enc_hidden_layers=[512, 768],
                 dec_hidden_layers=[768, 1024, 512],
                 emb_weight = text_processor.embedding_matrix,
                 max_seq_len = text_processor.max_seq_len,
                 use_weight_matrix = use_weight_matrix,
                 dropout=dropout,
+                use_latent=use_latent,
                 nheads=nheads,
                 normalize_weights=normalize_weights,
                 to_cuda=to_cuda)

@@ -2,30 +2,30 @@ import math
 import torch
 import torch.nn as nn
 from sklearn.preprocessing import normalize
-from .encoder import Encoder, LatentEncoder
+from .encoder import LatentEncoder
 from .decoder import Decoder
-from .aggregator import AttentionAggregator, CrossAttentionAggregator
+from .aggregator import CrossAttentionAggregator
 from .transformer import TransformerEncoder, TransformerEncoderLayer
 
 
 class CNP(nn.Module):
 
-    def __init__(self, hidden_repr, enc_hidden_layers, dec_hidden_layers, emb_weight,
-                       max_seq_len, use_weight_matrix, nheads=2, dropout=0.1,
+    def __init__(self, enc_hidden_layers, dec_hidden_layers, emb_weight,
+                       max_seq_len, use_weight_matrix, use_latent, nheads=2, dropout=0.1,
                        normalize_weights=True, to_cuda=False):
         super(CNP, self).__init__()
 
-        self.max_seq_len = max_seq_len
-
         embedding_size = emb_weight.shape[1]
-        pos_embedding_size = embedding_size
         output_size = embedding_size if use_weight_matrix else emb_weight.shape[0] - 1
         input_size = embedding_size
 
         self.encoder = TransformerEncoder(TransformerEncoderLayer(input_size, nheads, enc_hidden_layers[0], dropout), len(enc_hidden_layers))
-        self.latent_encoder = LatentEncoder(input_size, nheads, input_size, input_size, enc_hidden_layers[0], dropout, len(enc_hidden_layers), to_cuda)
         self.aggregator = CrossAttentionAggregator(embedding_size, nheads, dropout, to_cuda)
         self.decoder = Decoder(2 * input_size, dec_hidden_layers, output_size, dropout, to_cuda)
+        if use_latent:
+            self.latent_encoder = LatentEncoder(input_size, nheads, input_size, input_size, enc_hidden_layers[0], dropout, len(enc_hidden_layers), to_cuda)
+        else:
+            self.latent_encoder = None
 
         self.word_embeddings = nn.Embedding.from_pretrained(emb_weight, padding_idx=0)
 
@@ -48,12 +48,11 @@ class CNP(nn.Module):
             self.encoder = self.encoder.cuda()
             self.aggregator = self.aggregator.cuda()
             self.decoder = self.decoder.cuda()
+            self.pos_embeddings = self.pos_embeddings.cuda()
             if self.latent_encoder is not None:
                 self.latent_encoder = self.latent_encoder.cuda()
             if self.embedding_matrix is not None:
                 self.embedding_matrix = self.embedding_matrix.cuda()
-            if self.pos_embeddings is not None:
-                self.pos_embeddings = self.pos_embeddings.cuda()
 
 
     def forward(self, context_xs, context_ys, context_mask, target_xs, target_mask, sents=None):
@@ -63,32 +62,33 @@ class CNP(nn.Module):
         context = context_word_embeddings + context_pos_embeddings
         target_pos_embeddings = self.pos_embeddings(target_xs)
 
-
-
         context = context.transpose(0, 1)
         context_encodings = self.encoder(context, src_key_padding_mask=context_mask)
         context_encodings = context_encodings.transpose(0, 1)
-        prior = self.latent_encoder(context, context_mask)
         representations = self.aggregator(q=target_pos_embeddings, k=context_pos_embeddings, r=context_encodings, context_mask=context_mask, target_mask=target_mask)
 
-        # For Training
-        if sents:
-            sent_xs, sent_ys, sent_mask = sents[0], sents[1], sents[2]
-            sent_pos_embeddings = self.pos_embeddings(sent_xs)
-            sent_word_embeddings = self.word_embeddings(sent_ys)
-            latent_target = sent_pos_embeddings + sent_word_embeddings
-            latent_target = latent_target.transpose(0, 1)
-            posterior = self.latent_encoder(latent_target, sent_mask)
-            z = posterior
-
-        # For Generation
-        else:
-            z = prior
-
-        latent_representations = torch.repeat_interleave(z, target_pos_embeddings.shape[1], dim=1)
-
         target = representations + target_pos_embeddings
-        target = torch.cat((target, latent_representations), dim=2)
+
+        if self.latent_encoder is not None:
+            prior = self.latent_encoder(context, context_mask)
+
+            # For Training
+            if sents:
+                sent_xs, sent_ys, sent_mask = sents[0], sents[1], sents[2]
+                sent_pos_embeddings = self.pos_embeddings(sent_xs)
+                sent_word_embeddings = self.word_embeddings(sent_ys)
+                latent_target = sent_pos_embeddings + sent_word_embeddings
+                latent_target = latent_target.transpose(0, 1)
+                posterior = self.latent_encoder(latent_target, sent_mask)
+                z = posterior
+
+            # For Generation
+            else:
+                z = prior
+
+            latent_representations = torch.repeat_interleave(z, target_pos_embeddings.shape[1], dim=1)
+            target = torch.cat((target, latent_representations), dim=2)
+
 
         predictions = self.decoder(target)
 

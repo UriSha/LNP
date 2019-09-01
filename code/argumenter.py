@@ -58,6 +58,8 @@ input_arguments = [
     InputArgument("number_of_heads", "nheads", "number of heads for attention (default: 2)", 2, int),
     InputArgument("normalize_weights", "nw", "Whether to normalize weight matrix (default: True)", True, str2bool,
                   nargs="?", const=True),
+    InputArgument("use_latent", "ul", "Whether to use latent encoder (default: True)", True, str2bool,
+                  nargs="?", const=True),
     InputArgument("random_seed", "rs", "random_seed (default: randomly selected)", 0, int)
 ]
 
