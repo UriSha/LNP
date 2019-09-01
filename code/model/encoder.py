@@ -35,12 +35,27 @@ class Encoder(nn.Module):
         return x
 
 
+class SelfAttentionEncoder(torch.nn.Module):
+
+    def __init__(self, d_model, nheads, dim_feedforward, dropout, num_layers, to_cuda=False):
+        super(SelfAttentionEncoder, self).__init__()
+
+        self.encoder = TransformerEncoder(TransformerEncoderLayer(d_model, nheads, dim_feedforward, dropout), num_layers)
+
+        if to_cuda:
+            self.encoder = self.encoder.cuda()
+
+
+    def forward(self, x, x_mask=None):
+        return self.encoder(x, src_key_padding_mask=x_mask)
+
+
 class LatentEncoder(torch.nn.Module):
 
-    def __init__(self, d_model, nhead, num_hidden, num_latent, dim_feedforward, dropout, num_layers, to_cuda=False):
+    def __init__(self, d_model, nheads, num_hidden, num_latent, dim_feedforward, dropout, num_layers, to_cuda=False):
         super(LatentEncoder, self).__init__()
 
-        self.encoder = TransformerEncoder(TransformerEncoderLayer(d_model, nhead, dim_feedforward, dropout), num_layers)
+        self.encoder = TransformerEncoder(TransformerEncoderLayer(d_model, nheads, dim_feedforward, dropout), num_layers)
         self.aggregator = AverageAggregator()
         self.mu = nn.Linear(num_hidden, num_latent)
         self.log_sigma = nn.Linear(num_hidden, num_latent)

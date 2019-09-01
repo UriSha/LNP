@@ -2,10 +2,9 @@ import math
 import torch
 import torch.nn as nn
 from sklearn.preprocessing import normalize
-from .encoder import LatentEncoder
+from .encoder import SelfAttentionEncoder, LatentEncoder
 from .decoder import Decoder
 from .aggregator import CrossAttentionAggregator
-from .transformer import TransformerEncoder, TransformerEncoderLayer
 
 
 class CNP(nn.Module):
@@ -19,7 +18,7 @@ class CNP(nn.Module):
         output_size = embedding_size if use_weight_matrix else emb_weight.shape[0] - 1
         input_size = embedding_size
 
-        self.encoder = TransformerEncoder(TransformerEncoderLayer(input_size, nheads, enc_hidden_layers[0], dropout), len(enc_hidden_layers))
+        self.encoder = SelfAttentionEncoder(input_size, nheads, enc_hidden_layers[0], dropout, len(enc_hidden_layers), to_cuda)
         self.aggregator = CrossAttentionAggregator(embedding_size, nheads, dropout, to_cuda)
         self.decoder = Decoder(2 * input_size, dec_hidden_layers, output_size, dropout, to_cuda)
         if use_latent:
@@ -63,7 +62,7 @@ class CNP(nn.Module):
         target_pos_embeddings = self.pos_embeddings(target_xs)
 
         context = context.transpose(0, 1)
-        context_encodings = self.encoder(context, src_key_padding_mask=context_mask)
+        context_encodings = self.encoder(context, context_mask)
         context_encodings = context_encodings.transpose(0, 1)
         representations = self.aggregator(q=target_pos_embeddings, k=context_pos_embeddings, r=context_encodings, context_mask=context_mask, target_mask=target_mask)
 
