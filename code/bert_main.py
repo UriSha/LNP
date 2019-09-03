@@ -26,7 +26,7 @@ def main():
     logger = Logger()
     cur_dir = os.path.dirname(os.path.realpath(__file__))
 
-    random.seed(a=5)
+    random.seed(a=539463084)
 
     # text_processor = TextProcessor(os.path.join(cur_dir, "../data/APRC/APRC_new1.txt"),
     #                                             os.path.join(cur_dir, "../data/embeddings/wiki-news-300d-1M.vec"), test_size=test_size, mask_ratio=mask_ratio,
