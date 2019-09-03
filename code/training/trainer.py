@@ -11,10 +11,11 @@ from .sampler import Sampler
 class Trainer():
 
     def __init__(self, model, train_dataset, test_datasets, tags, batch_size, opt, learning_rate, momentum,
-                 epoch_count, acc_topk, print_interval, bleu_sents, to_cuda, logger, id2w):
+                 epoch_count, acc_topk, kl_weight, print_interval, bleu_sents, to_cuda, logger, id2w):
         self.model = model
         self.epoch_count = epoch_count
         self.acc_topk = acc_topk
+        self.kl_weight = kl_weight
         self.tags = tags
         self.bleu_sents = bleu_sents
         self.to_cuda = to_cuda
@@ -129,7 +130,7 @@ class Trainer():
 
             loss = self.loss_function(outputs_adjusted, target_ys_adjusted)
             if kl_divergence:
-                loss += kl_divergence
+                loss += self.kl_weight * kl_divergence
 
             if is_train:
                 loss.backward()

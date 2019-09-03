@@ -87,6 +87,7 @@ def main():
                       momentum=args.momentum,
                       epoch_count=args.epochs,
                       acc_topk=args.topk,
+                      kl_weight=args.kl_weight,
                       print_interval=args.print_interval,
                       bleu_sents=text_processor.bleu_sents,
                       to_cuda=args.to_cuda,

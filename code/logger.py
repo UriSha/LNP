@@ -11,7 +11,6 @@ class Logger():
         self.log_file = open(os.path.join(log_dir, "log.txt"), "w")
         self.log_dir = log_dir
 
-
     def log(self, *args, **kwargs):
         time_prefix = f"[{time.strftime('%H:%M:%S', time.localtime())}]"
         print(time_prefix, *args, **kwargs)
