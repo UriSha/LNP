@@ -24,7 +24,6 @@ class DatasetBert(Dataset):
             return self.mem[index]
 
         sent = self.sents[index]
-        sent = "[CLS] this book is such a great read . cant wait for the next one . [SEP]".split(" ")
         tokens_tensor, segments_tensors, indexed_masked_tokes_tensor, positions_to_predict_tensor = self.mask_sent(sent)
         if not self.random_every_time:
             self.mem[index] = tokens_tensor, segments_tensors, indexed_masked_tokes_tensor, positions_to_predict_tensor
@@ -72,55 +71,3 @@ class DatasetBert(Dataset):
 
 
         return tokens_tensor, segments_tensors, indexed_masked_tokes_tensor, positions_to_predict_tensor
-
-    def mask_sent1(self, sent):
-
-        mask_ratio = self.mask_ratios[self.current_mask_ratio_index]
-        self.current_mask_ratio_index = (self.current_mask_ratio_index + 1) % len(self.mask_ratios)
-
-        num_of_masks = int(len(sent) * mask_ratio)
-        num_of_masks = max(1, num_of_masks)
-
-        indices_to_mask = sorted(random.sample(range(len(sent)), num_of_masks))
-
-        masked_sent = ["<PAD>"] * self.max_seq_len
-        ys = ["<PAD>"] * self.max_seq_len
-        context_mask = [1] * self.max_seq_len
-        target_mask = [1] * self.max_masked_size
-
-        j = 0
-        k = 0
-        for i in range(len(sent) + 1):
-            if i == len(sent):
-                masked_sent.insert(i, "[SEP]")
-                target_mask.insert(j, 0)
-                j += 1
-            elif j < len(indices_to_mask) and i == indices_to_mask[j]:
-                masked_sent[i] = "[MASK]"
-                ys[j] = self.id2w[sent[i]]
-                target_mask[j] = 0
-                j += 1
-            else:
-                masked_sent[i] = self.id2w[sent[i]]
-                context_mask[k] = 0
-                k += 1
-
-        masked_sent.insert(0, "[CLS]")
-
-        tokenized_text = self.tokenizer.tokenize(masked_sent)
-        indexed_tokens = self.tokenizer.convert_tokens_to_ids(tokenized_text)
-        segments_ids = [0] * len(tokenized_text)
-
-        tokens_tensor = torch.tensor([indexed_tokens])
-        segments_tensors = torch.tensor([segments_ids])
-
-        context_mask = torch.ByteTensor(context_mask)
-        target_mask = torch.ByteTensor(target_mask)
-
-        if self.to_cuda:
-            tokens_tensor = tokens_tensor.cuda()
-            segments_tensors = segments_tensors.cuda()
-            context_mask = context_mask.cuda()
-            target_mask = target_mask.cuda()
-
-        return tokens_tensor, segments_tensors, context_mask, target_mask
