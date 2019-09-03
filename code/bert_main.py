@@ -20,6 +20,7 @@ def main():
     use_weight_matrix = True
     normalize_weights = True
     sequential = True
+    big_bert = True
 
     dropout = 0
     epoch_count = 20
@@ -60,7 +61,10 @@ def main():
     # tokens_tensor, segments_tensors, indexed_masked_tokes_tensor, positions_to_predict_tensor = train_dataset[0]
 
     print("Vocab size: ", len(text_processor.id2w))
-    model = BertForMaskedLM.from_pretrained('bert-large-uncased')
+    if big_bert:
+        model = BertForMaskedLM.from_pretrained('bert-large-uncased')
+    else:
+        model = BertForMaskedLM.from_pretrained('bert-base-uncased')
     if to_cuda:
         model = model.cuda()
 
