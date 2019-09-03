@@ -44,7 +44,12 @@ def main():
                                    rare_word_threshold=10,
                                    logger=logger)
 
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    if big_bert:
+        pretrained_model_name_or_path = 'bert-large-uncased'
+    else:
+        pretrained_model_name_or_path = 'bert-base-uncased'
+
+    tokenizer = BertTokenizer.from_pretrained(pretrained_model_name_or_path)
 
     eval_datasets = []
     eval_datasets.append(DatasetBert(text_processor.test25,
@@ -61,10 +66,9 @@ def main():
     # tokens_tensor, segments_tensors, indexed_masked_tokes_tensor, positions_to_predict_tensor = train_dataset[0]
 
     print("Vocab size: ", len(text_processor.id2w))
-    if big_bert:
-        model = BertForMaskedLM.from_pretrained('bert-large-uncased')
-    else:
-        model = BertForMaskedLM.from_pretrained('bert-base-uncased')
+    
+    model = BertForMaskedLM.from_pretrained(pretrained_model_name_or_path)
+
     if to_cuda:
         model = model.cuda()
 
