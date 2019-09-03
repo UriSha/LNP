@@ -80,12 +80,14 @@ def main():
             positions_to_predict_tensor = positions_to_predict_tensor.squeeze(dim=0)
             # Predict all tokens
             with torch.no_grad():
-                predictions = model(tokens_tensor, segments_tensors)
-                for indexed_to_predict, token_id_to_predict in zip(positions_to_predict_tensor, indexed_masked_tokes_tensor):
-                    # predicted_index = torch.argmax(predictions[0, indexed_to_predict]).item()
-                    # predicted_token = train_dataset.tokenizer.convert_ids_to_tokens([predicted_index])[0]
-                    loss = loss_function(predictions[0,indexed_to_predict].unsqueeze(dim=0), token_id_to_predict.unsqueeze(dim=0))
+                for j in range(len(indexed_masked_tokes_tensor)):
+                    predictions = model(tokens_tensor, segments_tensors)
+                    cur_indexed_to_predict = positions_to_predict_tensor[j]
+                    cur_token_id_to_predict = indexed_masked_tokes_tensor[j]
+                    loss = loss_function(predictions[0, cur_indexed_to_predict].unsqueeze(dim=0), cur_token_id_to_predict.unsqueeze(dim=0))
                     losses.append(loss.item())
+                    tokens_tensor[0, cur_indexed_to_predict] = torch.argmax(predictions[0, cur_indexed_to_predict]).item()
+
         avg_loss = sum(losses) / len(losses)
         print(f"Finished evaluating {tags[i]:.2f}, loss: {avg_loss:.2f}")
 
