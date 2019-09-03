@@ -81,4 +81,4 @@ class LatentEncoder(torch.nn.Module):
         eps = torch.randn_like(std)
         z = eps.mul(std).add_(mu)
 
-        return z
+        return mu, log_sigma, z

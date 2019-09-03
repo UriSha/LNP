@@ -3,6 +3,7 @@ import torch.nn as nn
 from nltk.translate.bleu_score import corpus_bleu
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
+
 from .bleu import corpus_bleu_with_joint_refrences, populate_predicted_and_ground_truth
 from .sampler import Sampler
 
@@ -38,8 +39,7 @@ class Trainer():
         self.train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
         self.test_loaders = []
         for test_dataset in test_datasets:
-                self.test_loaders.append(DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False))
-
+            self.test_loaders.append(DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False))
 
     def run(self):
 
@@ -53,7 +53,8 @@ class Trainer():
 
             # Train
             self.model.train_model()
-            cur_train_loss, cur_train_accuracy, _, _ = self.run_epoch(self.train_loader, self.train_sampler, True, False)
+            cur_train_loss, cur_train_accuracy, _, _ = self.run_epoch(self.train_loader, self.train_sampler, True,
+                                                                      False)
             train_loss_per_epoch.append(cur_train_loss)
 
             # Test
@@ -62,7 +63,8 @@ class Trainer():
             cur_test_losses = [None] * len(self.test_loaders)
             cur_test_accuracies = [None] * len(self.test_loaders)
             for i, test_loader in enumerate(self.test_loaders):
-                cur_test_loss, cur_test_accuracy, predicted_sentences, ground_truth_sentences = self.run_epoch(test_loader, self.test_samplers[i], False, calculate_bleu)
+                cur_test_loss, cur_test_accuracy, predicted_sentences, ground_truth_sentences = self.run_epoch(
+                    test_loader, self.test_samplers[i], False, calculate_bleu)
                 test_losses_per_epoch[i].append(cur_test_loss)
                 cur_test_losses[i] = cur_test_loss
                 cur_test_accuracies[i] = cur_test_accuracy
@@ -70,20 +72,23 @@ class Trainer():
                     predicted_sentences_i[i] = predicted_sentences
                     ground_truth_sentences_i[i] = ground_truth_sentences
 
-
             if calculate_bleu:
                 cur_eval_bleu_without_big_ref = []
                 cur_eval_bleu_with_big_ref = []
                 for i, test_loader in enumerate(self.test_loaders):
-                    cur_eval_bleu_without_big_ref.append(corpus_bleu(ground_truth_sentences_i[i], predicted_sentences_i[i]))
-                    self.logger.log("Calculating blue score for (%.2f) with total of %d references" % (self.tags[i], len(self.bleu_sents) + len(ground_truth_sentences_i[i])))
+                    cur_eval_bleu_without_big_ref.append(
+                        corpus_bleu(ground_truth_sentences_i[i], predicted_sentences_i[i]))
+                    self.logger.log("Calculating blue score for (%.2f) with total of %d references" % (
+                    self.tags[i], len(self.bleu_sents) + len(ground_truth_sentences_i[i])))
 
-                    cur_eval_bleu_with_big_ref.append(corpus_bleu_with_joint_refrences(self.bleu_sents, ground_truth_sentences_i[i], predicted_sentences_i[i]))
+                    cur_eval_bleu_with_big_ref.append(
+                        corpus_bleu_with_joint_refrences(self.bleu_sents, ground_truth_sentences_i[i],
+                                                         predicted_sentences_i[i]))
                 self.logger.log()
 
-
             if epoch % 1 == 0 or epoch == 1:
-                self.logger.log(f"Epoch [{epoch}/{self.epoch_count}] Train Loss: {cur_train_loss:.4f}, Train {self.__print_accuracy(cur_train_accuracy)}")
+                self.logger.log(
+                    f"Epoch [{epoch}/{self.epoch_count}] Train Loss: {cur_train_loss:.4f}, Train {self.__print_accuracy(cur_train_accuracy)}")
 
                 for i in range(len(self.test_loaders)):
                     msg = f"Epoch [{epoch}/{self.epoch_count}] Test Loss({self.tags[i]:.2f}): {cur_test_losses[i]:.4f}, Test {self.__print_accuracy(cur_test_accuracies[i])}"
@@ -92,7 +97,6 @@ class Trainer():
                     self.logger.log(msg)
 
         return train_loss_per_epoch, test_losses_per_epoch
-
 
     def run_epoch(self, loader, sampler, is_train, return_sentences):
 
@@ -115,12 +119,16 @@ class Trainer():
             # feedforward - backprop
             if is_train:
                 self.optimizer.zero_grad()
-                outputs = self.model(context_xs, context_ys, context_mask, target_xs, target_mask, (sent_xs, sent_ys, sent_mask))
+                outputs, kl_divergence = self.model(context_xs, context_ys, context_mask, target_xs, target_mask,
+                                     (sent_xs, sent_ys, sent_mask))
             else:
-                outputs = self.model(context_xs, context_ys, context_mask, target_xs, target_mask)
+                outputs, kl_divergence = self.model(context_xs, context_ys, context_mask, target_xs, target_mask)
 
             outputs_adjusted, target_ys_adjusted = self.__adjust_dimensions(outputs, target_ys)
+
             loss = self.loss_function(outputs_adjusted, target_ys_adjusted)
+            if kl_divergence:
+                loss += kl_divergence
 
             if is_train:
                 loss.backward()
@@ -131,7 +139,10 @@ class Trainer():
             sampler.sample(sent_ys[0], target_xs[0], outputs[0])
 
             if return_sentences:
-                batch_predicted_sentences, batch_ground_truth_sentences = populate_predicted_and_ground_truth(sent_ys, target_xs, outputs, self.id2w)
+                batch_predicted_sentences, batch_ground_truth_sentences = populate_predicted_and_ground_truth(sent_ys,
+                                                                                                              target_xs,
+                                                                                                              outputs,
+                                                                                                              self.id2w)
                 predicted_sentences.extend(batch_predicted_sentences)
                 ground_truth_sentences.extend(batch_ground_truth_sentences)
 
@@ -143,13 +154,11 @@ class Trainer():
 
         return epoch_loss, epoch_accuracy, predicted_sentences, ground_truth_sentences
 
-
     def __batch2var(self, batch_param, requires_grad=False):
         if self.to_cuda:
             batch_param = batch_param.cuda()
 
         return Variable(batch_param, requires_grad=requires_grad)
-
 
     def __adjust_dimensions(self, outputs, target_ys):
         a, b, c, = outputs.shape
@@ -158,7 +167,6 @@ class Trainer():
         target_ys = target_ys.reshape(a * b)
         target_ys = target_ys - 1  # subtract one to account for pad shifting
         return outputs, target_ys
-
 
     def __compute_accuracy(self, outputs, target_ys):
         topks = [min(topk, outputs.shape[1]) for topk in self.acc_topk]
@@ -172,7 +180,6 @@ class Trainer():
             mask_size = (target_ys == mask).sum().item()
             results.append((max_indices == target_ys.unsqueeze(dim=1)).sum().item() / (len(target_ys) - mask_size))
         return results
-
 
     def __print_accuracy(self, accuracies):
         accs = []

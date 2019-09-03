@@ -1,24 +1,27 @@
 import math
+
 import torch
 import torch.nn as nn
 from sklearn.preprocessing import normalize
-from .encoder import SelfAttentionEncoder, LatentEncoder
-from .decoder import Decoder
+
 from .aggregator import CrossAttentionAggregator
+from .decoder import Decoder
+from .encoder import SelfAttentionEncoder, LatentEncoder
 
 
 class CNP(nn.Module):
 
     def __init__(self, enc_hidden_layers, dec_hidden_layers, emb_weight,
-                       max_seq_len, use_weight_matrix, use_latent, nheads=2, dropout=0.1,
-                       normalize_weights=True, to_cuda=False):
+                 max_seq_len, use_weight_matrix, use_latent, nheads=2, dropout=0.1,
+                 normalize_weights=True, to_cuda=False):
         super(CNP, self).__init__()
 
         embedding_size = emb_weight.shape[1]
         output_size = embedding_size if use_weight_matrix else emb_weight.shape[0] - 1
         input_size = embedding_size
 
-        self.encoder = SelfAttentionEncoder(input_size, nheads, enc_hidden_layers[0], dropout, len(enc_hidden_layers), to_cuda)
+        self.encoder = SelfAttentionEncoder(input_size, nheads, enc_hidden_layers[0], dropout, len(enc_hidden_layers),
+                                            to_cuda)
         self.aggregator = CrossAttentionAggregator(embedding_size, nheads, dropout, to_cuda)
 
         decoder_input_size = input_size
@@ -27,7 +30,8 @@ class CNP(nn.Module):
 
         self.decoder = Decoder(decoder_input_size, dec_hidden_layers, output_size, dropout, to_cuda)
         if use_latent:
-            self.latent_encoder = LatentEncoder(input_size, nheads, input_size, input_size, enc_hidden_layers[0], dropout, len(enc_hidden_layers), to_cuda)
+            self.latent_encoder = LatentEncoder(input_size, nheads, input_size, input_size, enc_hidden_layers[0],
+                                                dropout, len(enc_hidden_layers), to_cuda)
         else:
             self.latent_encoder = None
 
@@ -58,7 +62,6 @@ class CNP(nn.Module):
             if self.embedding_matrix is not None:
                 self.embedding_matrix = self.embedding_matrix.cuda()
 
-
     def forward(self, context_xs, context_ys, context_mask, target_xs, target_mask, sents=None):
 
         context_word_embeddings = self.word_embeddings(context_ys)
@@ -69,12 +72,13 @@ class CNP(nn.Module):
         context = context.transpose(0, 1)
         context_encodings = self.encoder(context, context_mask)
         context_encodings = context_encodings.transpose(0, 1)
-        representations = self.aggregator(q=target_pos_embeddings, k=context_pos_embeddings, r=context_encodings, context_mask=context_mask, target_mask=target_mask)
+        representations = self.aggregator(q=target_pos_embeddings, k=context_pos_embeddings, r=context_encodings,
+                                          context_mask=context_mask, target_mask=target_mask)
 
         target = representations + target_pos_embeddings
 
         if self.latent_encoder is not None:
-            prior = self.latent_encoder(context, context_mask)
+            prior_mu, prior_var, prior = self.latent_encoder(context, context_mask)
 
             # For Training
             if sents:
@@ -83,7 +87,7 @@ class CNP(nn.Module):
                 sent_word_embeddings = self.word_embeddings(sent_ys)
                 latent_target = sent_pos_embeddings + sent_word_embeddings
                 latent_target = latent_target.transpose(0, 1)
-                posterior = self.latent_encoder(latent_target, sent_mask)
+                posterior_mu, posterior_var, posterior = self.latent_encoder(latent_target, sent_mask)
                 z = posterior
 
             # For Generation
@@ -93,14 +97,21 @@ class CNP(nn.Module):
             latent_representations = torch.repeat_interleave(z, target_pos_embeddings.shape[1], dim=1)
             target = torch.cat((target, latent_representations), dim=2)
 
-
         predictions = self.decoder(target)
 
         if self.embedding_matrix is not None:
             predictions = torch.matmul(predictions, self.embedding_matrix)
 
-        return predictions
+        kl = None
+        if self.latent_encoder is not None and sents is not None:
+            kl = self.kl_div(prior_mu, prior_var, posterior_mu, posterior_var)
 
+        return predictions, kl
+
+    def kl_div(self, prior_mu, prior_var, posterior_mu, posterior_var):
+        kl_div = (torch.exp(posterior_var) + (posterior_mu-prior_mu) ** 2) / torch.exp(prior_var) - 1. + (prior_var - posterior_var)
+        kl_div = 0.5 * kl_div.sum()
+        return kl_div
 
     def test_model(self):
         self.eval()
@@ -108,13 +119,11 @@ class CNP(nn.Module):
         self.decoder.eval()
         self.aggregator.eval()
 
-
     def train_model(self):
         self.train()
         self.encoder.train()
         self.decoder.train()
         self.aggregator.train()
-
 
     def __create_pos_embeddings_matrix(self, max_seq_len, embed_size):
         pe = torch.zeros(max_seq_len + 1, embed_size)
@@ -126,3 +135,4 @@ class CNP(nn.Module):
                     math.cos(pos / (10000 ** (i / embed_size)))
 
         return pe
+
