@@ -11,7 +11,8 @@ import torch.nn as nn
 
 
 def main():
-    to_cuda = False
+    to_cuda = torch.cuda.is_available()
+    print("to_cuda:", to_cuda)
     train_mask_rations = [0.25, 0.5]
     test_size = 10000
     topk = [1, 5, 10]
@@ -59,6 +60,8 @@ def main():
 
     print("Vocab size: ", len(text_processor.id2w))
     model = BertForMaskedLM.from_pretrained('bert-base-uncased')
+    if to_cuda:
+        model = model.cuda()
 
     print("Model has {} parameters".format(sum(p.numel() for p in model.parameters() if p.requires_grad)))
 
