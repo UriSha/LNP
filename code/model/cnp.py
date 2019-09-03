@@ -81,7 +81,7 @@ class CNP(nn.Module):
             prior_mu, prior_var, prior = self.latent_encoder(context, context_mask)
 
             # For Training
-            if sents:
+            if sents is not None:
                 sent_xs, sent_ys, sent_mask = sents[0], sents[1], sents[2]
                 sent_pos_embeddings = self.pos_embeddings(sent_xs)
                 sent_word_embeddings = self.word_embeddings(sent_ys)

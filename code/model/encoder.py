@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 from .aggregator import AverageAggregator
 from .transformer import TransformerEncoder, TransformerEncoderLayer
 
@@ -25,7 +26,6 @@ class Encoder(nn.Module):
                 self.dps[i] = self.dps[i].cuda()
             self.output_fc = self.output_fc.cuda()
 
-
     def forward(self, x, x_mask):
         for i in range(len(self.fcs)):
             x = self.fcs[i](x)
@@ -40,11 +40,11 @@ class SelfAttentionEncoder(torch.nn.Module):
     def __init__(self, d_model, nheads, dim_feedforward, dropout, num_layers, to_cuda=False):
         super(SelfAttentionEncoder, self).__init__()
 
-        self.encoder = TransformerEncoder(TransformerEncoderLayer(d_model, nheads, dim_feedforward, dropout), num_layers)
+        self.encoder = TransformerEncoder(TransformerEncoderLayer(d_model, nheads, dim_feedforward, dropout),
+                                          num_layers)
 
         if to_cuda:
             self.encoder = self.encoder.cuda()
-
 
     def forward(self, x, x_mask=None):
         return self.encoder(x, src_key_padding_mask=x_mask)
@@ -55,7 +55,8 @@ class LatentEncoder(torch.nn.Module):
     def __init__(self, d_model, nheads, num_hidden, num_latent, dim_feedforward, dropout, num_layers, to_cuda=False):
         super(LatentEncoder, self).__init__()
 
-        self.encoder = TransformerEncoder(TransformerEncoderLayer(d_model, nheads, dim_feedforward, dropout), num_layers)
+        self.encoder = TransformerEncoder(TransformerEncoderLayer(d_model, nheads, dim_feedforward, dropout),
+                                          num_layers)
         self.aggregator = AverageAggregator()
         self.mu = nn.Linear(num_hidden, num_latent)
         self.log_sigma = nn.Linear(num_hidden, num_latent)
@@ -65,7 +66,6 @@ class LatentEncoder(torch.nn.Module):
             self.aggregator = self.aggregator.cuda()
             self.mu = self.mu.cuda()
             self.log_sigma = self.log_sigma.cuda()
-
 
     def forward(self, x, x_mask=None):
         latent_representations = self.encoder(x, src_key_padding_mask=x_mask)
