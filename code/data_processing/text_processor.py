@@ -1,7 +1,8 @@
-import re
-import torch
 import random
+import re
 from collections import defaultdict
+
+import torch
 
 
 class TextProcessor():
@@ -29,7 +30,6 @@ class TextProcessor():
         self.test25 = self.test_sents[:test_size]
         self.test50 = self.test_sents[test_size:]
 
-
     def read_data(self, path, sents_limit):
         with open(path, "r") as f:
             if sents_limit:
@@ -45,7 +45,6 @@ class TextProcessor():
 
         return [sent.rstrip("\n").split(" ") for sent in text]
 
-
     def normalize_word(self, w):
         w = w.replace("`", "")
         if not bool(re.search(r'^\'\w', w)):
@@ -57,7 +56,6 @@ class TextProcessor():
                     if lst[2] not in ['i', 'a']:
                         return lst[:2]
         return lst
-
 
     def initiate_vocab(self, sents, rare_word_threshold, embed_file_path):
         max_len = 0
@@ -96,7 +94,6 @@ class TextProcessor():
                     self.logger.log("k = ", k)
                     self.logger.log("word_id = ", word_id)
 
-
         embed_list = [torch.zeros(vec_size)]
         new_w2id = {}
         new_w2id["<PAD>"] = 0
@@ -119,13 +116,13 @@ class TextProcessor():
                     new_id2w[new_word_id] = word
 
         ratio = rare_words_count / len(w2cnt)
-        self.logger.log(f"With rare_word_threshold = {rare_word_threshold}, the ratio of rare words (that were removed) is: {ratio}")
+        self.logger.log(
+            f"With rare_word_threshold = {rare_word_threshold}, the ratio of rare words (that were removed) is: {ratio}")
 
         self.embedding_matrix = torch.stack(embed_list)
         self.id2w = new_id2w
         self.max_seq_len = max_len
         self.sents = [[new_w2id[word] for word in sent] for sent in new_sents]
-
 
     def line_to_embedding(self, line_num, vec_size, embeddings_file_lines):
         if line_num == -1:
@@ -135,7 +132,6 @@ class TextProcessor():
         all_tokens = line.split(" ")
         # vector = list(map(float, all_tokens[1:]))
         return torch.tensor(list(map(float, (all_tokens[1:]))))
-
 
     def read_embeddings(self, file_path):
         """Assumes that the first line of the file is
@@ -159,7 +155,6 @@ class TextProcessor():
             if word not in w2id:
                 w2id[word] = words_count
                 words_count += 1
-
 
             # vector = list(map(float, all_tokens[1:]))
             # vector = torch.tensor(list(map(float, (all_tokens[1:]))))

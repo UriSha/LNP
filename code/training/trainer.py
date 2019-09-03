@@ -79,7 +79,7 @@ class Trainer():
                     cur_eval_bleu_without_big_ref.append(
                         corpus_bleu(ground_truth_sentences_i[i], predicted_sentences_i[i]))
                     self.logger.log("Calculating blue score for (%.2f) with total of %d references" % (
-                    self.tags[i], len(self.bleu_sents) + len(ground_truth_sentences_i[i])))
+                        self.tags[i], len(self.bleu_sents) + len(ground_truth_sentences_i[i])))
 
                     cur_eval_bleu_with_big_ref.append(
                         corpus_bleu_with_joint_refrences(self.bleu_sents, ground_truth_sentences_i[i],
@@ -120,7 +120,8 @@ class Trainer():
             if is_train:
                 self.optimizer.zero_grad()
                 outputs, kl_divergence = self.model(context_xs, context_ys, context_mask, target_xs, target_mask,
-                                     (sent_xs, sent_ys, sent_mask))
+                                                    # (sent_xs, sent_ys, sent_mask))
+                                                    (target_xs, target_ys, target_mask))
             else:
                 outputs, kl_divergence = self.model(context_xs, context_ys, context_mask, target_xs, target_mask)
 

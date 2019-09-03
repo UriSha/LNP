@@ -1,11 +1,12 @@
 import math
-import torch
 import random
+
+import torch
 from torch.utils.data import Dataset
 
 
 class DatasetNonContextual(Dataset):
-    
+
     def __init__(self, sents, max_seq_len, mask_ratios, random_every_time=False, to_cuda=True):
         self.sents = sents
         self.mask_ratios = mask_ratios
@@ -16,21 +17,20 @@ class DatasetNonContextual(Dataset):
         self.current_mask_ratio_index = 0
         self.random_every_time = random_every_time
 
-
     def __getitem__(self, index):
         if index in self.mem:
             return self.mem[index]
 
         sent = self.sents[index]
-        context_x, context_y, context_mask, target_x, target_y, target_mask, sent_x, sent_y, sent_mask = self.mask_sent(sent)
+        context_x, context_y, context_mask, target_x, target_y, target_mask, sent_x, sent_y, sent_mask = self.mask_sent(
+            sent)
         if not self.random_every_time:
-            self.mem[index] = context_x, context_y, context_mask, target_x, target_y, target_mask, sent_x, sent_y, sent_mask
+            self.mem[
+                index] = context_x, context_y, context_mask, target_x, target_y, target_mask, sent_x, sent_y, sent_mask
         return context_x, context_y, context_mask, target_x, target_y, target_mask, sent_x, sent_y, sent_mask
-
 
     def __len__(self):
         return len(self.sents)
-
 
     def mask_sent(self, sent):
         context_x = [self.max_seq_len] * self.max_seq_len
