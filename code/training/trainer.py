@@ -10,10 +10,11 @@ from .sampler import Sampler
 class Trainer():
 
     def __init__(self, model, train_dataset, test_datasets, tags, batch_size, opt, learning_rate, momentum,
-                 epoch_count, acc_topk, print_interval, bleu_sents, to_cuda, logger, id2w):
+                 epoch_count, acc_topk, kl_weight, print_interval, bleu_sents, to_cuda, logger, id2w):
         self.model = model
         self.epoch_count = epoch_count
         self.acc_topk = acc_topk
+        self.kl_weight = kl_weight
         self.tags = tags
         self.bleu_sents = bleu_sents
         self.to_cuda = to_cuda
@@ -115,18 +116,21 @@ class Trainer():
             # feedforward - backprop
             if is_train:
                 self.optimizer.zero_grad()
-                outputs = self.model(context_xs, context_ys, context_mask, target_xs, target_mask, (sent_xs, sent_ys, sent_mask))
+                outputs, kl = self.model(context_xs, context_ys, context_mask, target_xs, target_mask, (sent_xs, sent_ys, sent_mask))
             else:
-                outputs = self.model(context_xs, context_ys, context_mask, target_xs, target_mask)
+                outputs, kl = self.model(context_xs, context_ys, context_mask, target_xs, target_mask)
 
             outputs_adjusted, target_ys_adjusted = self.__adjust_dimensions(outputs, target_ys)
             loss = self.loss_function(outputs_adjusted, target_ys_adjusted)
+            losses.append(loss.item())
+
+            if kl is not None:
+                loss += self.kl_weight * kl
 
             if is_train:
                 loss.backward()
                 self.optimizer.step()
 
-            losses.append(loss.item())
             accuracies.append(self.__compute_accuracy(outputs_adjusted, target_ys_adjusted))
             sampler.sample(sent_ys[0], target_xs[0], outputs[0])
 

@@ -17,6 +17,7 @@ def main():
     use_weight_matrix = True
     normalize_weights = True
     use_latent = True
+    kl_weight = 1.0
 
     dropout = 0
     epoch_count = 20
@@ -77,6 +78,7 @@ def main():
                       momentum=0.9,
                       epoch_count=epoch_count,
                       acc_topk=topk,
+                      kl_weight=kl_weight,
                       print_interval=1,
                       bleu_sents=text_processor.bleu_sents,
                       to_cuda=to_cuda,

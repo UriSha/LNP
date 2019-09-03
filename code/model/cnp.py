@@ -70,8 +70,9 @@ class CNP(nn.Module):
 
         target = representations + target_pos_embeddings
 
+        kl = None
         if self.latent_encoder is not None:
-            prior = self.latent_encoder(context, context_mask)
+            prior_mu, prior_var, prior = self.latent_encoder(context, context_mask)
 
             # For Training
             if sents:
@@ -80,8 +81,9 @@ class CNP(nn.Module):
                 sent_word_embeddings = self.word_embeddings(sent_ys)
                 latent_target = sent_pos_embeddings + sent_word_embeddings
                 latent_target = latent_target.transpose(0, 1)
-                posterior = self.latent_encoder(latent_target, sent_mask)
+                posterior_mu, posterior_var, posterior = self.latent_encoder(latent_target, sent_mask)
                 z = posterior
+                kl = self.kl_div(prior_mu, prior_var, posterior_mu, posterior_var)
 
             # For Generation
             else:
@@ -96,7 +98,12 @@ class CNP(nn.Module):
         if self.embedding_matrix is not None:
             predictions = torch.matmul(predictions, self.embedding_matrix)
 
-        return predictions
+        return predictions, kl
+
+    def kl_div(self, prior_mu, prior_var, posterior_mu, posterior_var):
+        kl_div = (torch.exp(posterior_var) + (posterior_mu-prior_mu) ** 2) / torch.exp(prior_var) - 1. + (prior_var - posterior_var)
+        kl_div = 0.5 * kl_div.sum()
+        return kl_div
 
 
     def test_model(self):

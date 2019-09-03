@@ -60,7 +60,8 @@ input_arguments = [
                   nargs="?", const=True),
     InputArgument("use_latent", "ul", "Whether to use latent encoder (default: True)", True, str2bool,
                   nargs="?", const=True),
-    InputArgument("random_seed", "rs", "random_seed (default: randomly selected)", 0, int)
+    InputArgument("random_seed", "rs", "random_seed (default: randomly selected)", 0, int),
+    InputArgument("kl_weight", "kl", "Weight of KL divergence in the training loss (default: 1.0)", 1.0, float)
 ]
 
 
