@@ -104,7 +104,7 @@ def main():
                 with torch.no_grad():
                     predictions = model(tokens_tensor, segments_tensors)
                     for indexed_to_predict, token_id_to_predict in zip(positions_to_predict_tensor, indexed_masked_tokes_tensor):
-                        loss = loss_function(predictions[0,indexed_to_predict].unsqueeze(dim=0), token_id_to_predict.unsqueeze(dim=0))
+                        loss = loss_function(predictions[0, indexed_to_predict].unsqueeze(dim=0), token_id_to_predict.unsqueeze(dim=0))
                         losses.append(loss.item())
 
 
