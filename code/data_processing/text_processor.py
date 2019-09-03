@@ -9,7 +9,6 @@ class TextProcessor():
 
         self.logger = logger
         self.id2w = {}
-        self.w2id = {}
         self.max_seq_len = 0
         self.sents = None
         self.embedding_matrix = None
@@ -124,7 +123,6 @@ class TextProcessor():
 
         self.embedding_matrix = torch.stack(embed_list)
         self.id2w = new_id2w
-        self.w2id = new_w2id
         self.max_seq_len = max_len
         self.sents = [[new_w2id[word] for word in sent] for sent in new_sents]
 

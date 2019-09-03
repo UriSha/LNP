@@ -3,7 +3,7 @@ import random
 
 import torch
 from pytorch_pretrained_bert import BertForMaskedLM, BertTokenizer
-
+from torch.utils.data import DataLoader
 from bert_based.dataset_bert import DatasetBert
 from data_processing.text_processor import TextProcessor
 from logger import Logger
@@ -42,27 +42,20 @@ def main():
                                    logger=logger)
 
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    train_dataset = DatasetBert(text_processor.train_sents,
-                                text_processor.max_seq_len,
-                                mask_ratios=train_mask_rations,
-                                id2w=text_processor.id2w,
-                                w2id=text_processor.w2id,
-                                tokenizer=tokenizer,
-                                random_every_time=random_every_time,
-                                to_cuda=to_cuda)
+
     eval_datasets = []
     eval_datasets.append(DatasetBert(text_processor.test25,
                                      text_processor.max_seq_len,
                                      mask_ratios=[0.25],
-                                     id2w=text_processor.id2w, w2id=text_processor.w2id, tokenizer=tokenizer, to_cuda=to_cuda))
+                                     id2w=text_processor.id2w, tokenizer=tokenizer, to_cuda=to_cuda))
     eval_datasets.append(DatasetBert(text_processor.test50,
                                      text_processor.max_seq_len,
                                      mask_ratios=[0.5],
-                                     id2w=text_processor.id2w, w2id=text_processor.w2id, tokenizer=tokenizer, to_cuda=to_cuda))
+                                     id2w=text_processor.id2w, tokenizer=tokenizer, to_cuda=to_cuda))
 
     tags = [eval_ds.mask_ratios[0] for eval_ds in eval_datasets]
 
-    tokens_tensor, segments_tensors, indexed_masked_tokes_tensor, positions_to_predict_tensor = train_dataset[0]
+    # tokens_tensor, segments_tensors, indexed_masked_tokes_tensor, positions_to_predict_tensor = train_dataset[0]
 
     print("Vocab size: ", len(text_processor.id2w))
     model = BertForMaskedLM.from_pretrained('bert-base-uncased')
@@ -73,39 +66,28 @@ def main():
 
     loss_function = nn.CrossEntropyLoss()
 
-    # Predict all tokens
-    with torch.no_grad():
-        predictions = model(tokens_tensor, segments_tensors)
+    eval_loaders = []
+    for eval_dataset in eval_datasets:
+        eval_loaders.append(DataLoader(dataset=eval_dataset, batch_size=1, shuffle=False))
 
-    for indexed_to_predict, token_id_to_predict in zip(positions_to_predict_tensor, indexed_masked_tokes_tensor):
-        predicted_index = torch.argmax(predictions[0, indexed_to_predict]).item()
-        predicted_token = train_dataset.tokenizer.convert_ids_to_tokens([predicted_index])[0]
-        loss = loss_function(predictions[0,indexed_to_predict].unsqueeze(dim=0), token_id_to_predict.unsqueeze(dim=0))
-        print(f"loss: {loss.item()}")
-
-    print(predicted_token)
-    x=4
-
-    # print(list(model.decoder.parameters()))
-    # trainer = Trainer(model=model,
-    #                   train_dataset=train_dataset,
-    #                   test_datasets=eval_datasets,
-    #                   tags=tags,
-    #                   batch_size=70,
-    #                   opt="ADAM",
-    #                   learning_rate=0.001,
-    #                   momentum=0.9,
-    #                   epoch_count=epoch_count,
-    #                   acc_topk=topk,
-    #                   print_interval=1,
-    #                   bleu_sents=text_processor.bleu_sents,
-    #                   to_cuda=to_cuda,
-    #                   logger=logger,
-    #                   id2w=text_processor.id2w)
-    # train_loss, test_losses = trainer.run()
-    # plotter = Plotter(train_loss, test_losses, tags, logger)
-    # plotter.plot()
-
+    for i, eval_loader in enumerate(eval_loaders):
+        print(f"Evaluating: {tags[i]}")
+        losses = []
+        for tokens_tensor, segments_tensors, indexed_masked_tokes_tensor, positions_to_predict_tensor in eval_loader:
+            tokens_tensor = tokens_tensor.squeeze(dim=0)
+            segments_tensors = segments_tensors.squeeze(dim=0)
+            indexed_masked_tokes_tensor = indexed_masked_tokes_tensor.squeeze(dim=0)
+            positions_to_predict_tensor = positions_to_predict_tensor.squeeze(dim=0)
+            # Predict all tokens
+            with torch.no_grad():
+                predictions = model(tokens_tensor, segments_tensors)
+                for indexed_to_predict, token_id_to_predict in zip(positions_to_predict_tensor, indexed_masked_tokes_tensor):
+                    # predicted_index = torch.argmax(predictions[0, indexed_to_predict]).item()
+                    # predicted_token = train_dataset.tokenizer.convert_ids_to_tokens([predicted_index])[0]
+                    loss = loss_function(predictions[0,indexed_to_predict].unsqueeze(dim=0), token_id_to_predict.unsqueeze(dim=0))
+                    losses.append(loss.item())
+        avg_loss = sum(losses) / len(losses)
+        print(f"Finished evaluating {tags[i]:.2f}, loss: {avg_loss:.2f}")
 
 if __name__ == "__main__":
     main()

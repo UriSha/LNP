@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 
 
 class DatasetBert(Dataset):
-    def __init__(self, sents, max_seq_len, mask_ratios, id2w, w2id, tokenizer, random_every_time=False, to_cuda=True):
+    def __init__(self, sents, max_seq_len, mask_ratios, id2w, tokenizer, random_every_time=False, to_cuda=True):
         self.sents = [["[CLS]"] + [id2w[word_id] for word_id in sent] + ["[SEP]"] for sent in sents]
         self.mask_ratios = mask_ratios
         self.max_seq_len = max_seq_len
@@ -16,7 +16,6 @@ class DatasetBert(Dataset):
         self.current_mask_ratio_index = 0
         self.random_every_time = random_every_time
         self.id2w = id2w
-        self.w2id = w2id
         self.tokenizer = tokenizer
 
     def __getitem__(self, index):
