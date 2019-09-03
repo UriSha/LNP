@@ -31,6 +31,13 @@ model.eval()
 with torch.no_grad():
     predictions = model(tokens_tensor, segments_tensors)
 
+
+#
+print(torch.sum(predictions,2))
+
+
+
+
 predicted_index = torch.argmax(predictions[0, masked_index]).item()
 predicted_token = tokenizer.convert_ids_to_tokens([predicted_index])[0]
 
@@ -40,3 +47,5 @@ predicted_index = torch.argmax(predictions[0, masked_index2]).item()
 predicted_token = tokenizer.convert_ids_to_tokens([predicted_index])[0]
 
 print(predicted_token)
+
+
