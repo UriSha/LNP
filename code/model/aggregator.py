@@ -60,11 +60,11 @@ class CrossAttentionAggregator(nn.Module):
             self.multihead_attention = self.multihead_attention.cuda()
 
 
-    def forward(self, q, k, r, context_mask, target_mask):
+    def forward(self, q, k, r, context_mask):
         q = q.transpose(0, 1)
         k = k.transpose(0, 1)
         r = r.transpose(0, 1)
-        rep = self.multihead_attention(q, k, r, context_mask)
+        rep = self.multihead_attention(q, k, r, key_padding_mask=context_mask)
         rep = rep[0].transpose(0, 1)
 
         return rep

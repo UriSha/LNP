@@ -21,15 +21,12 @@ class CNP(nn.Module):
         self.encoder = SelfAttentionEncoder(input_size, nheads, enc_hidden_layers[0], dropout, len(enc_hidden_layers), to_cuda)
         self.aggregator = CrossAttentionAggregator(embedding_size, nheads, dropout, to_cuda)
 
-        decoder_input_size = input_size
-        if use_latent:
-            decoder_input_size = 2 * input_size
-
-        self.decoder = Decoder(decoder_input_size, dec_hidden_layers, output_size, dropout, to_cuda)
         if use_latent:
             self.latent_encoder = LatentEncoder(input_size, nheads, input_size, input_size, enc_hidden_layers[0], dropout, len(enc_hidden_layers), to_cuda)
+            self.decoder = Decoder(2 * input_size, dec_hidden_layers, output_size, dropout, to_cuda)
         else:
             self.latent_encoder = None
+            self.decoder = Decoder(input_size, dec_hidden_layers, output_size, dropout, to_cuda)
 
         self.word_embeddings = nn.Embedding.from_pretrained(emb_weight, padding_idx=0)
 
@@ -69,7 +66,7 @@ class CNP(nn.Module):
         context = context.transpose(0, 1)
         context_encodings = self.encoder(context, context_mask)
         context_encodings = context_encodings.transpose(0, 1)
-        representations = self.aggregator(q=target_pos_embeddings, k=context_pos_embeddings, r=context_encodings, context_mask=context_mask, target_mask=target_mask)
+        representations = self.aggregator(q=target_pos_embeddings, k=context_pos_embeddings, r=context_encodings, context_mask=context_mask)
 
         target = representations + target_pos_embeddings
 
