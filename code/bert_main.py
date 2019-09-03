@@ -13,7 +13,7 @@ import torch.nn as nn
 def main():
     to_cuda = False
     train_mask_rations = [0.25, 0.5]
-    test_size = 0.5
+    test_size = 10000
     topk = [1, 5, 10]
     nheads = 2
     use_weight_matrix = True
@@ -34,11 +34,11 @@ def main():
     # text_processor = TextProcessor(os.path.join(cur_dir, "../data/APRC/APRC_small_mock.txt"),
     #                                             os.path.join(cur_dir, "../data/embeddings/wiki-news-300d-1M.vec"), test_size=test_size, mask_ratio=mask_ratio,
     #                                             sents_limit=10000, rare_word_threshold=1, use_weight_loss=True)
-    text_processor = TextProcessor(os.path.join(cur_dir, "../data/APRC/APRC_small_mock1.txt"),
-                                   os.path.join(cur_dir, "../data/embeddings/small_fasttext.txt"),
+    text_processor = TextProcessor(os.path.join(cur_dir, "../data/APRC/APRC_new2.txt"),
+                                   os.path.join(cur_dir, "../data/embeddings/wiki-news-300d-1M.vec"),
                                    test_size=test_size,
-                                   sents_limit=10000,
-                                   rare_word_threshold=0,
+                                   sents_limit=0,
+                                   rare_word_threshold=10,
                                    logger=logger)
 
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
