@@ -19,6 +19,7 @@ def main():
     nheads = 2
     use_weight_matrix = True
     normalize_weights = True
+    sequential = True
 
     dropout = 0
     epoch_count = 20
@@ -59,7 +60,7 @@ def main():
     # tokens_tensor, segments_tensors, indexed_masked_tokes_tensor, positions_to_predict_tensor = train_dataset[0]
 
     print("Vocab size: ", len(text_processor.id2w))
-    model = BertForMaskedLM.from_pretrained('bert-base-uncased')
+    model = BertForMaskedLM.from_pretrained('bert-large-uncased')
     if to_cuda:
         model = model.cuda()
 
@@ -73,23 +74,39 @@ def main():
     for eval_dataset in eval_datasets:
         eval_loaders.append(DataLoader(dataset=eval_dataset, batch_size=1, shuffle=False))
 
-    for i, eval_loader in enumerate(eval_loaders):
-        print(f"Evaluating: {tags[i]}")
-        losses = []
-        for tokens_tensor, segments_tensors, indexed_masked_tokes_tensor, positions_to_predict_tensor in eval_loader:
-            tokens_tensor = tokens_tensor.squeeze(dim=0)
-            segments_tensors = segments_tensors.squeeze(dim=0)
-            indexed_masked_tokes_tensor = indexed_masked_tokes_tensor.squeeze(dim=0)
-            positions_to_predict_tensor = positions_to_predict_tensor.squeeze(dim=0)
-            # Predict all tokens
-            with torch.no_grad():
-                for j in range(len(indexed_masked_tokes_tensor)):
+    if sequential:
+        for i, eval_loader in enumerate(eval_loaders):
+            print(f"Evaluating: {tags[i]}")
+            losses = []
+            for tokens_tensor, segments_tensors, indexed_masked_tokes_tensor, positions_to_predict_tensor in eval_loader:
+                tokens_tensor = tokens_tensor.squeeze(dim=0)
+                segments_tensors = segments_tensors.squeeze(dim=0)
+                indexed_masked_tokes_tensor = indexed_masked_tokes_tensor.squeeze(dim=0)
+                positions_to_predict_tensor = positions_to_predict_tensor.squeeze(dim=0)
+                # Predict all tokens
+                with torch.no_grad():
+                    for j in range(len(indexed_masked_tokes_tensor)):
+                        predictions = model(tokens_tensor, segments_tensors)
+                        cur_indexed_to_predict = positions_to_predict_tensor[j]
+                        cur_token_id_to_predict = indexed_masked_tokes_tensor[j]
+                        loss = loss_function(predictions[0, cur_indexed_to_predict].unsqueeze(dim=0), cur_token_id_to_predict.unsqueeze(dim=0))
+                        losses.append(loss.item())
+                        tokens_tensor[0, cur_indexed_to_predict] = torch.argmax(predictions[0, cur_indexed_to_predict]).item()
+    else:
+        for i, eval_loader in enumerate(eval_loaders):
+            print(f"Evaluating: {tags[i]}")
+            losses = []
+            for tokens_tensor, segments_tensors, indexed_masked_tokes_tensor, positions_to_predict_tensor in eval_loader:
+                tokens_tensor = tokens_tensor.squeeze(dim=0)
+                segments_tensors = segments_tensors.squeeze(dim=0)
+                indexed_masked_tokes_tensor = indexed_masked_tokes_tensor.squeeze(dim=0)
+                positions_to_predict_tensor = positions_to_predict_tensor.squeeze(dim=0)
+                with torch.no_grad():
                     predictions = model(tokens_tensor, segments_tensors)
-                    cur_indexed_to_predict = positions_to_predict_tensor[j]
-                    cur_token_id_to_predict = indexed_masked_tokes_tensor[j]
-                    loss = loss_function(predictions[0, cur_indexed_to_predict].unsqueeze(dim=0), cur_token_id_to_predict.unsqueeze(dim=0))
-                    losses.append(loss.item())
-                    tokens_tensor[0, cur_indexed_to_predict] = torch.argmax(predictions[0, cur_indexed_to_predict]).item()
+                    for indexed_to_predict, token_id_to_predict in zip(positions_to_predict_tensor, indexed_masked_tokes_tensor):
+                        loss = loss_function(predictions[0,indexed_to_predict].unsqueeze(dim=0), token_id_to_predict.unsqueeze(dim=0))
+                        losses.append(loss.item())
+
 
         avg_loss = sum(losses) / len(losses)
         print(f"Finished evaluating {tags[i]:.2f}, loss: {avg_loss:.2f}")
