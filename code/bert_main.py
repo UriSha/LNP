@@ -100,6 +100,9 @@ def main():
                         loss = loss_function(predictions[0, cur_indexed_to_predict].unsqueeze(dim=0), cur_token_id_to_predict.unsqueeze(dim=0))
                         losses.append(loss.item())
                         tokens_tensor[0, cur_indexed_to_predict] = torch.argmax(predictions[0, cur_indexed_to_predict]).item()
+
+            avg_loss = sum(losses) / len(losses)
+            print(f"Finished evaluating {tags[i]:.2f}, loss: {avg_loss:.2f}")
     else:
         for i, eval_loader in enumerate(eval_loaders):
             print(f"Evaluating: {tags[i]}")
@@ -116,8 +119,8 @@ def main():
                         losses.append(loss.item())
 
 
-        avg_loss = sum(losses) / len(losses)
-        print(f"Finished evaluating {tags[i]:.2f}, loss: {avg_loss:.2f}")
+            avg_loss = sum(losses) / len(losses)
+            print(f"Finished evaluating {tags[i]:.2f}, loss: {avg_loss:.2f}")
 
 if __name__ == "__main__":
     main()
