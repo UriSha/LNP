@@ -402,17 +402,17 @@ def main():
 
     ## Required parameters
     parser.add_argument("--train_corpus",
-                        default=None,
+                        default="../data/APRC/APRC_new2.txt",
                         type=str,
-                        required=True,
+                        required=False,
                         help="The input train corpus.")
-    parser.add_argument("--bert_model", default=None, type=str, required=True,
+    parser.add_argument("--bert_model", default="bert-base-uncased", type=str, required=False,
                         help="Bert pre-trained model selected in the list: bert-base-uncased, "
                              "bert-large-uncased, bert-base-cased, bert-base-multilingual, bert-base-chinese.")
     parser.add_argument("--output_dir",
-                        default=None,
+                        default="bert_finetuned",
                         type=str,
-                        required=True,
+                        required=False,
                         help="The output directory where the model checkpoints will be written.")
 
     ## Other parameters
