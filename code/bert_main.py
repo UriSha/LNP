@@ -5,29 +5,45 @@ import torch
 import torch.nn as nn
 from pytorch_pretrained_bert import BertForMaskedLM, BertTokenizer
 from torch.utils.data import DataLoader
-
+import argparse
 from bert_based.dataset_bert import DatasetBert
 from data_processing.text_processor import TextProcessor
 from logger import Logger
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-bm', '--bert_fine_tuned_path',
+                        help="bert_fine_tuned_path",
+                        default='bert_based/bert_finetuned/pytorch_model.bin')
+    parser.add_argument('-se', '--sequential',
+                        help="sequential (default: True)",
+                        default=True, type=bool)
+    parser.add_argument('-sb', '--use_small_bert',
+                        help="sequential (default: True)",
+                        default=True, type=bool)
+    args = parser.parse_args()
     to_cuda = torch.cuda.is_available()
-    print("to_cuda:", to_cuda)
-    bert_fine_tuned_path = "bert_based/bert_finetuned/pytorch_model.bin"
-    print("bert_fine_tuned_path", bert_fine_tuned_path)
+
+    bert_fine_tuned_path = args.bert_fine_tuned_path
     train_mask_rations = [0.25, 0.5]
     test_size = 10000
     topk = [1, 5, 10]
     nheads = 2
     use_weight_matrix = True
     normalize_weights = True
-    sequential = False
-    big_bert = False
+    sequential = args.sequential
+    small_bert = args.use_small_bert
 
     dropout = 0
     epoch_count = 20
     random_every_time = True
+
+    print("to_cuda:", to_cuda)
+    print("bert_fine_tuned_path", bert_fine_tuned_path)
+    print("sequential", sequential)
+    print("small_bert", small_bert)
+
 
     logger = Logger()
     cur_dir = os.path.dirname(os.path.realpath(__file__))
@@ -48,12 +64,12 @@ def main():
                                    rare_word_threshold=10,
                                    logger=logger)
 
-    if big_bert:
-        print("will use bert large")
-        pretrained_model_name_or_path = 'bert-large-uncased'
-    else:
+    if small_bert:
         print("will use bert base")
         pretrained_model_name_or_path = 'bert-base-uncased'
+    else:
+        print("will use bert large")
+        pretrained_model_name_or_path = 'bert-large-uncased'
 
     tokenizer = BertTokenizer.from_pretrained(pretrained_model_name_or_path)
 
