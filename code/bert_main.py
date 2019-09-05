@@ -22,6 +22,9 @@ def main():
     parser.add_argument('-sb', '--use_small_bert',
                         help="sequential (default: True)",
                         default="True")
+    parser.add_argument('-pw', '--print_w',
+                        help="print_w (default: True)",
+                        default="True")
     args = parser.parse_args()
     to_cuda = torch.cuda.is_available()
 
@@ -34,6 +37,7 @@ def main():
     normalize_weights = True
     sequential = args.sequential if args.sequential == "True" else False
     small_bert = args.use_small_bert if  args.use_small_bert == "True" else False
+    print_w = args.print_w if  args.print_w == "True" else False
 
     dropout = 0
     epoch_count = 20
@@ -43,6 +47,7 @@ def main():
     print("bert_fine_tuned_path", bert_fine_tuned_path)
     print("sequential", sequential)
     print("small_bert", small_bert)
+    print("print_w", print_w)
 
 
     logger = Logger()
@@ -89,16 +94,20 @@ def main():
 
     model = BertForMaskedLM.from_pretrained(pretrained_model_name_or_path)
 
-    print("bert weights")
-    for param_tensor in model.state_dict():
-        print(param_tensor, "\t", model.state_dict()[param_tensor].size())
+    if print_w:
+        print("bert weights")
+        for param_tensor in model.state_dict():
+            print(param_tensor, "\t", model.state_dict()[param_tensor].size())
     print()
     if bert_fine_tuned_path is not None:
         print("starting to load pre-trained bert")
-        print("bert_fine_tuned_state_dict:")
         bert_fine_tuned_state_dict = torch.load(bert_fine_tuned_path)
-        for param_tensor in bert_fine_tuned_state_dict:
-            print(param_tensor, "\t", model.state_dict()[param_tensor].size())
+
+        if print_w:
+            print("bert_fine_tuned_state_dict:")
+            for param_tensor in bert_fine_tuned_state_dict:
+                print(param_tensor, "\t", model.state_dict()[param_tensor].size())
+
         model.load_state_dict(bert_fine_tuned_state_dict)
         print("loaded pre-trained bert")
 
