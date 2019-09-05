@@ -89,9 +89,16 @@ def main():
 
     model = BertForMaskedLM.from_pretrained(pretrained_model_name_or_path)
 
+    print("bert weights")
+    for param_tensor in model.state_dict():
+        print(param_tensor, "\t", model.state_dict()[param_tensor].size())
+    print()
     if bert_fine_tuned_path is not None:
         print("starting to load pre-trained bert")
+        print("bert_fine_tuned_state_dict:")
         bert_fine_tuned_state_dict = torch.load(bert_fine_tuned_path)
+        for param_tensor in bert_fine_tuned_state_dict:
+            print(param_tensor, "\t", model.state_dict()[param_tensor].size())
         model.load_state_dict(bert_fine_tuned_state_dict)
         print("loaded pre-trained bert")
 
