@@ -2,17 +2,20 @@ import os
 import random
 
 import torch
+import torch.nn as nn
 from pytorch_pretrained_bert import BertForMaskedLM, BertTokenizer
 from torch.utils.data import DataLoader
+
 from bert_based.dataset_bert import DatasetBert
 from data_processing.text_processor import TextProcessor
 from logger import Logger
-import torch.nn as nn
 
 
 def main():
     to_cuda = torch.cuda.is_available()
     print("to_cuda:", to_cuda)
+    bert_fine_tuned_path = "bert_based/bert_finetuned/pytorch_model.bin"
+    print("bert_fine_tuned_path", bert_fine_tuned_path)
     train_mask_rations = [0.25, 0.5]
     test_size = 10000
     topk = [1, 5, 10]
@@ -20,7 +23,7 @@ def main():
     use_weight_matrix = True
     normalize_weights = True
     sequential = True
-    big_bert = True
+    big_bert = False
 
     dropout = 0
     epoch_count = 20
@@ -37,6 +40,7 @@ def main():
     # text_processor = TextProcessor(os.path.join(cur_dir, "../data/APRC/APRC_small_mock.txt"),
     #                                             os.path.join(cur_dir, "../data/embeddings/wiki-news-300d-1M.vec"), test_size=test_size, mask_ratio=mask_ratio,
     #                                             sents_limit=10000, rare_word_threshold=1, use_weight_loss=True)
+    print("init text_processor")
     text_processor = TextProcessor(os.path.join(cur_dir, "../data/APRC/APRC_new2.txt"),
                                    os.path.join(cur_dir, "../data/embeddings/wiki-news-300d-1M.vec"),
                                    test_size=test_size,
@@ -45,8 +49,10 @@ def main():
                                    logger=logger)
 
     if big_bert:
+        print("will use bert large")
         pretrained_model_name_or_path = 'bert-large-uncased'
     else:
+        print("will use bert base")
         pretrained_model_name_or_path = 'bert-base-uncased'
 
     tokenizer = BertTokenizer.from_pretrained(pretrained_model_name_or_path)
@@ -63,11 +69,16 @@ def main():
 
     tags = [eval_ds.mask_ratios[0] for eval_ds in eval_datasets]
 
-    # tokens_tensor, segments_tensors, indexed_masked_tokes_tensor, positions_to_predict_tensor = train_dataset[0]
-
     print("Vocab size: ", len(text_processor.id2w))
-    
+
     model = BertForMaskedLM.from_pretrained(pretrained_model_name_or_path)
+
+    if bert_fine_tuned_path is not None:
+        print("starting to load pre-trained bert")
+        best_model = torch.load(bert_fine_tuned_path)
+        state_dict = best_model.state_dict()
+        model.load_state_dict(state_dict)
+        print("loaded pre-trained bert")
 
     if to_cuda:
         model = model.cuda()
@@ -97,9 +108,11 @@ def main():
                         predictions = model(tokens_tensor, segments_tensors)
                         cur_indexed_to_predict = positions_to_predict_tensor[j]
                         cur_token_id_to_predict = indexed_masked_tokes_tensor[j]
-                        loss = loss_function(predictions[0, cur_indexed_to_predict].unsqueeze(dim=0), cur_token_id_to_predict.unsqueeze(dim=0))
+                        loss = loss_function(predictions[0, cur_indexed_to_predict].unsqueeze(dim=0),
+                                             cur_token_id_to_predict.unsqueeze(dim=0))
                         losses.append(loss.item())
-                        tokens_tensor[0, cur_indexed_to_predict] = torch.argmax(predictions[0, cur_indexed_to_predict]).item()
+                        tokens_tensor[0, cur_indexed_to_predict] = torch.argmax(
+                            predictions[0, cur_indexed_to_predict]).item()
 
             avg_loss = sum(losses) / len(losses)
             print(f"Finished evaluating {tags[i]:.2f}, loss: {avg_loss:.2f}")
@@ -114,13 +127,15 @@ def main():
                 positions_to_predict_tensor = positions_to_predict_tensor.squeeze(dim=0)
                 with torch.no_grad():
                     predictions = model(tokens_tensor, segments_tensors)
-                    for indexed_to_predict, token_id_to_predict in zip(positions_to_predict_tensor, indexed_masked_tokes_tensor):
-                        loss = loss_function(predictions[0, indexed_to_predict].unsqueeze(dim=0), token_id_to_predict.unsqueeze(dim=0))
+                    for indexed_to_predict, token_id_to_predict in zip(positions_to_predict_tensor,
+                                                                       indexed_masked_tokes_tensor):
+                        loss = loss_function(predictions[0, indexed_to_predict].unsqueeze(dim=0),
+                                             token_id_to_predict.unsqueeze(dim=0))
                         losses.append(loss.item())
-
 
             avg_loss = sum(losses) / len(losses)
             print(f"Finished evaluating {tags[i]:.2f}, loss: {avg_loss:.2f}")
+
 
 if __name__ == "__main__":
     main()
