@@ -91,9 +91,8 @@ def main():
 
     if bert_fine_tuned_path is not None:
         print("starting to load pre-trained bert")
-        best_model = torch.load(bert_fine_tuned_path)
-        state_dict = best_model.state_dict()
-        model.load_state_dict(state_dict)
+        bert_fine_tuned_state_dict = torch.load(bert_fine_tuned_path)
+        model.load_state_dict(bert_fine_tuned_state_dict)
         print("loaded pre-trained bert")
 
     if to_cuda:
