@@ -22,7 +22,7 @@ def main():
     nheads = 2
     use_weight_matrix = True
     normalize_weights = True
-    sequential = True
+    sequential = False
     big_bert = False
 
     dropout = 0
