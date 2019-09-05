@@ -18,10 +18,10 @@ def main():
                         default='bert_based/bert_finetuned/pytorch_model.bin')
     parser.add_argument('-se', '--sequential',
                         help="sequential (default: True)",
-                        default=True, type=bool)
+                        default="True")
     parser.add_argument('-sb', '--use_small_bert',
                         help="sequential (default: True)",
-                        default=True, type=bool)
+                        default="True")
     args = parser.parse_args()
     to_cuda = torch.cuda.is_available()
 
@@ -32,8 +32,8 @@ def main():
     nheads = 2
     use_weight_matrix = True
     normalize_weights = True
-    sequential = args.sequential
-    small_bert = args.use_small_bert
+    sequential = args.sequential if args.sequential == "True" else False
+    small_bert = args.use_small_bert if  args.use_small_bert == "True" else False
 
     dropout = 0
     epoch_count = 20
