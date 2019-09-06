@@ -18,7 +18,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-bm', '--bert_fine_tuned_path',
                         help="bert_fine_tuned_path",
-                        default='bert_based/bert_finetuned/pytorch_model.bin')
+                        default='bert_finetuned/pytorch_model.bin')
     parser.add_argument('-se', '--sequential',
                         help="sequential (default: True)",
                         default="False")
@@ -33,6 +33,8 @@ def main():
 
 
     bert_fine_tuned_path = args.bert_fine_tuned_path
+    if bert_fine_tuned_path == "None":
+        bert_fine_tuned_path = None
    # bert_fine_tuned_path = None
     test_size = 10000
     sequential = args.sequential if args.sequential == "True" else False
@@ -145,8 +147,13 @@ def main():
     if sequential:
         for i, eval_loader in enumerate(eval_loaders):
             print(f"Evaluating: {tags[i]}")
+            golden_sents.append([])
+            predicted_sents.append([])
             losses = []
             for tokens_tensor, segments_tensors, indexed_masked_tokes_tensor, positions_to_predict_tensor in eval_loader:
+                golden_sent = list(map(int, tokens_tensor.clone().squeeze()))
+                predicted_sent = list(map(int, tokens_tensor.clone().squeeze()))
+
                 tokens_tensor = tokens_tensor.squeeze(dim=0)
                 segments_tensors = segments_tensors.squeeze(dim=0)
                 indexed_masked_tokes_tensor = indexed_masked_tokes_tensor.squeeze(dim=0)
@@ -162,6 +169,15 @@ def main():
                         losses.append(loss.item())
                         tokens_tensor[0, cur_indexed_to_predict] = torch.argmax(
                             predictions[0, cur_indexed_to_predict]).item()
+
+                        golden_sent[cur_indexed_to_predict] = cur_token_id_to_predict.item()
+                        predicted_sent[cur_indexed_to_predict] = torch.argmax(predictions[0, cur_indexed_to_predict]).item()
+
+                    golden_sent = tokenizer.convert_ids_to_tokens(golden_sent[1:-1])
+                    predicted_sent = tokenizer.convert_ids_to_tokens(predicted_sent[1:-1])
+
+                    golden_sents[i].append([golden_sent])
+                    predicted_sents[i].append(predicted_sent)
 
             avg_loss = sum(losses) / len(losses)
             print(f"Finished evaluating {tags[i]:.2f}, loss: {avg_loss:.2f}")
