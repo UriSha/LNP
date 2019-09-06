@@ -108,6 +108,10 @@ def main():
             for param_tensor in bert_fine_tuned_state_dict:
                 print(param_tensor, "\t", bert_fine_tuned_state_dict[param_tensor].size())
 
+        print("removing cls.seq_relationship.weight and cls.seq_relationship.bias from bert_fine_tuned_state_dict")
+        del bert_fine_tuned_state_dict["cls.seq_relationship.weight"]
+        del bert_fine_tuned_state_dict["cls.seq_relationship.bias"]
+
         model.load_state_dict(bert_fine_tuned_state_dict)
         print("loaded pre-trained bert")
 
