@@ -106,7 +106,7 @@ def main():
         if print_w:
             print("bert_fine_tuned_state_dict:")
             for param_tensor in bert_fine_tuned_state_dict:
-                print(param_tensor, "\t", model.state_dict()[param_tensor].size())
+                print(param_tensor, "\t", bert_fine_tuned_state_dict[param_tensor].size())
 
         model.load_state_dict(bert_fine_tuned_state_dict)
         print("loaded pre-trained bert")
