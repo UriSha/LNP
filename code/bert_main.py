@@ -87,7 +87,7 @@ def main():
         tokenized = tokenizer.tokenize(" ".join(sent))
         bert_bleu_sents.append(tokenized)
 
-    print("len(blue_sents): ", len(blue_sents))
+    print("len(blue_sents): ", len(bert_bleu_sents))
 
 
     eval_datasets = []
@@ -193,7 +193,7 @@ def main():
                     golden_sent = tokenizer.convert_ids_to_tokens(golden_sent[1:-1])
                     predicted_sent = tokenizer.convert_ids_to_tokens(predicted_sent[1:-1])
 
-                    golden_sents[i].append(golden_sent)
+                    golden_sents[i].append([golden_sent])
                     predicted_sents[i].append(predicted_sent)
 
             # total loss
@@ -206,8 +206,8 @@ def main():
         blue_with_only_golden = corpus_bleu(golden_sents[i],predicted_sents[i])
         print(f"blue_with_only_golden for {tags[i]:.2f}:", blue_with_only_golden)
 
-        bleu_score = corpus_bleu_with_joint_refrences(blue_sents,golden_sents[i],predicted_sents[i])
-        print(f"bleu_score with {len(blue_sents)} sents from eval for {tags[i]:.2f}:", bleu_score)
+        bleu_score = corpus_bleu_with_joint_refrences(bert_bleu_sents,golden_sents[i],predicted_sents[i])
+        print(f"bleu_score with {len(bert_bleu_sents)} sents from eval for {tags[i]:.2f}:", bleu_score)
 
 if __name__ == "__main__":
     main()
