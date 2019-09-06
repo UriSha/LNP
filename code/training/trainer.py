@@ -102,23 +102,25 @@ class Trainer():
         predicted_sentences = []
         ground_truth_sentences = []
 
-        for context_xs_batch, context_ys_batch, context_mask_batch, target_xs_batch, target_ys_batch, target_mask_batch, sent_xs_batch, sent_ys_batch, sent_mask_batch in loader:
-            context_xs = self.__batch2var(context_xs_batch)
-            context_ys = self.__batch2var(context_ys_batch)
-            context_mask = self.__batch2var(context_mask_batch)
-            target_xs = self.__batch2var(target_xs_batch)
-            target_ys = self.__batch2var(target_ys_batch)
-            target_mask = self.__batch2var(target_mask_batch)
-            sent_xs = self.__batch2var(sent_xs_batch)
-            sent_ys = self.__batch2var(sent_ys_batch)
-            sent_mask = self.__batch2var(sent_mask_batch)
+        for src, src_mask, src_padding_mask, tgt, tgt_mask, tgt_padding_mask, sent_x, sent_y, sent_mask in loader:
+            src = self.__batch2var(src)
+            src_mask = self.__batch2var(src_mask)
+            src_padding_mask = self.__batch2var(src_padding_mask)
+
+            tgt = self.__batch2var(tgt)
+            tgt_mask = self.__batch2var(tgt_mask)
+            tgt_padding_mask = self.__batch2var(tgt_padding_mask)
+
+            sent_x = self.__batch2var(sent_x)
+            sent_y = self.__batch2var(sent_y)
+            sent_mask = self.__batch2var(sent_mask)
 
             # feedforward - backprop
             if is_train:
                 self.optimizer.zero_grad()
-                outputs, kl = self.model(context_xs, context_ys, context_mask, target_xs, target_mask, (sent_xs, sent_ys, sent_mask))
+                outputs, kl = self.model(src, src_mask, src_padding_mask, tgt, tgt_mask, tgt_padding_mask, sent_x, sent_y, sent_mask)
             else:
-                outputs, kl = self.model(context_xs, context_ys, context_mask, target_xs, target_mask)
+                outputs, kl = self.model(src, src_mask, src_padding_mask, tgt, tgt_mask, tgt_padding_mask)
 
             outputs_adjusted, target_ys_adjusted = self.__adjust_dimensions(outputs, target_ys)
             loss = self.loss_function(outputs_adjusted, target_ys_adjusted)

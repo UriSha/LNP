@@ -34,7 +34,7 @@ def main():
     # text_processor = TextProcessor(os.path.join(cur_dir, "../data/APRC/APRC_small_mock.txt"),
     #                                             os.path.join(cur_dir, "../data/embeddings/wiki-news-300d-1M.vec"), test_size=test_size, mask_ratio=mask_ratio,
     #                                             sents_limit=10000, rare_word_threshold=1, use_weight_loss=True)
-    text_processor = TextProcessor(os.path.join(cur_dir, "../data/APRC/APRC_small_mock1.txt"),
+    text_processor = TextProcessor(os.path.join(cur_dir, "../data/APRC/APRC_small_mock.txt"),
                                    os.path.join(cur_dir, "../data/embeddings/small_fasttext.txt"),
                                    test_size=test_size,
                                    sents_limit=10000,

@@ -1,18 +1,17 @@
 import math
+
 import torch
 import torch.nn as nn
 from sklearn.preprocessing import normalize
-from .encoder import SelfAttentionEncoder, LatentEncoder
-from .decoder import Decoder
-from .aggregator import CrossAttentionAggregator
+
 from .transformer import Transformer
 
 
 class CNP(nn.Module):
 
     def __init__(self, enc_hidden_layers, dec_hidden_layers, emb_weight,
-                       max_seq_len, use_weight_matrix, use_latent, nheads=2, dropout=0.1,
-                       normalize_weights=True, to_cuda=False):
+                 max_seq_len, use_weight_matrix, use_latent, nheads=2, dropout=0.1,
+                 normalize_weights=True, to_cuda=False):
         super(CNP, self).__init__()
 
         embedding_size = emb_weight.shape[1]
@@ -29,7 +28,8 @@ class CNP(nn.Module):
         #     self.latent_encoder = None
         #     self.decoder = Decoder(input_size, dec_hidden_layers, output_size, dropout, to_cuda)
 
-        self.transformer = Transformer(input_size, nheads, len(enc_hidden_layers), len(dec_hidden_layers), enc_hidden_layers[0], dropout)
+        self.transformer = Transformer(input_size, nheads, len(enc_hidden_layers), len(dec_hidden_layers),
+                                       enc_hidden_layers[0], dropout)
 
         self.word_embeddings = nn.Embedding.from_pretrained(emb_weight, padding_idx=0)
 
@@ -59,47 +59,33 @@ class CNP(nn.Module):
             if self.embedding_matrix is not None:
                 self.embedding_matrix = self.embedding_matrix.cuda()
 
+    def forward(self, src, src_mask, src_padding_mask, tgt, tgt_mask, tgt_padding_mask, sent_x, sent_y, sent_mask):
 
-    def forward(self, context_xs, context_ys, context_mask, target_xs, target_mask, sents=None):
+        src = self.word_embeddings(src)
+        tgt = self.word_embeddings(tgt)
 
-        context_word_embeddings = self.word_embeddings(context_ys)
-        context_pos_embeddings = self.pos_embeddings(context_xs)
-        context = context_word_embeddings + context_pos_embeddings
-        target_pos_embeddings = self.pos_embeddings(target_xs)
+        # pos_embeddings = self.pos_embeddings(sent_x)
+        #
+        # src = src_embeddings + pos_embeddings
+        # tgt = tgt_embeddings + pos_embeddings
 
-        context = context.transpose(0, 1)
+        src = src.transpose(0, 1)
         # context_encodings = self.encoder(context, context_mask)
         # context_encodings = context_encodings.transpose(0, 1)
         # representations = self.aggregator(q=target_pos_embeddings, k=context_pos_embeddings, r=context_encodings, context_mask=context_mask)
 
-        target = target_pos_embeddings.transpose(0, 1)
+        tgt = tgt.transpose(0, 1)
 
         kl = None
-        # if self.latent_encoder is not None:
-        #     prior_mu, prior_var, prior = self.latent_encoder(context, context_mask)
 
-        #     # For Training
-        #     if sents:
-        #         sent_xs, sent_ys, sent_mask = sents[0], sents[1], sents[2]
-        #         sent_pos_embeddings = self.pos_embeddings(sent_xs)
-        #         sent_word_embeddings = self.word_embeddings(sent_ys)
-        #         latent_target = sent_pos_embeddings + sent_word_embeddings
-        #         latent_target = latent_target.transpose(0, 1)
-        #         posterior_mu, posterior_var, posterior = self.latent_encoder(latent_target, sent_mask)
-        #         z = posterior
-        #         kl = self.kl_div(prior_mu, prior_var, posterior_mu, posterior_var)
-
-        #     # For Generation
-        #     else:
-        #         z = prior
-
-        #     latent_representations = torch.repeat_interleave(z, target_pos_embeddings.shape[1], dim=1)
-        #     target = torch.cat((target, latent_representations), dim=2)
-
-
-        # predictions = self.decoder(target)
-
-        predictions = self.transformer(context, target, src_key_padding_mask=context_mask, tgt_key_padding_mask=target_mask)
+        predictions = self.transformer(
+            src=src,
+            tgt=tgt,
+            src_mask=src_mask,
+            tgt_mask=tgt_mask,
+            src_key_padding_mask=src_padding_mask,
+            tgt_key_padding_mask=tgt_padding_mask
+        )
         predictions = predictions.transpose(0, 1)
 
         if self.embedding_matrix is not None:
@@ -108,10 +94,10 @@ class CNP(nn.Module):
         return predictions, kl
 
     def kl_div(self, prior_mu, prior_var, posterior_mu, posterior_var):
-        kl_div = (torch.exp(posterior_var) + (posterior_mu-prior_mu) ** 2) / torch.exp(prior_var) - 1. + (prior_var - posterior_var)
+        kl_div = (torch.exp(posterior_var) + (posterior_mu - prior_mu) ** 2) / torch.exp(prior_var) - 1. + (
+                    prior_var - posterior_var)
         kl_div = 0.5 * kl_div.sum()
         return kl_div
-
 
     def test_model(self):
         self.eval()
@@ -120,14 +106,12 @@ class CNP(nn.Module):
         # self.aggregator.eval()
         self.transformer.eval()
 
-
     def train_model(self):
         self.train()
         # self.encoder.train()
         # self.decoder.train()
         # self.aggregator.train()
         self.transformer.train()
-
 
     def __create_pos_embeddings_matrix(self, max_seq_len, embed_size):
         pe = torch.zeros(max_seq_len + 1, embed_size)
