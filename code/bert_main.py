@@ -36,8 +36,8 @@ def main():
    # bert_fine_tuned_path = None
     test_size = 10000
     sequential = args.sequential if args.sequential == "True" else False
-    small_bert = args.use_small_bert if  args.use_small_bert == "True" else False
-    print_w = args.print_w if  args.print_w == "True" else False
+    small_bert = args.use_small_bert if args.use_small_bert == "True" else False
+    print_w = args.print_w if args.print_w == "True" else False
 
     print("to_cuda:", to_cuda)
     print("bert_fine_tuned_path", bert_fine_tuned_path)
@@ -65,7 +65,7 @@ def main():
                                    rare_word_threshold=0,
                                    logger=logger)
 
-    # text_processor = TextProcessor(os.path.join(cur_dir, "../data/APRC/APRC_small_mock.txt"),
+    # text_processor = TextProcessor(os.path.join(cur_dir, "../data/APRC/APRC_small_mock1.txt"),
     #                                os.path.join(cur_dir, "../data/embeddings/small_fasttext.txt"),
     #                                test_size=test_size,
     #                                sents_limit=0,
@@ -81,12 +81,13 @@ def main():
 
     tokenizer = BertTokenizer.from_pretrained(pretrained_model_name_or_path)
 
-    # blue_sents = text_processor.bleu_sents
-    # bert_bleu_sents = []
-    # for sent in blue_sents:
-    #     tokenized = tokenizer.tokenize(" ".join(sent))
-    #     bert_bleu_sents.append(tokenized)
-    #
+    blue_sents = text_processor.bleu_sents
+    bert_bleu_sents = []
+    for sent in blue_sents:
+        tokenized = tokenizer.tokenize(" ".join(sent))
+        bert_bleu_sents.append(tokenized)
+
+    print("len(blue_sents): ", len(blue_sents))
 
 
     eval_datasets = []
@@ -139,8 +140,8 @@ def main():
     for eval_dataset in eval_datasets:
         eval_loaders.append(DataLoader(dataset=eval_dataset, batch_size=1, shuffle=False))
 
-    # golden_sents = [] * len(eval_loaders)
-    # predicted_sents = [] * len(eval_loaders)
+    golden_sents = []
+    predicted_sents = []
     if sequential:
         for i, eval_loader in enumerate(eval_loaders):
             print(f"Evaluating: {tags[i]}")
@@ -167,12 +168,13 @@ def main():
     else:
         for i, eval_loader in enumerate(eval_loaders):
             print(f"Evaluating: {tags[i]}")
-            # golden_sents[i] = []
-            # predicted_sents[i] = []
+            golden_sents.append([])
+            predicted_sents.append([])
             losses = []
             for tokens_tensor, segments_tensors, indexed_masked_tokes_tensor, positions_to_predict_tensor in eval_loader:
-                # golden_sent = list(map(int,tokens_tensor.clone().squeeze()))
-                # predicted_sent = list(map(int,tokens_tensor.clone().squeeze()))
+                golden_sent = list(map(int,tokens_tensor.clone().squeeze()))
+                predicted_sent = list(map(int,tokens_tensor.clone().squeeze()))
+
                 tokens_tensor = tokens_tensor.squeeze(dim=0)
                 segments_tensors = segments_tensors.squeeze(dim=0)
                 indexed_masked_tokes_tensor = indexed_masked_tokes_tensor.squeeze(dim=0)
@@ -185,30 +187,27 @@ def main():
                                              token_id_to_predict.unsqueeze(dim=0))
                         losses.append(loss.item())
 
-                    #     golden_sent[indexed_to_predict] = token_id_to_predict.item()
-                    #     predicted_sent[indexed_to_predict] = torch.argmax(predictions[0, indexed_to_predict]).item()
-                    #
-                    # golden_sent = golden_sent[1:-1]
-                    # predicted_sent = predicted_sent[1:-1]
-                    #
-                    # golden_sents[i].append(golden_sent)
-                    # predicted_sents[i].append(predicted_sent)
+                        golden_sent[indexed_to_predict] = token_id_to_predict.item()
+                        predicted_sent[indexed_to_predict] = torch.argmax(predictions[0, indexed_to_predict]).item()
+
+                    golden_sent = tokenizer.convert_ids_to_tokens(golden_sent[1:-1])
+                    predicted_sent = tokenizer.convert_ids_to_tokens(predicted_sent[1:-1])
+
+                    golden_sents[i].append(golden_sent)
+                    predicted_sents[i].append(predicted_sent)
 
             # total loss
             avg_loss = sum(losses) / len(losses)
             print(f"Finished evaluating {tags[i]:.2f}, loss: {avg_loss:.2f}")
 
-    # golden_ten_thousend = list(golden_sents[0])
-    # golden_ten_thousend.extend(golden_sents[1])
-    #
-    # for i, eval_loader in enumerate(eval_loaders):
-    #     # total bleu
-    #     print(f"calculating bleu for {tags[i]:.2f}")
-    #     blue_with_only_golden = corpus_bleu(golden_sents[i],predicted_sents[i])
-    #     print(f"blue_with_only_golden for {tags[i]:.2f}:", blue_with_only_golden)
-    #
-    #     bleu_score = corpus_bleu_with_joint_refrences(golden_ten_thousend,golden_sents[i],predicted_sents[i])
-    #     print(f"bleu_score with 10,000 sents from eval for {tags[i]:.2f}:", bleu_score)
+    for i, eval_loader in enumerate(eval_loaders):
+        # total bleu
+        print(f"calculating bleu for {tags[i]:.2f}")
+        blue_with_only_golden = corpus_bleu(golden_sents[i],predicted_sents[i])
+        print(f"blue_with_only_golden for {tags[i]:.2f}:", blue_with_only_golden)
+
+        bleu_score = corpus_bleu_with_joint_refrences(blue_sents,golden_sents[i],predicted_sents[i])
+        print(f"bleu_score with {len(blue_sents)} sents from eval for {tags[i]:.2f}:", bleu_score)
 
 if __name__ == "__main__":
     main()
