@@ -81,8 +81,8 @@ class CNP(nn.Module):
         predictions = self.transformer(
             src=src,
             tgt=tgt,
-            src_mask=src_mask,
-            tgt_mask=tgt_mask,
+            # src_mask=src_mask,
+            # tgt_mask=tgt_mask,
             src_key_padding_mask=src_padding_mask,
             tgt_key_padding_mask=tgt_padding_mask
         )

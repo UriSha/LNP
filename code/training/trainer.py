@@ -102,7 +102,7 @@ class Trainer():
         predicted_sentences = []
         ground_truth_sentences = []
 
-        for src, src_mask, src_padding_mask, tgt, tgt_mask, tgt_padding_mask, sent_x, sent_y, sent_mask in loader:
+        for src, src_mask, src_padding_mask, tgt, tgt_mask, tgt_padding_mask, sent_x, sent_y, sent_mask, target_xs, target_ys in loader:
             src = self.__batch2var(src)
             src_mask = self.__batch2var(src_mask)
             src_padding_mask = self.__batch2var(src_padding_mask)
@@ -115,6 +115,9 @@ class Trainer():
             sent_y = self.__batch2var(sent_y)
             sent_mask = self.__batch2var(sent_mask)
 
+            target_xs = self.__batch2var(target_xs)
+            target_ys = self.__batch2var(target_ys)
+
             # feedforward - backprop
             if is_train:
                 self.optimizer.zero_grad()
@@ -123,7 +126,10 @@ class Trainer():
                 outputs, kl = self.model(src, src_mask, src_padding_mask, tgt, tgt_mask, tgt_padding_mask)
 
             outputs_adjusted, target_ys_adjusted = self.__adjust_dimensions(outputs, target_ys)
-            loss = self.loss_function(outputs_adjusted, target_ys_adjusted)
+            try:
+                loss = self.loss_function(outputs_adjusted, target_ys_adjusted)
+            except ValueError:
+                x = 7
             losses.append(loss.item())
 
             if kl is not None:
@@ -134,10 +140,10 @@ class Trainer():
                 self.optimizer.step()
 
             accuracies.append(self.__compute_accuracy(outputs_adjusted, target_ys_adjusted))
-            sampler.sample(sent_ys[0], target_xs[0], outputs[0])
+            sampler.sample(sent_y[0], target_xs[0], outputs[0])
 
             if return_sentences:
-                batch_predicted_sentences, batch_ground_truth_sentences = populate_predicted_and_ground_truth(sent_ys, target_xs, outputs, self.id2w)
+                batch_predicted_sentences, batch_ground_truth_sentences = populate_predicted_and_ground_truth(sent_y, target_xs, outputs, self.id2w)
                 predicted_sentences.extend(batch_predicted_sentences)
                 ground_truth_sentences.extend(batch_ground_truth_sentences)
 

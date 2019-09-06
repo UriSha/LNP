@@ -24,14 +24,14 @@ class DatasetNonContextual(Dataset):
         sent = self.sents[index]
         # context_x, context_y, context_mask, target_x, target_y, target_mask, sent_x, sent_y, sent_mask = self.mask_sent(sent)
 
-        src, src_mask, src_padding_mask, tgt, tgt_mask, tgt_padding_mask, sent_x, sent_y, sent_mask = self.get_src_and_tgt(sent=sent)
+        src, src_mask, src_padding_mask, tgt, tgt_mask, tgt_padding_mask, sent_x, sent_y, sent_mask, target_x, target_y = self.get_src_and_tgt(sent=sent)
 
         if not self.random_every_time:
             # self.mem[index] = context_x, context_y, context_mask, target_x, target_y, target_mask, sent_x, sent_y, sent_mask
-            self.mem[index] = src, src_mask, src_padding_mask, tgt, tgt_mask, tgt_padding_mask, sent_x, sent_y, sent_mask
+            self.mem[index] = src, src_mask, src_padding_mask, tgt, tgt_mask, tgt_padding_mask, sent_x, sent_y, sent_mask, target_x, target_y
 
         # return context_x, context_y, context_mask, target_x, target_y, target_mask, sent_x, sent_y, sent_mask
-        return src, src_mask, src_padding_mask, tgt, tgt_mask, tgt_padding_mask, sent_x, sent_y, sent_mask
+        return src, src_mask, src_padding_mask, tgt, tgt_mask, tgt_padding_mask, sent_x, sent_y, sent_mask, target_x, target_y
 
 
     def __len__(self):
@@ -39,6 +39,13 @@ class DatasetNonContextual(Dataset):
 
 
     def get_src_and_tgt(self, sent):
+        context_x = [self.max_seq_len] * self.max_seq_len
+        context_y = [0] * self.max_seq_len
+        context_mask = [1] * self.max_seq_len
+        target_x = [self.max_seq_len] * self.max_masked_size
+        target_y = [0] * self.max_masked_size
+        target_mask = [1] * self.max_masked_size
+
         src = [0] * self.max_seq_len
         src_mask = [float('-inf')] * self.max_seq_len
         src_padding_mask = [1] * self.max_seq_len
@@ -60,6 +67,7 @@ class DatasetNonContextual(Dataset):
             if j < len(indices_to_mask) and i == indices_to_mask[j]:
                 src[i] = 0
                 src_mask[i] = float('-inf')
+                src_padding_mask[i] = 1
                 j += 1
             else:
                 src[i] = sent[i]
@@ -68,8 +76,21 @@ class DatasetNonContextual(Dataset):
             tgt[i] = sent[i]
             tgt_mask[i] = 0
 
-            src_padding_mask[i] = 0
             tgt_padding_mask[i] = 0
+
+        j = 0
+        k = 0
+        for i in range(len(sent)):
+            if j < len(indices_to_mask) and i == indices_to_mask[j]:
+                target_x[j] = indices_to_mask[j]
+                target_y[j] = sent[indices_to_mask[j]]
+                target_mask[j] = 0
+                j += 1
+            else:
+                context_x[k] = i
+                context_y[k] = sent[i]
+                context_mask[k] = 0
+                k += 1
 
         src = torch.LongTensor(src)
         src_mask = torch.Tensor(src_mask)
@@ -82,6 +103,9 @@ class DatasetNonContextual(Dataset):
         sent_x = torch.LongTensor([i if i < len(sent) else self.max_seq_len for i in range(self.max_seq_len)])
         sent_y = torch.LongTensor([sent[i] if i < len(sent) else 0 for i in range(self.max_seq_len)])
         sent_mask = torch.ByteTensor([0 if i < len(sent) else 1 for i in range(self.max_seq_len)])
+
+        target_x = torch.LongTensor(target_x)
+        target_y = torch.LongTensor(target_y)
 
         if self.to_cuda:
             src = src.cuda()
@@ -96,7 +120,10 @@ class DatasetNonContextual(Dataset):
             sent_y = sent_y.cuda()
             sent_mask = sent_mask.cuda()
 
-        return src, src_mask, src_padding_mask, tgt, tgt_mask, tgt_padding_mask, sent_x, sent_y, sent_mask
+            target_x = torch.LongTensor(target_x)
+            target_y = torch.LongTensor(target_y)
+
+        return src, src_mask, src_padding_mask, tgt, tgt_mask, tgt_padding_mask, sent_x, sent_y, sent_mask, target_x, target_y
 
 
     def mask_sent(self, sent):
