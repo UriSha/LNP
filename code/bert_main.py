@@ -77,7 +77,6 @@ def main():
     if small_bert:
         print("will use bert base")
         pretrained_model_name_or_path = 'bert-base-uncased'
-        pretrained_model_name_or_path = 'https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-uncased-vocab.txt'
     else:
         print("will use bert large")
         pretrained_model_name_or_path = 'bert-large-uncased'
@@ -181,7 +180,7 @@ def main():
                     predicted_sents[i].append(predicted_sent)
 
             avg_loss = sum(losses) / len(losses)
-            print(f"Finished evaluating {tags[i]:.2f}, loss: {avg_loss:.2f}")
+            print(f"Finished evaluating {tags[i]:.2f}, loss: {avg_loss:.4f}")
     else:
         for i, eval_loader in enumerate(eval_loaders):
             print(f"Evaluating: {tags[i]}")
@@ -215,7 +214,7 @@ def main():
 
             # total loss
             avg_loss = sum(losses) / len(losses)
-            print(f"Finished evaluating {tags[i]:.2f}, loss: {avg_loss:.2f}")
+            print(f"Finished evaluating {tags[i]:.2f}, loss: {avg_loss:.4f}")
 
     for i, eval_loader in enumerate(eval_loaders):
         # total bleu
