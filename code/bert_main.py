@@ -13,6 +13,19 @@ from training.bleu import corpus_bleu_with_joint_refrences
 from nltk.translate.bleu_score import corpus_bleu
 
 
+def compute_accuracy(prediction, truth, topks):
+    results = []
+    for topk in topks:
+        _, max_indices = prediction.topk(k=topk, dim=1)
+        for i in range(max_indices.shape[1]):
+            if max_indices[0, i].item() == truth.item():
+                results.append(1)
+                break
+        else:
+            results.append(0)
+
+    return results
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -108,6 +121,9 @@ def main():
 
     model = BertForMaskedLM.from_pretrained(pretrained_model_name_or_path)
 
+    topks = [1, 5, 10]
+    topk_results = [[] for _ in range(len(topks))]
+
     if print_w:
         print("bert weights")
         for param_tensor in model.state_dict():
@@ -164,11 +180,13 @@ def main():
                         predictions = model(tokens_tensor, segments_tensors)
                         cur_indexed_to_predict = positions_to_predict_tensor[j]
                         cur_token_id_to_predict = indexed_masked_tokes_tensor[j]
-                        loss = loss_function(predictions[0, cur_indexed_to_predict].unsqueeze(dim=0),
-                                             cur_token_id_to_predict.unsqueeze(dim=0))
+                        prediction = predictions[0, cur_indexed_to_predict].unsqueeze(dim=0)
+                        truth = cur_token_id_to_predict.unsqueeze(dim=0)
+                        loss = loss_function(prediction, truth)
                         losses.append(loss.item())
-                        tokens_tensor[0, cur_indexed_to_predict] = torch.argmax(
-                            predictions[0, cur_indexed_to_predict]).item()
+                        for k, res in enumerate(compute_accuracy(prediction, truth, topks)):
+                            topk_results[k].append(res)
+                        tokens_tensor[0, cur_indexed_to_predict] = torch.argmax(predictions[0, cur_indexed_to_predict]).item()
 
                         golden_sent[cur_indexed_to_predict] = cur_token_id_to_predict.item()
                         predicted_sent[cur_indexed_to_predict] = torch.argmax(predictions[0, cur_indexed_to_predict]).item()
@@ -199,9 +217,12 @@ def main():
                     predictions = model(tokens_tensor, segments_tensors)
                     for indexed_to_predict, token_id_to_predict in zip(positions_to_predict_tensor,
                                                                        indexed_masked_tokes_tensor):
-                        loss = loss_function(predictions[0, indexed_to_predict].unsqueeze(dim=0),
-                                             token_id_to_predict.unsqueeze(dim=0))
+                        truth = token_id_to_predict.unsqueeze(dim=0)
+                        prediction = predictions[0, indexed_to_predict].unsqueeze(dim=0)
+                        loss = loss_function(prediction, truth)
                         losses.append(loss.item())
+                        for k, res in enumerate(compute_accuracy(prediction, truth, topks)):
+                            topk_results[k].append(res)
 
                         golden_sent[indexed_to_predict] = token_id_to_predict.item()
                         predicted_sent[indexed_to_predict] = torch.argmax(predictions[0, indexed_to_predict]).item()
@@ -215,6 +236,11 @@ def main():
             # total loss
             avg_loss = sum(losses) / len(losses)
             print(f"Finished evaluating {tags[i]:.2f}, loss: {avg_loss:.4f}")
+
+
+    for i, topk in enumerate(topks):
+        res = sum(topk_results[i]) / len(topk_results[i])
+        print(f"Topk({topk}): {res:.3f}")
 
     for i, eval_loader in enumerate(eval_loaders):
         # total bleu
