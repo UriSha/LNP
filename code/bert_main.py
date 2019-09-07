@@ -122,7 +122,7 @@ def main():
     model = BertForMaskedLM.from_pretrained(pretrained_model_name_or_path)
 
     topks = [1, 5, 10]
-    topk_results = [[] for _ in range(len(topks))]
+    topk_results = [[[] for _ in range(len(topks))] for len(eval_datasets)]
 
     if print_w:
         print("bert weights")
@@ -185,7 +185,7 @@ def main():
                         loss = loss_function(prediction, truth)
                         losses.append(loss.item())
                         for k, res in enumerate(compute_accuracy(prediction, truth, topks)):
-                            topk_results[k].append(res)
+                            topk_results[i][k].append(res)
                         tokens_tensor[0, cur_indexed_to_predict] = torch.argmax(predictions[0, cur_indexed_to_predict]).item()
 
                         golden_sent[cur_indexed_to_predict] = cur_token_id_to_predict.item()
@@ -222,7 +222,7 @@ def main():
                         loss = loss_function(prediction, truth)
                         losses.append(loss.item())
                         for k, res in enumerate(compute_accuracy(prediction, truth, topks)):
-                            topk_results[k].append(res)
+                            topk_results[i][k].append(res)
 
                         golden_sent[indexed_to_predict] = token_id_to_predict.item()
                         predicted_sent[indexed_to_predict] = torch.argmax(predictions[0, indexed_to_predict]).item()
@@ -236,11 +236,10 @@ def main():
             # total loss
             avg_loss = sum(losses) / len(losses)
             print(f"Finished evaluating {tags[i]:.2f}, loss: {avg_loss:.4f}")
+            for r, topk in enumerate(topks):
+                res = sum(topk_results[i][r]) / len(topk_results[r])
+                print(f"Topk({topk}): {res:.3f}")
 
-
-    for i, topk in enumerate(topks):
-        res = sum(topk_results[i]) / len(topk_results[i])
-        print(f"Topk({topk}): {res:.3f}")
 
     for i, eval_loader in enumerate(eval_loaders):
         # total bleu
