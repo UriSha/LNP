@@ -122,7 +122,7 @@ def main():
     model = BertForMaskedLM.from_pretrained(pretrained_model_name_or_path)
 
     topks = [1, 5, 10]
-    topk_results = [[[] for _ in range(len(topks))] for len(eval_datasets)]
+    topk_results = [[[] for _ in range(len(topks))] for range(len(eval_datasets))]
 
     if print_w:
         print("bert weights")
