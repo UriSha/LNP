@@ -77,6 +77,7 @@ def main():
     if small_bert:
         print("will use bert base")
         pretrained_model_name_or_path = 'bert-base-uncased'
+        pretrained_model_name_or_path = 'https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-uncased-vocab.txt'
     else:
         print("will use bert large")
         pretrained_model_name_or_path = 'bert-large-uncased'
