@@ -199,6 +199,9 @@ def main():
 
             avg_loss = sum(losses) / len(losses)
             print(f"Finished evaluating {tags[i]:.2f}, loss: {avg_loss:.4f}")
+            for r, topk in enumerate(topks):
+                res = sum(topk_results[i][r]) / len(topk_results[i][r])
+                print(f"Topk({topk}): {res:.3f}")
     else:
         for i, eval_loader in enumerate(eval_loaders):
             print(f"Evaluating: {tags[i]}")
