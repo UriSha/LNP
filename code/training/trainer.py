@@ -116,9 +116,9 @@ class Trainer():
             # feedforward - backprop
             if is_train:
                 self.optimizer.zero_grad()
-                outputs, kl = self.model(context_xs, context_ys, context_mask, target_xs, target_mask, (sent_xs, sent_ys, sent_mask))
+                outputs, kl = self.model(context_xs, context_ys, context_mask, target_xs, (sent_xs, sent_ys, sent_mask))
             else:
-                outputs, kl = self.model(context_xs, context_ys, context_mask, target_xs, target_mask)
+                outputs, kl = self.model(context_xs, context_ys, context_mask, target_xs)
 
             outputs_adjusted, target_ys_adjusted = self.__adjust_dimensions(outputs, target_ys)
             loss = self.loss_function(outputs_adjusted, target_ys_adjusted)

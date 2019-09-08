@@ -56,7 +56,7 @@ class CNP(nn.Module):
                 self.embedding_matrix = self.embedding_matrix.cuda()
 
 
-    def forward(self, context_xs, context_ys, context_mask, target_xs, target_mask, sents=None):
+    def forward(self, context_xs, context_ys, context_mask, target_xs, sents=None):
 
         context_word_embeddings = self.word_embeddings(context_ys)
         context_pos_embeddings = self.pos_embeddings(context_xs)
