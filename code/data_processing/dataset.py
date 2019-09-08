@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 
 
 class DatasetNonContextual(Dataset):
-    
+
     def __init__(self, sents, max_seq_len, mask_ratios, random_every_time=False, to_cuda=True):
         self.sents = sents
         self.mask_ratios = mask_ratios
@@ -36,9 +36,9 @@ class DatasetNonContextual(Dataset):
         context_x = [self.max_seq_len] * self.max_seq_len
         context_y = [0] * self.max_seq_len
         context_mask = [1] * self.max_seq_len
-        target_x = [self.max_seq_len] * self.max_masked_size
-        target_y = [0] * self.max_masked_size
-        target_mask = [1] * self.max_masked_size
+        target_x = [self.max_seq_len] * self.max_seq_len
+        target_y = [0] * self.max_seq_len
+        target_mask = [1] * self.max_seq_len
 
         mask_ratio = self.mask_ratios[self.current_mask_ratio_index]
         self.current_mask_ratio_index = (self.current_mask_ratio_index + 1) % len(self.mask_ratios)
@@ -51,16 +51,18 @@ class DatasetNonContextual(Dataset):
         j = 0
         k = 0
         for i in range(len(sent)):
-            if j < len(indices_to_mask) and i == indices_to_mask[j]:
-                target_x[j] = indices_to_mask[j]
-                target_y[j] = sent[indices_to_mask[j]]
-                target_mask[j] = 0
-                j += 1
-            else:
-                context_x[k] = i
-                context_y[k] = sent[i]
-                context_mask[k] = 0
-                k += 1
+            context_x[i] = i
+            target_x[i] = i
+            context_y[i] = sent[i]
+            target_y[i] = 0
+            context_mask[i] = 0
+            target_mask[i] = 1
+
+        for j in range(len(indices_to_mask)):
+            context_y[indices_to_mask[j]] = 0
+            context_mask[indices_to_mask[j]] = 1
+            target_y[indices_to_mask[j]] = sent[indices_to_mask[j]]
+            target_mask[indices_to_mask[j]] = 0
 
         context_x = torch.LongTensor(context_x)
         context_y = torch.LongTensor(context_y)
