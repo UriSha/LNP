@@ -47,7 +47,7 @@ input_arguments = [
     InputArgument("rare_threshold", "rt", "rare word threshold (default: 10)", 10, float),
     InputArgument("hidden_repr", "hr", "hidden_repr (default: 1000)", 1000, int),
     InputArgument("enc_layers", "encl", "enc_layers (default: [512, 768])", [512, 768], int, nargs="+"),
-    InputArgument("dec_layers", "decl", "dec_layers (default: [768, 1024, 512])", [300, 300], int, nargs="+"),
+    InputArgument("dec_layers", "decl", "dec_layers (default: [1024, 2048, 1024])", [1024, 2048, 1024], int, nargs="+"),
     InputArgument("opt", "opt", "opt (default: \"ADAM\")", "ADAM"),
     InputArgument("dropout", "dp", "dropout (default: 0.1)", .1, float),
     InputArgument("print_interval", "pi", "print interval (default: 60sec)", 60, int),
@@ -61,7 +61,7 @@ input_arguments = [
     InputArgument("use_latent", "ul", "Whether to use latent encoder (default: True)", True, str2bool,
                   nargs="?", const=True),
     InputArgument("random_seed", "rs", "random_seed (default: randomly selected)", 0, int),
-    InputArgument("kl_weight", "kl", "Weight of KL divergence in the training loss (default: 1.0)", 1.0, float)
+    InputArgument("kl_weight", "kl", "Weight of KL divergence in the training loss (default: 0.7)", 0.7, float)
 ]
 
 
